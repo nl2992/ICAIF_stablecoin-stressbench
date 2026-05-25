@@ -21,7 +21,14 @@ env/
 !.env.example
 
 # Data and generated artifacts
-data/
+data/*
+!data/README.md
+!data/bronze/
+!data/bronze/.gitkeep
+!data/silver/
+!data/silver/.gitkeep
+!data/gold/
+!data/gold/.gitkeep
 models/trained/
 leaderboard.csv
 *.parquet
