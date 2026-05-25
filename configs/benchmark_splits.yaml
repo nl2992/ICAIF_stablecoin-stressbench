@@ -1,0 +1,29 @@
+splits:
+  event_based:
+    description: "Event-based splits to prevent temporal leakage."
+    train:
+      events:
+        - normal_control_2022_jan
+        - normal_control_2023_feb
+        - normal_control_2024_q1
+    validation:
+      events:
+        - terra_luna_2022
+    test:
+      events:
+        - usdc_depeg_2023
+        - usdc_depeg_2023_recovery
+
+  time_based:
+    description: "Strict time-based splits for robustness checks."
+    train_end: "2022-12-31T23:59:59Z"
+    validation_start: "2023-01-01T00:00:00Z"
+    validation_end: "2023-03-09T23:59:59Z"
+    test_start: "2023-03-10T00:00:00Z"
+
+leakage_rules:
+  - "Labels must be generated only after all features for that timestamp are frozen."
+  - "No future information may be used in feature computation at time t."
+  - "Train/validation/test splits must be strictly non-overlapping in time."
+  - "Do not random-split high-frequency rows; always use temporal or event-based splits."
+  - "Regime labels derived from future deviation values must use t+h, not t."

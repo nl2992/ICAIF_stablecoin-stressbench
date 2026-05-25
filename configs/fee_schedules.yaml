@@ -1,0 +1,36 @@
+fee_schedules:
+  binance:
+    taker_bps: 10.0          # 0.10% standard taker fee
+    maker_bps: 10.0
+    withdrawal_fee_usdc: 1.0 # USDC withdrawal fee in USD equivalent
+    withdrawal_fee_usdt: 1.0
+    withdrawal_fee_dai: 2.0
+    notes: "Standard tier; BNB discount not applied"
+
+  coinbase:
+    taker_bps: 60.0          # 0.60% standard taker fee (advanced trade)
+    maker_bps: 40.0
+    withdrawal_fee_usdc: 0.0 # USDC withdrawals free on Coinbase
+    withdrawal_fee_usdt: 1.0
+    withdrawal_fee_dai: 2.0
+    notes: "Advanced Trade standard tier"
+
+  kraken:
+    taker_bps: 40.0          # 0.40% standard taker fee
+    maker_bps: 16.0
+    withdrawal_fee_usdc: 0.25
+    withdrawal_fee_usdt: 0.50
+    withdrawal_fee_dai: 0.50
+    notes: "Kraken standard tier"
+
+  ethereum_mainnet:
+    gas_gwei_estimate: 20.0  # baseline gas price estimate in gwei
+    erc20_transfer_gas: 65000
+    uniswap_swap_gas: 150000
+    notes: "Estimates only; actual gas is dynamic. Use on-chain proxy."
+
+settlement_delays:
+  binance_to_coinbase_usdc_hours: 0.5   # typical ERC-20 settlement
+  coinbase_to_kraken_usdc_hours: 0.5
+  ethereum_confirmation_minutes: 12     # ~1 block = 12s, but 6 confirmations
+  notes: "Delays are proxies. Actual settlement depends on network congestion."

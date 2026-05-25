@@ -1,0 +1,59 @@
+venues:
+  binance:
+    type: cex
+    timezone: UTC
+    websocket: true
+    archive: true
+    websocket_url: "wss://data-stream.binance.vision/stream"
+    archive_url: "https://data.binance.vision"
+    symbols:
+      - USDCUSDT
+      - USDTUSDC
+      - BTCUSDT
+      - BTCUSDC
+      - ETHUSDT
+      - ETHUSDC
+      - DAIUSDT
+      - DAIUSDC
+      - FDUSDUSDT
+
+  coinbase:
+    type: cex
+    timezone: UTC
+    websocket: true
+    archive: false
+    websocket_url: "wss://advanced-trade-ws.coinbase.com"
+    products:
+      - USDC-USD
+      - USDT-USD
+      - DAI-USD
+      - BTC-USD
+      - BTC-USDC
+      - ETH-USD
+      - ETH-USDC
+
+  kraken:
+    type: cex
+    timezone: UTC
+    websocket: true
+    archive: false
+    websocket_url: "wss://ws.kraken.com/v2"
+    pairs:
+      - USDC/USD
+      - USDT/USD
+      - DAI/USD
+      - BTC/USD
+      - ETH/USD
+
+  uniswap_v3:
+    type: dex
+    chain: ethereum
+    websocket: false
+    archive: true
+    subgraph_url: "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3"
+    pools:
+      - USDC/USDT
+      - USDC/DAI
+      - USDC/WETH
+      - USDT/WETH
+      - USDT/DAI

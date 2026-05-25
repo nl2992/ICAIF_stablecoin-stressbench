@@ -1,0 +1,49 @@
+events:
+  usdc_depeg_2023:
+    start: "2023-03-10T00:00:00Z"
+    end: "2023-03-14T23:59:59Z"
+    assets: [USDC, USDT, DAI]
+    venues: [binance, coinbase, kraken]
+    reason: "USDC reserve-bank stress / depeg episode (SVB collapse)"
+    peak_deviation_bps: ~350
+    split: test
+
+  usdc_depeg_2023_recovery:
+    start: "2023-03-15T00:00:00Z"
+    end: "2023-03-20T23:59:59Z"
+    assets: [USDC, USDT, DAI]
+    venues: [binance, coinbase, kraken]
+    reason: "USDC recovery window after SVB resolution"
+    split: test
+
+  terra_luna_2022:
+    start: "2022-05-07T00:00:00Z"
+    end: "2022-05-14T23:59:59Z"
+    assets: [USDT, USDC, DAI]
+    venues: [binance, coinbase, kraken]
+    reason: "UST/LUNA collapse and contagion stress on other stablecoins"
+    split: validation
+
+  normal_control_2023_feb:
+    start: "2023-02-01T00:00:00Z"
+    end: "2023-02-07T23:59:59Z"
+    assets: [USDC, USDT, DAI]
+    venues: [binance, coinbase, kraken]
+    reason: "Calm control window before SVB stress"
+    split: train
+
+  normal_control_2022_jan:
+    start: "2022-01-10T00:00:00Z"
+    end: "2022-01-16T23:59:59Z"
+    assets: [USDC, USDT, DAI]
+    venues: [binance, coinbase, kraken]
+    reason: "Calm control window in early 2022"
+    split: train
+
+  normal_control_2024_q1:
+    start: "2024-01-15T00:00:00Z"
+    end: "2024-01-21T23:59:59Z"
+    assets: [USDC, USDT, DAI]
+    venues: [binance, coinbase, kraken]
+    reason: "Calm control window in Q1 2024"
+    split: train

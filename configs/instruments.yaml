@@ -1,0 +1,127 @@
+instruments:
+  # Direct stablecoin / USD pairs
+  - instrument_id: "binance:USDCUSDT"
+    venue_id: binance
+    native_symbol: USDCUSDT
+    base_asset: USDC
+    quote_asset: USDT
+    instrument_type: spot
+
+  - instrument_id: "binance:BTCUSDT"
+    venue_id: binance
+    native_symbol: BTCUSDT
+    base_asset: BTC
+    quote_asset: USDT
+    instrument_type: spot
+
+  - instrument_id: "binance:BTCUSDC"
+    venue_id: binance
+    native_symbol: BTCUSDC
+    base_asset: BTC
+    quote_asset: USDC
+    instrument_type: spot
+
+  - instrument_id: "binance:ETHUSDT"
+    venue_id: binance
+    native_symbol: ETHUSDT
+    base_asset: ETH
+    quote_asset: USDT
+    instrument_type: spot
+
+  - instrument_id: "binance:ETHUSDC"
+    venue_id: binance
+    native_symbol: ETHUSDC
+    base_asset: ETH
+    quote_asset: USDC
+    instrument_type: spot
+
+  - instrument_id: "binance:DAIUSDT"
+    venue_id: binance
+    native_symbol: DAIUSDT
+    base_asset: DAI
+    quote_asset: USDT
+    instrument_type: spot
+
+  - instrument_id: "coinbase:USDC-USD"
+    venue_id: coinbase
+    native_symbol: USDC-USD
+    base_asset: USDC
+    quote_asset: USD
+    instrument_type: spot
+
+  - instrument_id: "coinbase:USDT-USD"
+    venue_id: coinbase
+    native_symbol: USDT-USD
+    base_asset: USDT
+    quote_asset: USD
+    instrument_type: spot
+
+  - instrument_id: "coinbase:DAI-USD"
+    venue_id: coinbase
+    native_symbol: DAI-USD
+    base_asset: DAI
+    quote_asset: USD
+    instrument_type: spot
+
+  - instrument_id: "coinbase:BTC-USD"
+    venue_id: coinbase
+    native_symbol: BTC-USD
+    base_asset: BTC
+    quote_asset: USD
+    instrument_type: spot
+
+  - instrument_id: "coinbase:BTC-USDC"
+    venue_id: coinbase
+    native_symbol: BTC-USDC
+    base_asset: BTC
+    quote_asset: USDC
+    instrument_type: spot
+
+  - instrument_id: "coinbase:ETH-USD"
+    venue_id: coinbase
+    native_symbol: ETH-USD
+    base_asset: ETH
+    quote_asset: USD
+    instrument_type: spot
+
+  - instrument_id: "coinbase:ETH-USDC"
+    venue_id: coinbase
+    native_symbol: ETH-USDC
+    base_asset: ETH
+    quote_asset: USDC
+    instrument_type: spot
+
+  - instrument_id: "kraken:USDC/USD"
+    venue_id: kraken
+    native_symbol: USDC/USD
+    base_asset: USDC
+    quote_asset: USD
+    instrument_type: spot
+
+  - instrument_id: "kraken:USDT/USD"
+    venue_id: kraken
+    native_symbol: USDT/USD
+    base_asset: USDT
+    quote_asset: USD
+    instrument_type: spot
+
+  - instrument_id: "kraken:DAI/USD"
+    venue_id: kraken
+    native_symbol: DAI/USD
+    base_asset: DAI
+    quote_asset: USD
+    instrument_type: spot
+
+  - instrument_id: "kraken:BTC/USD"
+    venue_id: kraken
+    native_symbol: BTC/USD
+    base_asset: BTC
+    quote_asset: USD
+    instrument_type: spot
+
+  - instrument_id: "kraken:ETH/USD"
+    venue_id: kraken
+    native_symbol: ETH/USD
+    base_asset: ETH
+    quote_asset: USD
+    instrument_type: spot
