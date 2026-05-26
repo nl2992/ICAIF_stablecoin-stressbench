@@ -1,0 +1,9 @@
+source,model,feature_set,task,calibrated_threshold_bps,test_n_trades,test_net_bps_captured,oracle_net_bps,oracle_capture_pct
+baseline,logistic@price_plus_book,—,basis_usdc_1m_gt10bps,—,—,-49.09,161.73,-30.4
+baseline,price_threshold_25bps@price_only,—,executable_arb_q10000_5m,—,—,-42.9,224.57,-19.1
+addon,expected_net_lgbm,price_only,net_profit_regressor/net_profit_bps_q10000,-82.936,1610,-61.406,—,-27.3
+addon,expected_net_lgbm,price_plus_book,net_profit_regressor/net_profit_bps_q10000,-76.668,140,-71.156,—,-31.7
+addon,expected_net_lgbm,price_book_frag,net_profit_regressor/net_profit_bps_q10000,-74.711,59,-72.964,—,-32.5
+addon,expected_net_xgb,price_only,net_profit_regressor/net_profit_bps_q10000,-78.373,211,-68.324,—,-30.4
+addon,expected_net_xgb,price_plus_book,net_profit_regressor/net_profit_bps_q10000,-71.366,57,-72.936,—,-32.5
+addon,expected_net_xgb,price_book_frag,net_profit_regressor/net_profit_bps_q10000,-70.434,89,-76.311,—,-34.0

@@ -1,0 +1,7 @@
+model,feature_set,target_col,n_train,n_val,n_test,n_features,calibrated_threshold_bps,val_n_trades,val_net_bps,test_n_trades,test_net_bps_captured,test_hit_rate_above_cost,test_false_positive_cost,test_final_pnl_bps,test_oracle_capture_pct
+expected_net_lgbm,price_only,net_profit_bps_q10000,20125,11523,15839,5,-82.936,577,-75.096,1610,-61.406,0.0745,-88.156,-98863.74,-27.3
+expected_net_lgbm,price_plus_book,net_profit_bps_q10000,20125,11523,15839,12,-76.668,577,-83.481,140,-71.156,0.0,-71.156,-9961.82,-31.7
+expected_net_lgbm,price_book_frag,net_profit_bps_q10000,20125,11523,15839,15,-74.711,577,-85.987,59,-72.964,0.0,-72.964,-4304.87,-32.5
+expected_net_xgb,price_only,net_profit_bps_q10000,20125,11523,15839,5,-78.373,575,-74.294,211,-68.324,0.0664,-90.136,-14416.45,-30.4
+expected_net_xgb,price_plus_book,net_profit_bps_q10000,20125,11523,15839,12,-71.366,577,-84.023,57,-72.936,0.0,-74.158,-4157.36,-32.5
+expected_net_xgb,price_book_frag,net_profit_bps_q10000,20125,11523,15839,15,-70.434,576,-86.312,89,-76.311,0.0,-76.311,-6791.68,-34.0

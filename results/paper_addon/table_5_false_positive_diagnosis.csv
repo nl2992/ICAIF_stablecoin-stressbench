@@ -1,0 +1,5 @@
+model,feature_set,task,group,n,avg_cross_quote_basis_usdc_bps,avg_cross_quote_basis_usdt_bps,avg_cross_quote_basis_maxabs_bps,avg_spread_bps_mean,avg_depth_bid_10bp_mean,avg_depth_ask_10bp_mean,avg_imbalance_1bp_mean,avg_mid_dispersion_bps_mean,avg_num_active_venues_mean,avg_net_profit_bps_q10000,avg_net_profit_bps_q50000
+price_threshold_10bps,price_only,label_basis_usdc_1m_gt10bps,TP,1421,-344.0859,-3.2064,-347.023,26.5564,59961.0678,49507.5762,0.005,nan,1.0,-35.1513,-40.7641
+price_threshold_10bps,price_only,label_basis_usdc_1m_gt10bps,FP,581,0.5597,0.8876,1.8816,27.7484,72805.4624,48393.3548,0.0557,nan,1.0,-38.7411,-59.5356
+price_threshold_10bps,price_only,label_basis_usdc_1m_gt10bps,FN,583,-0.5275,0.2041,0.2388,30.0021,71634.8858,52425.3466,0.0428,nan,1.0,-41.8483,-61.7554
+price_threshold_10bps,price_only,label_basis_usdc_1m_gt10bps,TN,10672,-0.4309,-0.5459,-0.6703,21.4861,70672.8404,41423.3599,0.0498,nan,1.0,-83.0179,-85.3927

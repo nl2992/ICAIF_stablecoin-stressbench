@@ -1,0 +1,13 @@
+split,notional,basis_threshold_bps,settlement_penalty_bps,fee_regime,horizon,n_minutes,price_signal_pct,executable_signal_pct,price_to_execution_ratio,oracle_net_bps,oracle_n_trades
+test,10000,10,0,base_fee,1m,15839,12.646,3.34,3.79,224.57,529
+test,10000,10,0,base_fee,5m,15839,12.646,5.644,2.24,224.57,529
+test,10000,10,0,base_fee,15m,15839,12.646,7.74,1.63,224.57,529
+test,50000,10,0,base_fee,1m,15839,12.646,2.216,5.71,146.75,351
+test,50000,10,0,base_fee,5m,15839,12.646,4.255,2.97,146.75,351
+test,50000,10,0,base_fee,15m,15839,12.646,6.213,2.04,146.75,351
+test,100000,10,0,base_fee,1m,15839,12.646,1.345,9.4,123.05,213
+test,100000,10,0,base_fee,5m,15839,12.646,2.866,4.41,123.05,213
+test,100000,10,0,base_fee,15m,15839,12.646,4.268,2.96,123.05,213
+test,500000,10,0,base_fee,1m,15839,12.646,0.107,117.82,26.36,17
+test,500000,10,0,base_fee,5m,15839,12.646,0.429,29.46,26.36,17
+test,500000,10,0,base_fee,15m,15839,12.646,1.023,12.36,26.36,17
