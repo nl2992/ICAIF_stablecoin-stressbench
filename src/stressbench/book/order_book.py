@@ -128,14 +128,16 @@ class OrderBook:
             best = self.best_bid()
             if best is None:
                 return 0.0
-            threshold = best * (1 - bps / 10_000)
-            return sum(q for p, q in self.bids.items() if p >= threshold)
+            # threshold = best / (1 + bps/10_000) avoids floating-point undercount
+            # and gives "strictly within N bps" measured from each level's price
+            threshold = best / (1 + bps / 10_000)
+            return sum(q for p, q in self.bids.items() if p > threshold)
         else:
             best = self.best_ask()
             if best is None:
                 return 0.0
-            threshold = best * (1 + bps / 10_000)
-            return sum(q for p, q in self.asks.items() if p <= threshold)
+            threshold = best / (1 - bps / 10_000)
+            return sum(q for p, q in self.asks.items() if p < threshold)
 
     def imbalance(self, bps: float = 1.0) -> float | None:
         """Return order-book imbalance within ``bps`` of the best price.

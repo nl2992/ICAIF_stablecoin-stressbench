@@ -54,14 +54,46 @@ def load_test_data(data_dir: str, label_col: str, feature_cols: list[str] | None
     df = pl.read_parquet(str(gold_path / "*.parquet"))
     test_df = df.filter(pl.col("split") == "test")
 
-    if feature_cols is None:
-        feature_cols = [c for c in df.columns if not c.startswith("label_") and c != "split"]
+    # Drop rows where the label is null/NaN (end-of-window forward-look overflow)
+    test_df = test_df.filter(pl.col(label_col).is_not_null())
+    if test_df[label_col].dtype.is_float():
+        test_df = test_df.filter(~pl.col(label_col).is_nan())
 
-    X = test_df.select(feature_cols).to_numpy().astype(np.float32)
+    if feature_cols is None:
+        _excl = {"split", "ts_1m_ns"}
+        feature_cols = [
+            c for c in df.columns
+            if not c.startswith("label_") and c not in _excl
+        ]
+
+    X_raw = test_df.select(feature_cols).to_numpy().astype(np.float32)
     y = test_df[label_col].to_numpy()
 
-    net_col = "net_profit_bps_q50000"
-    y_net = test_df[net_col].to_numpy() if net_col in test_df.columns else np.zeros(len(y))
+    # Impute NaN features (same strategy as train: column median, all-NaN cols → 0)
+    nan_mask = np.isnan(X_raw)
+    if nan_mask.any():
+        with np.errstate(all="ignore"):
+            col_medians = np.nanmedian(X_raw, axis=0)
+        col_medians = np.nan_to_num(col_medians, nan=0.0)
+        X = np.where(nan_mask, col_medians[None, :], X_raw)
+    else:
+        X = X_raw
+
+    # Use the smallest notional for economic metrics — q10000 has most valid values
+    # (larger notionals are often NaN due to insufficient book depth)
+    net_col = next(
+        (c for c in ["net_profit_bps_q10000", "net_profit_bps_q50000",
+                     "net_profit_bps_q100000", "net_profit_bps_q500000"]
+         if c in test_df.columns),
+        None,
+    )
+    if net_col:
+        y_net_raw = test_df[net_col].to_numpy().astype(np.float64)
+        # Replace NaN (insufficient depth) with a large negative penalty so
+        # the economic_summary function can distinguish "depth-limited" from "unprofitable"
+        y_net = np.where(np.isnan(y_net_raw), -999.0, y_net_raw)
+    else:
+        y_net = np.zeros(len(y))
     return X, y, y_net
 
 

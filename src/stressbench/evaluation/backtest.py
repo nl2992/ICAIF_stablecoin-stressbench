@@ -53,8 +53,19 @@ def run_backtest(
         except (AttributeError, ValueError):
             y_proba = y_pred.astype(float)
 
-        ml = classification_metrics(y_test, y_proba, y_pred)
-        signal = y_pred
+        # Clip to [0, 1] — regression models may produce out-of-range scores
+        y_proba = np.clip(y_proba, 0.0, 1.0)
+
+        # Regression-style models (Ridge, Lasso, AR1) return continuous scores.
+        # Threshold at 0.5 to get binary predictions for classification metrics.
+        unique_vals = np.unique(y_pred[~np.isnan(y_pred)])
+        if len(unique_vals) > 2 or (len(unique_vals) > 0 and not set(unique_vals.tolist()).issubset({0, 1, 0.0, 1.0})):
+            y_pred_binary = (y_pred > 0.5).astype(np.int8)
+        else:
+            y_pred_binary = y_pred.astype(np.int8)
+
+        ml = classification_metrics(y_test, y_proba, y_pred_binary)
+        signal = y_pred_binary
     else:
         ml = regression_metrics(y_test, y_pred)
         signal = (y_pred > cost_threshold_bps).astype(int)

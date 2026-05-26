@@ -49,6 +49,18 @@ def get_env(key: str, default: str | None = None) -> str | None:
     return os.environ.get(key, default)
 
 
+def load_config() -> dict[str, Any]:
+    """Return a merged configuration dict with all top-level config keys."""
+    return {
+        "venues": load_venues(),
+        "instruments": load_instruments(),
+        "fee_schedules": load_fee_schedules(),
+        "event_windows": load_event_windows(),
+        "token_addresses": load_token_addresses(),
+        "benchmark_splits": load_benchmark_splits(),
+    }
+
+
 def bronze_root() -> Path:
     return Path(get_env("BRONZE_DATA_DIR", "./data/bronze"))
 

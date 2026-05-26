@@ -60,12 +60,19 @@ def add_arbitrage_labels(
             logger.warning("Column '%s' not found; skipping Q=%d labels.", net_col, q)
             continue
 
+        # Replace NaN → null before rolling operations.
+        # NaN means "insufficient book depth to execute this trade" (not profitable).
+        # In Polars, NaN > threshold evaluates to True, which would incorrectly
+        # label depth-limited rows as profitable.  Null is ignored by rolling_max.
+        _clean = f"_clean_net_{q}"
+        df = df.with_columns(pl.col(net_col).fill_nan(None).alias(_clean))
+
         for horizon_name, horizon_ns in _HORIZONS_NS.items():
             # Rolling max of net profit over the next H minutes
             # Implemented as a forward-looking rolling window via shift
             rolling_max_col = f"_max_net_{q}_{horizon_name}"
             df = df.with_columns(
-                pl.col(net_col)
+                pl.col(_clean)
                 .rolling_max(window_size=int(horizon_ns // 60_000_000_000), min_periods=1)
                 .shift(-(int(horizon_ns // 60_000_000_000)))
                 .alias(rolling_max_col)
@@ -74,11 +81,15 @@ def add_arbitrage_labels(
             for threshold in _THRESHOLDS_BPS:
                 label_col = f"label_arb_q{q}_{horizon_name}_gt{int(threshold)}bps"
                 df = df.with_columns(
-                    (pl.col(rolling_max_col) > threshold)
-                    .cast(pl.Int8)
-                    .alias(label_col)
+                    pl.when(pl.col(rolling_max_col).is_null())
+                      .then(pl.lit(None).cast(pl.Int8))
+                      .when(pl.col(rolling_max_col) > threshold)
+                      .then(pl.lit(1).cast(pl.Int8))
+                      .otherwise(pl.lit(0).cast(pl.Int8))
+                      .alias(label_col)
                 )
 
             df = df.drop(rolling_max_col)
+        df = df.drop(_clean)
 
     return df

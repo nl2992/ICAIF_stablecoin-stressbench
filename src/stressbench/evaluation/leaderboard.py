@@ -58,14 +58,15 @@ def build_leaderboard(results: list[dict[str, Any]]) -> pl.DataFrame:
 
     df = pl.DataFrame(rows)
     # Sort by net_bps_captured descending (primary), then AUROC descending
-    sort_cols = []
-    if "net_bps_captured" in df.columns:
-        sort_cols.append(pl.col("net_bps_captured").descending())
-    if "auroc" in df.columns:
-        sort_cols.append(pl.col("auroc").descending())
+    sort_by: list[str] = []
+    descending: list[bool] = []
+    for col_name in ("net_bps_captured", "auroc"):
+        if col_name in df.columns:
+            sort_by.append(col_name)
+            descending.append(True)
 
-    if sort_cols:
-        df = df.sort(sort_cols)
+    if sort_by:
+        df = df.sort(sort_by, descending=descending, nulls_last=True)
 
     return df
 

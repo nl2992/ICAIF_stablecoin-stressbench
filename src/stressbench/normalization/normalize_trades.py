@@ -140,7 +140,7 @@ def normalize_kraken_trades(df: pl.DataFrame) -> pl.DataFrame:
             symbol = trade.get("symbol", row.get("symbol", "UNKNOWN"))
             records.append(
                 {
-                    "ts_event_ns": int(float(trade.get("timestamp", 0)) * 1e9),
+                    "ts_event_ns": _parse_kraken_ts(trade.get("timestamp", 0)),
                     "ts_receive_ns": row["ts_receive_ns"],
                     "venue_id": "kraken",
                     "instrument_id": make_instrument_id("kraken", symbol),
@@ -174,6 +174,21 @@ def _parse_coinbase_ts(ts_str: str) -> int:
         dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
         return int(dt.timestamp() * 1e9)
     except ValueError:
+        return 0
+
+
+def _parse_kraken_ts(ts) -> int:
+    """Parse Kraken trade timestamp (ISO-8601 string or float seconds) to nanoseconds."""
+    if isinstance(ts, str):
+        try:
+            from datetime import datetime, timezone
+            dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            return int(dt.timestamp() * 1e9)
+        except ValueError:
+            return 0
+    try:
+        return int(float(ts) * 1e9)
+    except (TypeError, ValueError):
         return 0
 
 
