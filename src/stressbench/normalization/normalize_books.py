@@ -273,27 +273,31 @@ def normalize_binance_klines(df: pl.DataFrame) -> pl.DataFrame:
         for i in range(_N_LEVELS):
             bid_price = mid - _SPREAD_SCHEDULE[i] * half_spread
             ask_price = mid + _SPREAD_SCHEDULE[i] * half_spread
-            base = dict(
-                ts_event_ns=ts_ns,
-                ts_receive_ns=row.get("ts_receive_ns", ts_ns),
-                venue_id="binance",
-                instrument_id=make_instrument_id("binance", symbol),
-                native_symbol=symbol,
-                level=i,
-                checksum=None,
-                raw_source="binance:klines",
-                payload_hash=row.get("payload_hash", ""),
-                is_crossed_book=False,
-                is_negative_size=False,
-                is_sequence_gap=False,
-                is_checksum_failed=False,
-                is_stale_quote=False,
-                is_resync_period=False,
-            )
-            records.append({**base, "side": "bid", "price": bid_price,
-                            "size": taker_sell * _SIZE_SCHEDULE[i]})
-            records.append({**base, "side": "ask", "price": ask_price,
-                            "size": taker_buy * _SIZE_SCHEDULE[i]})
+            # Column order must match _make_level_record (side before level)
+            for side, px, sz in (
+                ("bid", bid_price, taker_sell * _SIZE_SCHEDULE[i]),
+                ("ask", ask_price, taker_buy * _SIZE_SCHEDULE[i]),
+            ):
+                records.append({
+                    "ts_event_ns": ts_ns,
+                    "ts_receive_ns": row.get("ts_receive_ns", ts_ns),
+                    "venue_id": "binance",
+                    "instrument_id": make_instrument_id("binance", symbol),
+                    "native_symbol": symbol,
+                    "side": side,
+                    "level": i,
+                    "price": px,
+                    "size": sz,
+                    "checksum": None,
+                    "raw_source": "binance:klines",
+                    "payload_hash": row.get("payload_hash", ""),
+                    "is_crossed_book": False,
+                    "is_negative_size": False,
+                    "is_sequence_gap": False,
+                    "is_checksum_failed": False,
+                    "is_stale_quote": False,
+                    "is_resync_period": False,
+                })
 
     if not records:
         return pl.DataFrame()

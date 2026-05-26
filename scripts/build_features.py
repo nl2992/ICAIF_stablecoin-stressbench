@@ -40,11 +40,14 @@ _CHANNEL_MAP: dict[tuple[str, str], str] = {
     # Archive / historical channels (written by archive_to_bronze.py)
     ("binance", "aggTrades"): "binance_trades",   # aggTrade WS-format payload
     ("binance", "klines"): "binance_klines",       # kline WS-format payload → synthetic book
-    # Tardis channel aliases
-    ("coinbase", "trade"): "coinbase_trades",
-    ("kraken", "trade"): "kraken_trades",
-    ("coinbase", "depth"): "coinbase_level2",
-    ("kraken", "depth"): "kraken_book",
+    # Tardis archive channels — source-identity preserved, routed to Tardis normalizers
+    # (Tardis CSV payload shape differs from live WS message shape)
+    ("coinbase", "tardis_trades"): "tardis_trades",
+    ("coinbase", "tardis_book_snapshot_1s"): "tardis_book_snapshot",
+    ("coinbase", "tardis_incremental_book_l2"): "tardis_incremental_book",
+    ("kraken", "tardis_trades"): "tardis_trades",
+    ("kraken", "tardis_book_snapshot_1s"): "tardis_book_snapshot",
+    ("kraken", "tardis_incremental_book_l2"): "tardis_incremental_book",
 }
 
 
@@ -99,6 +102,15 @@ def _get_normalizer(venue: str, channel: str) -> Callable | None:
     if key == "binance_klines":
         from stressbench.normalization.normalize_books import normalize_binance_klines
         return normalize_binance_klines
+    if key == "tardis_trades":
+        from stressbench.normalization.normalize_tardis import normalize_tardis_trades
+        return normalize_tardis_trades
+    if key == "tardis_book_snapshot":
+        from stressbench.normalization.normalize_tardis import normalize_tardis_book_snapshot_1s
+        return normalize_tardis_book_snapshot_1s
+    if key == "tardis_incremental_book":
+        from stressbench.normalization.normalize_tardis import normalize_tardis_incremental_book_l2
+        return normalize_tardis_incremental_book_l2
     if key == "coinbase_trades":
         from stressbench.normalization.normalize_trades import normalize_coinbase_trades
         return normalize_coinbase_trades
@@ -705,8 +717,17 @@ def build_gold_features(
         logger.info("Gold: processing %s", date_str)
         one_day = {date_str}
 
-        books = _load_silver_channels(silver_root, ["depth", "level2", "book", "klines"], one_day)
-        trades = _load_silver_channels(silver_root, ["trade", "aggTrades", "matches"], one_day)
+        books = _load_silver_channels(
+            silver_root,
+            ["depth", "level2", "book", "klines",
+             "tardis_book_snapshot_1s", "tardis_incremental_book_l2"],
+            one_day,
+        )
+        trades = _load_silver_channels(
+            silver_root,
+            ["trade", "aggTrades", "matches", "tardis_trades"],
+            one_day,
+        )
         transfers = _load_silver_channels(silver_root, ["transfer"], one_day)
         swaps = _load_silver_channels(silver_root, ["swap"], one_day)
 

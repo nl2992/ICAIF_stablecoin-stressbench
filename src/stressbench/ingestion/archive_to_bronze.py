@@ -48,13 +48,16 @@ _SCHEMA_VERSION = "raw.v1"
 _ARCHIVE_BATCH_ID = "binance_vision_archive"
 _TARDIS_BATCH_ID = "tardis_archive"
 
-# Tardis data_type → canonical Bronze channel name
+# Tardis data_type → canonical Bronze channel name.
+# Tardis-specific channel names preserve source identity so build_features.py
+# can route them to the dedicated normalize_tardis normalizers instead of the
+# live WebSocket normalizers (which expect different payload shapes).
 _TARDIS_CHANNEL_MAP: dict[str, str] = {
-    "trades": "trade",
-    "incremental_book_L2": "depth",
-    "book_snapshot_1s": "depth",
-    "quotes": "quote",
-    "book_ticker": "bookTicker",
+    "trades": "tardis_trades",
+    "incremental_book_L2": "tardis_incremental_book_l2",
+    "book_snapshot_1s": "tardis_book_snapshot_1s",
+    "quotes": "tardis_quotes",
+    "book_ticker": "tardis_book_ticker",
 }
 
 # Binance aggTrades CSV columns (no header row in archive files)
