@@ -286,7 +286,7 @@ $t + h$ and formally verified.
   \label{fig:basis}
 \end{figure}
 
-\subsection{Historical Event Catalogue and Data Tiering}
+\subsection{Historical Stress Taxonomy and Data Coverage}
 \label{sec:historical}
 
 Stablecoin stress is not a single phenomenon.
@@ -322,24 +322,39 @@ C ($N{=}5$)  & Partial          & Mechanism taxonomy and historical context only
 }
 \end{table}
 
-\begin{center}
+Table~\ref{tab:stress_summary} shows the USDC/SVB event is one instance
+of a broader stress taxonomy.
+We use the historical catalogue to establish external validity across
+mechanism classes, but restrict all execution-aware claims to Tier-A
+events.
+Terra/UST~(May~2022) provides an independent stress window for
+threshold calibration (the validation split; 13.76\% price-basis
+positive, 3.08\% executable at \$10K);
+USDC/SVB~(March~2023) is the primary execution test;
+USDT/Curve, FTX, and BUSD support mechanism-diversity context only.
+
+\begin{table}[t]
+\centering
+\caption{Stress-event summary and role in the benchmark. Execution
+labels available only for Tier-A events. Tier-B figures are
+price-grade estimates (\textit{est.}); no arbitrage-profitability
+claims are made from Tier-B data.}
+\label{tab:stress_summary}
 {\small
-\begin{tabular}{llccc}
+\begin{tabular}{lllcc}
 \toprule
-\textbf{Mechanism class} & \textbf{Rep.\ event} & \textbf{Tier} &
-\textbf{N} & \textbf{Benchmark use}\\
+\textbf{Event} & \textbf{Mechanism} & \textbf{Tier} & \textbf{Role} & \textbf{Exec.\ labels}\\
 \midrule
-Algorithmic / Reflexive & Terra/UST May 2022 & B & 5 & Val.\ split; context\\
-\textbf{Fiat-Reserve Bank Shock} & \textbf{USDC/SVB Mar 2023} & \textbf{A} & \textbf{2} & \textbf{Primary test split}\\
-Regulatory Winddown & BUSD Feb 2023 & B & 2 & Illustrative\\
-Exchange Credit/Liq.\ & FTX Nov 2022 & B & 3 & Illustrative\\
-DeFi Pool Imbalance & USDT/Curve Jun 2023 & B & 3 & Illustrative\\
-Collateral/Liquidation & DAI Black Thurs.\ 2020 & B & 1 & Context\\
-RWA / Niche & USDR Oct 2023 & B & 2 & Taxonomy\\
+Terra/UST 2022    & Algorithmic/reflexive    & B & Validation  & Partial / split label \\
+USDC/SVB 2023     & Fiat-reserve bank shock  & A & Main test   & Yes \\
+USDC recovery     & Fiat-reserve recovery    & A & Comparator  & Yes \\
+USDT/Curve 2023   & DeFi pool imbalance      & B & Context     & No \\
+FTX 2022          & Exchange liquidity shock & B & Context     & No \\
+BUSD 2023         & Regulatory winddown      & B & Context     & No \\
 \bottomrule
 \end{tabular}
 }
-\end{center}
+\end{table}
 
 \noindent Execution-grade labels are available for the USDC/SVB stress
 window and its immediate post-stress recovery window (both Tier~A).
@@ -877,7 +892,12 @@ observing price dislocations, but predicting which dislocations
 survive execution.
 The benchmark defines an oracle gap between hindsight-executable
 opportunities and ex-ante deployable models.
-Closing this gap — through better microstructure features, improved
+The historical catalogue of 18 events across seven mechanism classes
+demonstrates that execution barriers recur across different stress
+regimes; acquiring Tier-A depth for additional mechanisms remains the
+primary path to testing whether these results generalise beyond the
+fiat-reserve bank-shock class.
+Closing the oracle gap — through better microstructure features, improved
 calibration, or deeper sequence and network models — is the central
 challenge for future work on crypto market microstructure, financial
 ML validation, and execution-aware trading systems.

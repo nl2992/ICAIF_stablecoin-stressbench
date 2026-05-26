@@ -1,0 +1,7 @@
+event_id,event_name,mechanism_class,data_tier,role_in_paper,n_minutes,max_abs_basis_bps,pct_gt_10bps,exec_label_available,exec_positive_rate_5m_q10k,claim_allowed
+terra_ust_2022,Terra/UST Collapse 2022,algorithmic_reflexive,B,validation_split,11523,207.2,13.76,True,3.08,price-grade estimates only (est.)
+usdc_svb_2023,USDC/SVB De-peg 2023,fiat_reserve_bank_shock,A,primary_test_split,15839,956.4,35.09,True,5.76,"execution-grade: oracle bps, net bps, model eval"
+usdc_svb_recovery_2023,USDC/SVB Recovery 2023,fiat_reserve_bank_shock,A,test_split_comparator,incl. in test,956.4,35.09,True,5.76,"execution-grade: oracle bps, net bps, model eval"
+usdt_curve_2023,USDT/Curve Pool 2023,defi_pool_imbalance,B,context_defi_pool,,80.0,,False,,price-grade estimates only (est.)
+ftx_collapse_2022,FTX Collapse 2022,exchange_credit_liquidity,B,context_exchange_credit,,50.0,,False,,price-grade estimates only (est.)
+busd_regulatory_2023,BUSD Regulatory 2023,regulatory_issuer_winddown,B,context_regulatory,,30.0,,False,,price-grade estimates only (est.)
