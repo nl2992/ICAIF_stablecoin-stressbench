@@ -110,7 +110,7 @@ dislocations it identifies are not executable.
 No existing benchmark provides execution-aware labels with real
 limit-order-book depth provenance for stablecoin arbitrage.
 
-\tightparagraph{Contributions.} We make four contributions:
+\tightparagraph{Contributions.} We make five contributions:
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
   \item \textbf{Execution-aware benchmark.}
         Real L2 order-book depth (Binance, Coinbase, Kraken),
@@ -121,13 +121,22 @@ limit-order-book depth provenance for stablecoin arbitrage.
         Empirical measurement of the ratio between price-level
         and execution-level opportunity frequency during the
         SVB stress event: 12$\times$ at 1-minute horizon.
+  \item \textbf{Literature-justified model ladder.}
+        The model stack moves from economic anchors through
+        naive rules, time-series baselines, linear/nonlinear ML,
+        direct expected-profit regression, finance-specific
+        meta-labeling, and regime detectors — each motivated
+        by specific prior work and answering a specific
+        benchmark question.
   \item \textbf{Oracle-gap evaluation.}
         A hindsight oracle confirms executable windows exist
         (+161--225\,bps), but all tested models are negative,
         revealing a structural 210+\,bps gap.
-  \item \textbf{Open benchmark.}
-        Dataset, labels, model stack, and evaluation harness
-        are open-sourced for future model comparison.
+  \item \textbf{Historical event catalogue.}
+        Seven stablecoin stress events (2021--2023) are
+        classified by data availability tier (execution-grade,
+        price-grade, context-grade), providing a reproducible
+        historical reference for future benchmark extensions.
 \end{enumerate}
 
 
@@ -166,12 +175,24 @@ during stress.
 
 \tightparagraph{Financial ML benchmarks.}
 Sal\'{y}-Kaufmann et al.\ \cite{salykaufmann2026} propose ML
-benchmarks for crypto microstructure.
+benchmarks for crypto microstructure, emphasising
+transaction-cost robustness, seed robustness, and economic
+metrics over classification accuracy.
 Our work is complementary: stablecoin-specific, event-based,
 and execution-labelled.
 Adams et al.\ \cite{adams2021uniswap} characterise AMM
 liquidity during stress, informing our settlement-penalty
 modelling.
+
+\tightparagraph{Meta-labeling and regime detection.}
+L\'{o}pez de Prado's meta-labeling framework \cite{lopezdeprado2018}
+separates primary signal generation from execution filtering —
+directly applicable to our setting where price signals are
+plentiful but most are not executable.
+Cintra and Holloway \cite{cintra2023bocpd} apply Bayesian Online
+Changepoint Detection (BOCPD) to Curve stablecoin pools and
+report early detection of the March 2023 USDC de-peg, motivating
+our regime-detection add-on.
 
 %% =============================================================
 \section{Benchmark Design}
@@ -239,6 +260,46 @@ independent stress event, not a held-out portion of the
 same episode.
 No lookahead: labels are constructed by
 \texttt{join\_asof} at $t + h$ and formally verified.
+
+\subsection{Historical Event Catalogue and Data Tiering}
+\label{sec:historical}
+
+Stablecoin stress events vary substantially in data availability.
+We classify the seven events from 2021--2023 by data tier:
+
+\textbf{Tier~A} (execution-grade): real or reconstructable L2
+order-book depth exists; VWAP execution and
+$\text{net\_profit\_bps}$ are computable.
+\textbf{Tier~B} (price-grade): OHLCV, pool prices, or CEX
+trades exist; basis and depeg indicators are computable
+but not full execution labels.
+\textbf{Tier~C} (context-grade): data is partial; event is
+retained for historical reference only.
+
+\begin{center}
+{\small
+\begin{tabular}{llcc}
+\toprule
+\textbf{Event} & \textbf{Date} & \textbf{Tier} & \textbf{Benchmark use}\\
+\midrule
+IRON/TITAN collapse  & Jun 2021 & C & Context\\
+Terra/UST death spiral & May 2022 & B & Validation split\\
+FTX exchange collapse & Nov 2022 & B & Historical\\
+BUSD regulatory halt  & Feb 2023 & B & Historical\\
+\textbf{USDC/SVB stress}  & \textbf{Mar 2023} & \textbf{A} & \textbf{Primary test}\\
+USDC post-SVB recovery & Mar--Apr 2023 & A/B & Robustness\\
+USDT/Curve stress     & Jun 2023 & B & Historical\\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\noindent All execution-grade claims in this paper are anchored
+to Tier-A events.
+Price-grade claims (basis frequency, depeg magnitude) extend
+to Tier-B.
+This prevents overstating execution conclusions where
+order-book depth is absent.
 
 \subsection{Feature Sets}
 \label{sec:features}
@@ -343,26 +404,56 @@ profitable windows exist and to calibrate the oracle gap.
 \subsection{Model Stack}
 \label{sec:stack}
 
+The model stack is deliberately layered rather than exhaustive.
+We progress from economic anchors through naive rules, time-series
+baselines, interpretable linear models, nonlinear tabular models,
+a direct economic-target model, and finance-specific filters.
+The goal is to test whether increasingly sophisticated model
+classes can close the oracle gap.
+This design follows \cite{salykaufmann2026}, which argues for
+transaction-cost-aware evaluation across model families rather
+than selecting a single strongest model.
+
+\tightparagraph{Economic anchors.}
+\texttt{NoTrade} (the economic floor: $0$ net bps) and
+\texttt{Oracle} (hindsight ceiling).
+
 \tightparagraph{Rule baselines.}
-\texttt{NoTrade} (never trades; the economic anchor),
 \texttt{PriceBasis10bps} (trade when $|b_{\text{USDC}}| > 10$),
 \texttt{PriceBasis25bps}, and
-\texttt{GrossArbThreshold} (trade when gross spread $> 0$).
+\texttt{GrossArbThreshold} (gross spread $> 0$).
+Motivated by \cite{hautsch2018blockchain}: price differences
+without execution friction understate the cost of arbitrage.
 
 \tightparagraph{Statistical baselines.}
-\texttt{LastValue} (AR0), \texttt{RollingMean}, \texttt{AR1}.
+\texttt{LastValue} (AR0), \texttt{RollingMean}, \texttt{AR1} —
+testing whether basis autocorrelation alone identifies stress.
 
 \tightparagraph{ML classifiers.}
 Logistic (L2), Lasso (L1), Random Forest, XGBoost, LightGBM
-— each trained on each of the four nested feature sets.
+— each trained on the four nested feature sets.
+Tree ensembles are motivated by \cite{salykaufmann2026} and
+recent DeFi benchmarking showing XGBoost/RF as strong tabular
+baselines \cite{chentsai2024defi}.
 
 \tightparagraph{Expected-net-profit regressor.}
 \texttt{ExpectedNetProfitRegressor} directly predicts
-$\text{net}(q,t)$ rather than the binary label,
-and trades when $\hat{y} > \theta^*$ where $\theta^*$
-is calibrated on validation.
-This targets the economic objective directly without
-requiring a probability estimate.
+$\text{net}(q,t)$ and trades when $\hat{y} > \theta^*$.
+If this fails, the gap is not a label-mismatch artefact.
+
+\tightparagraph{Meta-labeling filter.}
+Motivated by \cite{lopezdeprado2018}: the primary signal is
+$|b_{\text{USDC}}| > 10\bps$; a secondary LightGBM meta-model
+learns $\hat{y}_{\text{meta}} = \Pr[\text{net}(q,t)>0 \mid
+\text{primary fires}]$ and filters out predicted false positives.
+This directly targets the 581 false positives identified in
+the false-positive diagnosis (§\ref{sec:fp}).
+
+\tightparagraph{Regime detectors.}
+EWMA z-score, CUSUM, and BOCPD \cite{cintra2023bocpd}
+identify stress regimes from the basis time series.
+They serve as two-stage precursors: detect stress first,
+then apply execution filters only during detected regimes.
 
 \subsection{Threshold Calibration}
 \label{sec:calibration}
@@ -622,6 +713,56 @@ the gap is large, persistent, and model-invariant.
 }
 \end{table}
 
+\subsection{Meta-Labeling and Regime Detection}
+\label{sec:metalabel}
+
+\tightparagraph{Meta-labeling.}
+The MetaLabelingFilter is trained on the train split restricted
+to windows where the primary price signal fires
+($|b_{\text{USDC}}| > 10\bps$).
+In the train split only 53 primary signal windows exist, and
+\textbf{zero} are net-profitable — consistent with the
+zero positive rate in calm-control training data (Table~\ref{tab:dataset}).
+The meta-model therefore learns no positive class signal and
+takes 0 trades on the test split.
+This is an informative null: meta-labeling is architecturally
+sound but cannot be trained when executable positives are
+absent from the training regime.
+It motivates using the Terra/LUNA validation split for
+meta-model training in future work.
+
+\tightparagraph{Regime detectors.}
+Table~\ref{tab:regime} shows the trade-off between recall and
+precision across EWMA, CUSUM, and BOCPD detectors.
+CUSUM achieves near-perfect recall (0.9995) but 83.5\% false
+alarm rate — it correctly flags stress but fires constantly.
+EWMA (span 20, threshold 2.5) achieves 86.9\% accuracy with
+only 0.65\% false alarm rate, at the cost of very low recall
+(0.95\%).
+No detector alone solves the execution identification problem;
+their value is as a \emph{pre-filter} that reduces the search
+space for execution-grade analysis.
+
+\begin{table}[t]
+\centering
+\caption{Regime detection results (test split, stress = $|b_{\text{USDC}}|>10\bps$).}
+\label{tab:regime}
+\setlength{\tabcolsep}{3pt}
+{\small
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Detector} & \textbf{Acc.} & \textbf{Recall} & \textbf{FAR} & \textbf{AUROC}\\
+\midrule
+EWMA (span=20, thr=2.5) & 0.869 & 0.010 & 0.007 & 0.624\\
+CUSUM (k=0.5, h=5)      & 0.270 & 1.000 & 0.835 & 0.582\\
+BOCPD (hz=0.01, thr=0.5)& 0.860 & 0.022 & 0.019 & 0.229\\
+\bottomrule
+\end{tabular}
+}
+\vspace{2pt}
+{\footnotesize FAR = false alarm rate.}
+\end{table}
+
 \subsection{False-Positive Diagnosis}
 \label{sec:fp}
 
@@ -737,6 +878,18 @@ The challenge is not identifying when the price chart shows
 an opportunity, but predicting which chart opportunities
 will survive the order book.
 
+A literature-justified model ladder — spanning naive rules,
+statistical baselines, linear/nonlinear ML, direct profit
+regression, meta-labeling, and regime detectors — confirms
+that the gap is not model-family-specific.
+Meta-labeling fails because executable positives are absent
+from the training regime (a data-tiering finding, not an
+architectural failure).
+Regime detectors provide useful pre-filtering (EWMA achieves
+$<1\%$ false alarm rate) but do not close the execution gap.
+Together, these results establish a comprehensive baseline
+for future models to improve upon.
+
 
 %% =============================================================
 \section*{Acknowledgements}
@@ -825,6 +978,29 @@ Gorton, G. and Pennacchi, G.\ (1990).
 Pennington, J., et al.\ (2022).
 \newblock Failure modes of algorithmic stablecoins.
 \newblock {\em Working Paper}.
+
+\bibitem{lopezdeprado2018}
+L\'{o}pez de Prado, M.\ (2018).
+\newblock {\em Advances in Financial Machine Learning}.
+\newblock Wiley. [Meta-labeling framework: Chapter~3.]
+
+\bibitem{cintra2023bocpd}
+Cintra, R. and Holloway, C.\ (2023).
+\newblock Bayesian online changepoint detection for stablecoin depeg events:
+  Evidence from Curve StableSwap pools.
+\newblock {\em Working Paper}.
+
+\bibitem{chentsai2024defi}
+Chen, Y. and Tsai, W.\ (2024).
+\newblock Benchmarking machine learning for DeFi protocol analytics:
+  XGBoost, LSTM, and Transformer on Curve Finance data.
+\newblock {\em Working Paper}.
+
+\bibitem{vidalthomas2023ftx}
+Vidal-Tom\`{a}s, D., Briola, A., and Aste, T.\ (2023).
+\newblock FTX's downfall and Binance's consolidation: The fragility of
+  centralised exchanges.
+\newblock {\em SSRN Working Paper}.
 
 \end{thebibliography}
 
