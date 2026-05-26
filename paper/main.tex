@@ -165,12 +165,14 @@ of financial models, and economic evaluation of ML systems.
 \label{sec:related}
 
 \tightparagraph{Stablecoin stress and depegs.}
-Cruz et al.\ \cite{cruz2024usdc} document USDC price fragmentation
-during the SVB collapse but do not evaluate ex-ante predictability.
-Kwon et al.\ \cite{kwon2023luna} analyse Terra/LUNA mechanics;
-we use May~2022 as our validation event.
-Griffin and Shams \cite{griffin2020tether} study Tether flows;
-our contribution is microstructure execution, not flow manipulation.
+The USDC/SVB episode (March 2023) produced well-documented price
+fragmentation across venues; we focus on the ex-ante predictability
+question that event documentation does not address.
+Kwon et al.\ \cite{kwon2023luna} analyse Terra/LUNA collapse mechanics;
+we use May~2022 as our validation split event.
+Griffin and Shams \cite{griffin2020tether} study Tether price
+manipulation; our contribution is execution microstructure, not flow
+manipulation.
 
 \tightparagraph{Limits to arbitrage.}
 Shleifer and Vishny \cite{shleifer1997limits} and
@@ -179,8 +181,9 @@ Hautsch et al.\ \cite{hautsch2018blockchain} model blockchain-specific
 limits to arbitrage (settlement finality, gas costs, latency);
 Makarov and Schoar \cite{makarov2020trading} provide empirical evidence
 of persistent crypto price gaps across venues.
-We provide the first empirical L2 measurement of execution barriers
-during a real stablecoin stress event.
+We provide an execution-aware empirical measurement of stablecoin
+arbitrage barriers during a real stress event, using documented
+order-book depth provenance.
 
 \tightparagraph{Market microstructure and optimal execution.}
 Glosten and Milgrom \cite{glosten1985bid} establish the theoretical
@@ -275,10 +278,11 @@ $t + h$ and formally verified.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{../results/paper/figures/figure_1_usdc_basis_svb.png}
-  \caption{USDC cross-quote basis (bps) during the SVB stress window
-    (March 2023).
-    The basis exceeded 100\,bps for sustained periods, driving the
-    35.1\% price-dislocation rate in the test split.}
+  \caption{USDC-specific cross-quote basis (bps) during the SVB stress
+    window (March 2023), exceeding 100\,bps for sustained periods.
+    The USDC-specific basis exceeds 10\,bps in 12.65\% of test minutes;
+    the broader primary/max basis (max of USDC and USDT routes) exceeds
+    10\,bps in 35.1\%.}
   \label{fig:basis}
 \end{figure}
 
@@ -297,13 +301,26 @@ secondary),
 \emph{collateral liquidation} (DAI Black Thursday),
 and \emph{RWA/niche stablecoin} (Acala~aUSD, USDR).
 
-Events are classified by data availability tier:
-\textbf{Tier~A} ($N{=}2$): full L2 order-book depth captured during
-the event; VWAP labels and oracle gap are computable.
-\textbf{Tier~B} ($N{=}11$): OHLCV, pool prices, or trade tape exist;
-basis indicators are computable but not execution labels.
-\textbf{Tier~C} ($N{=}5$): partial or reconstructed data; retained
-for mechanism taxonomy and historical framing only.
+Events are classified by data availability tier, which governs what
+claims this paper may make (Table~\ref{tab:tiers}).
+
+\begin{table}[t]
+\centering
+\caption{Data tier and permitted claims.}
+\label{tab:tiers}
+\setlength{\tabcolsep}{4pt}
+{\small
+\begin{tabular}{clp{3.6cm}}
+\toprule
+\textbf{Tier} & \textbf{Data} & \textbf{Permitted claims}\\
+\midrule
+A ($N{=}2$)  & Real L2 + trades & Execution gap, oracle gap, P\&L, model evaluation\\
+B ($N{=}11$) & OHLCV / pools    & Peg magnitude (est.), liquidity stress\\
+C ($N{=}5$)  & Partial          & Mechanism taxonomy and historical context only\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 
 \begin{center}
 {\small
@@ -324,9 +341,12 @@ RWA / Niche & USDR Oct 2023 & B & 2 & Taxonomy\\
 }
 \end{center}
 
-\noindent All execution-grade claims (price-to-execution gap, oracle
-net bps, model evaluation) are anchored exclusively to the two Tier-A
-events.
+\noindent Execution-grade labels are available for the USDC/SVB stress
+window and its immediate post-stress recovery window (both Tier~A).
+The price-to-execution gap, oracle net bps, and model evaluation in
+this paper are anchored to the USDC/SVB stress test; the recovery
+window serves as a Tier-A comparator, not an independent stress
+mechanism.
 Price-grade claims for Tier-B events are labelled as estimates
 (\textit{est.}) and are excluded from any
 arbitrage-profitability argument.
@@ -371,11 +391,11 @@ economically at Layer~2.
 \midrule
 1.\ Optical dislocation    & Quoted basis ${>}10\bps$ on price data       & 35.1\%\\
 2.\ Executable opportunity & Net profit ${>}0$ after VWAP, fees, costs    & 2.88\%\\
-3.\ Predictable ex ante    & Model identifies window before execution      & $\approx 0\%$\\
+3.\ Predictable ex ante    & Model identifies window before execution      & No active model\\
 \bottomrule
 \end{tabular}
 \vspace{2pt}
-{\footnotesize Layer~3: no tested model achieves consistent positive net bps out of sample.}
+{\footnotesize Layer~3 frequency: every active non-oracle strategy that takes trades produces negative net bps; abstention (no-trade) is the zero-P\&L floor.}
 \end{table}
 
 \noindent The gap between Layer~1 and Layer~2 is the
@@ -414,7 +434,8 @@ For each minute window and notional $q \in \{\$10\text{K},
 \$50\text{K}, \$100\text{K}, \$500\text{K}\}$, we simulate a
 round-trip execution:
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=1pt]
-  \item Walk the real-L2 bid and ask ladders across venues
+  \item Walk the available execution-grade bid and ask ladders
+        for routes with confirmed real-L2 provenance
         to fill $q$ notional, recording the VWAP price at
         each level consumed.
   \item Compute the gross spread:
@@ -600,7 +621,9 @@ Tracing the pipeline stage by stage: of 15,839 total test minutes,
 5,560 (35.1\%) show a max-basis price dislocation above 10\,bps;
 456 of those (2.88\%) remain executable at \$10K/1m; the oracle
 trades 351 of those minutes profitably.
-Every model trades far more minutes but loses money on nearly all.
+Naive price rules trade far more often and lose money on nearly all
+trades; calibrated ML models trade less aggressively or abstain
+entirely, but none achieves positive economic performance.
 
 \subsection{Profitable Windows Exist, But Only in Hindsight}
 \label{sec:oracle_gap}
@@ -612,8 +635,9 @@ The best ML model (logistic, \texttt{price\_plus\_book} features)
 achieves $-49.1\bps$ — 211\,bps below the oracle.
 On the executable arbitrage task, the oracle earns $+224.6\bps$;
 the best rule (\texttt{price\_threshold\_25bps}) achieves $-42.9\bps$.
-Every model, without exception, produces negative net bps on the
-test split.
+Every active non-oracle strategy that takes trades produces negative
+net bps on the test split; no-trade and meta-labeling (which
+abstains due to training-regime sparsity) remain at zero.
 
 \begin{table}[t]
 \centering
@@ -654,11 +678,12 @@ Table~\ref{tab:ablation} summarises the model ladder.
 Price-threshold rules overtrade severely (611--2002 trades,
 $-136$ to $-346\bps$): the rules fire on price dislocations
 with no executable depth.
-ML classifiers are better calibrated but still negative:
-the validation-calibrated logistic model takes only 1 trade
-at $-49.1\bps$.
+Validation-thresholded ML classifiers trade less aggressively than
+naive rules but lower trade count does not translate into positive
+economics: the calibrated logistic model takes only 1 trade at
+$-49.1\bps$.
 LightGBM, despite higher AUROC (0.63), produces worse economic
-results ($-329\bps$) due to overtrading.
+results ($-329\bps$) by taking 4 trades at large losses.
 Feature richness does not help: the best logistic result uses
 \texttt{price\_plus\_book}; adding fragmentation or settlement
 features does not improve economic outcomes.
@@ -691,7 +716,7 @@ Oracle$^\dagger$      & —                  & $+161.7$ & 316 & —\\
 \end{table}
 
 The \texttt{ExpectedNetProfitRegressor} (target: $\text{net}(q,t)$)
-achieves $-61.4\bps$ — better calibrated than rule baselines but
+achieves $-61.4\bps$ — a smaller loss than many rule baselines, but
 still economically negative.
 This is the strongest evidence that the oracle gap is structural:
 even when the training objective directly matches the economic
@@ -807,9 +832,10 @@ data from what can only be described at Tier-B or Tier-C.
 
 \tightparagraph{Settlement and latency are proxied.}
 CEX-to-CEX settlement latency is approximated via a fixed penalty
-parameter; true on-chain settlement delay is not modelled.
-Prokopenko et al.\ \cite{prokopenko2023settlement} provide a
-more detailed treatment.
+parameter; true on-chain settlement delay and block confirmation
+times are not modelled.
+A more detailed treatment would require per-block latency data
+beyond the scope of this benchmark.
 
 \tightparagraph{Venue-depth coverage.}
 Binance USDM futures bookDepth is the confirmed execution-grade
@@ -839,9 +865,10 @@ book-walking and costs — a 12$\times$ price-to-execution gap.
 Profitable windows do exist: a hindsight oracle earns
 $+161.7\bps$ per trade, confirming that execution-grade opportunities
 are real, not artefacts of the label construction.
-But every tested model — price rules, ML classifiers, tree
-ensembles, a direct expected-net-profit regressor, meta-labeling,
-and regime detectors — produces negative net bps out of sample.
+Every active non-oracle strategy that takes trades — price rules,
+ML classifiers, tree ensembles, and a direct expected-net-profit
+regressor — produces negative net bps out of sample; abstention
+remains the zero-P\&L floor.
 The oracle gap exceeds 210\,bps across all tasks and persists
 across fee regimes, settlement penalties, and notional sizes.
 
@@ -863,12 +890,6 @@ Anonymised for review.
 %% =============================================================
 \bibliographystyle{ACM-Reference-Format}
 \begin{thebibliography}{15}
-
-\bibitem{cruz2024usdc}
-Cruz, A., et al.\ (2024).
-\newblock USDC fragmentation during the SVB collapse: Cross-venue price gaps
-  and liquidity withdrawal.
-\newblock {\em Journal of Financial Economics (forthcoming)}.
 
 \bibitem{kwon2023luna}
 Kwon, S., Minegishi, K., and Nishi, R.\ (2023).
@@ -916,12 +937,6 @@ Makarov, I. and Schoar, A.\ (2020).
 Adams, H., et al.\ (2021).
 \newblock Uniswap v3 core.
 \newblock {\em Technical Report, Uniswap Labs}.
-
-\bibitem{prokopenko2023settlement}
-Prokopenko, A., et al.\ (2023).
-\newblock On-chain settlement latency under stress: Empirical evidence from
-  Ethereum mainnet.
-\newblock {\em Working Paper}.
 
 \bibitem{lopezdeprado2018}
 L\'{o}pez de Prado, M.\ (2018).
