@@ -1,0 +1,17 @@
+task,feature_set,model,class_balance_method,test_net_bps_captured,test_n_trades,test_hit_rate,test_final_pnl_usd,auroc,oracle_capture_pct
+basis_usdc_1m_gt10bps,price_only,logistic_balanced,class_weight_balanced,nan,0,nan,0.0,0.1294,nan
+basis_usdc_1m_gt10bps,price_only,rf_balanced,class_weight_balanced,-89.1819,11,0.0,-981.0,0.4673,-0.4955
+basis_usdc_1m_gt10bps,price_only,xgb_weighted,scale_pos_weight,-90.5113,30,0.0,-2715.34,0.6307,-0.5028
+basis_usdc_1m_gt10bps,price_only,lgbm_weighted,is_unbalance,-90.2115,29,0.0,-2616.13,0.5411,-0.5012
+basis_usdc_1m_gt10bps,price_plus_book,logistic_balanced,class_weight_balanced,-57.9461,2,0.0,-115.89,0.1379,-0.3219
+basis_usdc_1m_gt10bps,price_plus_book,rf_balanced,class_weight_balanced,-162.1163,13,0.0,-2107.51,0.6392,-0.9006
+basis_usdc_1m_gt10bps,price_plus_book,xgb_weighted,scale_pos_weight,nan,0,nan,0.0,0.6597,nan
+basis_usdc_1m_gt10bps,price_plus_book,lgbm_weighted,is_unbalance,-65.9641,2,0.0,-131.93,0.4968,-0.3665
+executable_arb_q10000_5m,price_only,logistic_balanced,class_weight_balanced,nan,0,nan,0.0,nan,nan
+executable_arb_q10000_5m,price_only,rf_balanced,class_weight_balanced,nan,0,nan,0.0,nan,nan
+executable_arb_q10000_5m,price_only,xgb_weighted,scale_pos_weight,nan,0,nan,0.0,nan,nan
+executable_arb_q10000_5m,price_only,lgbm_weighted,is_unbalance,nan,0,nan,0.0,nan,nan
+executable_arb_q10000_5m,price_plus_book,logistic_balanced,class_weight_balanced,nan,0,nan,0.0,nan,nan
+executable_arb_q10000_5m,price_plus_book,rf_balanced,class_weight_balanced,nan,0,nan,0.0,nan,nan
+executable_arb_q10000_5m,price_plus_book,xgb_weighted,scale_pos_weight,nan,0,nan,0.0,nan,nan
+executable_arb_q10000_5m,price_plus_book,lgbm_weighted,is_unbalance,nan,0,nan,0.0,nan,nan

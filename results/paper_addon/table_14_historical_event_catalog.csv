@@ -1,0 +1,8 @@
+event_id,display_name,stablecoins,start,end,data_tier,coverage_score,peak_depeg_bps,empirical_use
+iron_titan_2021,IRON/TITAN Collapse,IRON,2021-06-16T00:00:00Z,2021-06-17T23:59:59Z,C,0.25,-10000,Taxonomy context only; no benchmark tasks
+terra_ust_2022,Terra/UST Collapse,"UST, USDT, DAI",2022-05-07T00:00:00Z,2022-05-14T23:59:59Z,B,0.5,-9800,Validation split illustrative; price-basis claims only
+ftx_collapse_2022,FTX Collapse,"USDT, USDC, DAI",2022-11-06T00:00:00Z,2022-11-12T23:59:59Z,B,0.5,-20,Illustrative exchange-specific credit shock; not in benchmark splits
+busd_regulatory_2023,BUSD Regulatory Winddown,"BUSD, USDC, USDT",2023-02-13T00:00:00Z,2023-03-08T23:59:59Z,B,0.5,-30,Illustrative regulatory winddown dynamics; not in primary benchmark splits
+usdc_svb_2023,USDC/SVB Stress,"USDC, DAI, USDT",2023-03-10T00:00:00Z,2023-03-14T23:59:59Z,A,1.0,-1300,PRIMARY benchmark test split; all paper claims anchored here
+usdc_svb_recovery_2023,USDC Recovery (Post-SVB),"USDC, DAI, USDT",2023-03-15T00:00:00Z,2023-04-01T23:59:59Z,A,0.75,-10,Test split recovery window; validates regime generalization
+usdt_curve_2023,USDT/Curve Pool Stress,"USDT, USDC, DAI",2023-06-12T00:00:00Z,2023-06-15T23:59:59Z,B,0.5,-8,Out-of-sample illustrative; motivates on-chain Curve data integration

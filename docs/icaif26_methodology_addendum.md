@@ -112,3 +112,76 @@ This work contributes to the following ICAIF topic areas:
 - **Trading and execution**: execution-aware label construction, transaction cost modeling, oracle gap evaluation
 - **Validation and calibration of financial AI models**: threshold calibration on economic objectives, out-of-sample robustness, no-lookahead guarantees
 - **Uncertainty quantification**: abstention under model uncertainty, confidence-weighted trading signals
+
+## 9. Historical Coverage and Data Tiering
+
+### 9.1 Tier Classification
+
+The benchmark distinguishes three data availability tiers for historical stress events:
+
+| Tier | Description | What is computable | Benchmark use |
+|------|-------------|-------------------|--------------|
+| **A** | Execution-grade: full L2 order book + trade tape for all venues | Full `net_profit_bps` labels; oracle bound; execution-gap claims | Primary benchmark tasks |
+| **B** | Price-grade: OHLCV / CEX trades / DEX pool data, no full L2 | Price-basis labels; depeg magnitude; frequency claims | Secondary analysis only |
+| **C** | Context-grade: partial data, post-hoc reconstruction only | Historical taxonomy; qualitative mechanism description | Literature framing |
+
+Tier classification is formally encoded in `configs/event_windows_historical.yaml` and
+`src/stressbench/history/event_catalog.py` (DataTier enum). Each event carries a
+`coverage_score` (0.25/0.50/0.75/1.00) reflecting the completeness of available data.
+
+### 9.2 Which Claims are Execution-Grade vs Price-Grade
+
+**Execution-grade claims (Tier A only):**
+- The 12× price-to-execution gap (35% price-basis positive vs 2.88% executable at $10K)
+- Oracle net bps per trade (161–225 bps)
+- All `oracle_capture_pct` values
+- Model `net_bps_captured` and `test_final_pnl_usd`
+- The core null result: all models produce negative economic value
+
+These claims are anchored exclusively to the USDC/SVB March 10–15 2023 event (`usdc_svb_2023`)
+and its recovery window (`usdc_svb_recovery_2023`), which are the only Tier A events with full
+L2 data captured during the event.
+
+**Price-grade claims (Tier B, illustrative):**
+- Historical depeg magnitudes for Terra/UST, FTX, BUSD, USDT/Curve events
+- Frequency of stablecoin stress events over time
+- Cross-event comparison of depeg severity and duration
+- Mechanism taxonomy (algorithmic vs collateralized vs exchange-specific vs regulatory)
+
+Price-grade claims must be explicitly labeled as "price-grade" in paper text and cannot
+be used to make execution-gap or profitability arguments.
+
+### 9.3 The Event Catalogue Approach
+
+The full event catalogue (`docs/stablecoin_stress_event_catalog.md`) documents 7 events
+spanning June 2021 to June 2023:
+
+1. **IRON/TITAN Jun 2021** (Tier C): Canonical algorithmic stablecoin death spiral. Terminal depeg.
+2. **Terra/UST May 2022** (Tier B): Large-scale algorithmic failure. $40B market cap destruction.
+3. **FTX Collapse Nov 2022** (Tier B): Exchange credit shock. Small CEX stablecoin contagion (<20 bps).
+4. **BUSD Regulatory Feb–Mar 2023** (Tier B): Regulatory winddown. Managed -30 bps brief dislocation.
+5. **USDC/SVB Mar 10–15 2023** (Tier A): Primary benchmark event. -1300 bps peak. Full L2 captured.
+6. **USDC Recovery Mar 15–Apr 1 2023** (Tier A): Recovery window. Normal conditions within 5 days.
+7. **USDT/Curve Jun 2023** (Tier B): Brief pool imbalance. -8 bps. Hours not days.
+
+The event taxonomy serves two purposes:
+1. **Generalizability framing**: The benchmark tests on the March 2023 SVB event. Users extending
+   the benchmark to other events must account for data tier limitations.
+2. **Mechanism classification**: Each event represents a distinct failure mode. Models trained on
+   SVB-style reserve-bank shocks may not generalize to algorithmic (UST-style) or exchange-specific
+   (FTX-style) dislocations.
+
+### 9.4 Coverage Score Protocol
+
+A formal coverage_score (0.25–1.00) summarizes data availability:
+
+| Score | Criteria | Typical tier |
+|-------|----------|-------------|
+| 0.25 | Price data only, or context-grade reconstruction | C |
+| 0.50 | Price + trades, OR price + DEX/on-chain | B |
+| 0.75 | Price + trades + L2 (partial — not all venues) | A (partial) |
+| 1.00 | Price + trades + L2 (all benchmark venues) + supplementary | A (full) |
+
+The coverage_score is computed by `src/stressbench/history/data_availability.py` and exposed in
+`DataAvailabilityProfile`. The predefined profiles in `PREDEFINED_COVERAGE` are the authoritative
+source for all table and figure claims about data availability.

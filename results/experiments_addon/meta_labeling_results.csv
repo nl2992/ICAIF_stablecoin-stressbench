@@ -1,0 +1,5 @@
+task,feature_set,model,n_primary_fires_train,n_meta_positive_train,test_n_trades,test_net_bps_captured,test_hit_rate,test_final_pnl_usd,test_oracle_capture_pct
+basis_usdc_1m_gt10bps,price_only,MetaLabelingFilter_lgbm,53,0,0,nan,nan,0.0,nan
+basis_usdc_1m_gt10bps,price_plus_book,MetaLabelingFilter_lgbm,53,0,0,nan,nan,0.0,nan
+executable_arb_q10000_5m,price_only,MetaLabelingFilter_lgbm,53,0,0,nan,nan,0.0,nan
+executable_arb_q10000_5m,price_plus_book,MetaLabelingFilter_lgbm,53,0,0,nan,nan,0.0,nan
