@@ -10,7 +10,7 @@
 
 ## Abstract
 
-Stablecoin stress events generate frequent price dislocations, but many apparent arbitrage opportunities disappear once executable depth, VWAP book walking, fees, and market impact are included. We introduce Stablecoin StressBench, a transaction-cost-aware benchmark for evaluating whether AI and econometric models can distinguish optical arbitrage from executable arbitrage. During the March 2023 USDC/SVB test window, 35.1% of 1-minute windows exceed a 10 bps price-basis threshold, but only 2.88% remain profitable at $10K notional after execution costs — a 12× price-to-execution gap. A hindsight oracle earns positive net bps, but all tested rule-based and ML models lose money out of sample, revealing a large oracle gap (210+ bps). The benchmark reframes stablecoin arbitrage prediction as an execution-barrier problem rather than a simple price-signal detection problem, and provides an open evaluation framework for future models.
+Stablecoin stress events generate frequent price dislocations, but many apparent arbitrage opportunities disappear once executable depth, VWAP book walking, fees, and market impact are included. We introduce Stablecoin StressBench, a transaction-cost-aware benchmark for evaluating whether AI and econometric models can distinguish optical arbitrage from executable arbitrage. During the March 2023 USDC/SVB test window, 35.1% of 1-minute windows exceed a 10 bps primary/max price-basis threshold (12.65% for the USDC-specific basis), but only 2.88% remain profitable at $10K notional after execution costs — a 12× price-to-execution gap. A hindsight oracle earns positive net bps, but all tested rule-based and ML models lose money out of sample, revealing a large oracle gap (210+ bps). The benchmark reframes stablecoin arbitrage prediction as an execution-barrier problem rather than a simple price-signal detection problem, and provides an open evaluation framework for future models.
 
 *~150 words — fits ACM abstract requirement*
 
@@ -138,7 +138,7 @@ Secondary: AUROC, AUPRC, Brier score, n_trades
 | Threshold | Price signal | Executable ($10K) | Ratio |
 |---|---|---|---|
 | 0 bps | 97.15% | 3.34% | 29× |
-| 10 bps | 35.09% | 2.88% | 12× |
+| 10 bps | 35.09% (primary/max basis); 12.65% (USDC only) | 2.88% | 12× |
 | 25 bps | 9.63% | 2.62% | 3.7× |
 
 *The gap is large and persistent across thresholds.*
@@ -147,7 +147,7 @@ Secondary: AUROC, AUPRC, Brier score, n_trades
 
 ```
 Total test minutes:           15,839  (100%)
-Price dislocation (>10 bps):   5,560  (35.1%)
+Price dislocation (>10 bps):   5,560  (35.1%, primary/max basis); 2,004 (12.65%, USDC-specific)
 Executable at $10K:              456  (2.88%)
 Best model trades:              ≈XXX
 Best model profitable trades:   ≈XXX

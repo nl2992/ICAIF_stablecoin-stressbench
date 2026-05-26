@@ -1,6 +1,6 @@
 model_family,best_configuration,net_bps_captured,hit_rate_above_cost,n_trades_test,oracle_gap_bps,interpretation
 Oracle (hindsight),trades all profitable windows,161.7,100%,351,-0.0,Theoretical ceiling; not deployable
 Price threshold rules,gross_arb_threshold@price_only,-136.04315951678453,0.03927986906710311,611,-297.8,Price-only signal overtrades; ignores execution depth
-ML classifiers (logistic/tree),logistic@price_only,nan,nan,0,,Statistical signal; threshold calibration does not close gap
+ML classifiers (logistic/tree),logistic@price_plus_book,-49.09,0.0,1,-210.8,Statistical signal; validation calibration yields 1 trade but net P&L negative
 ExpectedNetProfitRegressor,expected_net_lgbm@price_only,-61.406,0.0745,1610,-223.1,Direct profit prediction; gap persists even with economic training target
 No-trade baseline,never trades,0.0,—,0,-161.7,Economic floor; negative-net-bps models worse than abstaining

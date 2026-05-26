@@ -18,20 +18,30 @@ writes to `results/experiments_addon/` and `results/paper_addon/` only.
 | Robustness grid script | Done | `scripts/run_robustness_grid.py` |
 | False-positive diagnosis | Done | `results/paper_addon/table_5_false_positive_diagnosis.csv` |
 | Addon tables (8, 9, 10) | Done | `results/paper_addon/table_{8,9,10}_*.csv` |
+| Table 8b cost robustness | Done | `results/paper_addon/table_8b_cost_robustness_summary.csv` |
 | Addon figures (8, 9, 11, 12) | Done | `results/paper_addon/figures/figure_{8,9,11,12}_*.png` |
-| Model failure summary table | Done | `results/paper_addon/table_model_failure_summary.csv` |
-| Uncertainty abstention module | Done (code + tests) | `src/stressbench/experiments/uncertainty.py` |
+| Extended figures (14–22, Columbia theme) | Done | `results/paper_addon/figures/figure_{14..22}_*.png` |
+| Model failure summary table | Done (NaN row fixed) | `results/paper_addon/table_model_failure_summary.csv` |
+| Uncertainty abstention module | Done (code + tests only) | `src/stressbench/experiments/uncertainty.py` |
 | No-overwrite guard test | Done | `tests/test_addon_outputs_do_not_overwrite.py` |
 | Cost-sensitivity tests | Done | `tests/test_robustness_cost_sensitivity.py` |
+| Claim-consistency audit fixes | Done | README, all docs — 35.1% now attributed to primary/max basis; 12.65% USDC-specific cited |
+| Data card update | Done | `docs/data_card.md` — rows 47,487; cols 125; correct split counts; depth_source vocabulary |
+| matplotlib in pyproject.toml | Done | `pyproject.toml` |
+| GitHub Actions CI | Done | `.github/workflows/ci.yml` |
+| Reproducibility manifest | Done | `docs/reproducibility_manifest.md` |
 
 ## Remaining / Optional
 
 | Item | Priority | Notes |
 |---|---|---|
-| Run uncertainty abstention experiment | Nice | Bootstrap ensemble expensive; skip for paper if time-limited |
+| Run uncertainty abstention experiment | Nice | Bootstrap ensemble expensive; move to future work in paper §7 |
+| Full threshold-rule ablation (fixed 0.5/0.7, F1, mean bps) | Nice | Currently only total_pnl rule is run; §7d addendum marks as planned |
 | Additional stress event (USDC recovery / USDT Curve) | Optional | Needs raw data pull for Mar 15–Apr 1 2023 or Jun 2023 |
 | Graph/network fragmentation analysis | Optional | Only if venue centrality improves FP diagnosis |
-| Venue network figure (Figure 13) | Optional | Skip unless network features add unique insight |
+| Block-bootstrap confidence intervals | Optional | Strengthens null result statistically |
+| Seed robustness sweep | Optional | Confirm ML results are not seed-sensitive |
+| LaTeX paper draft (`paper/main.tex`) | High | Next major deliverable |
 
 ## Key empirical numbers (for paper draft)
 

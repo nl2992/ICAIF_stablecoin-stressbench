@@ -66,7 +66,7 @@ The `NoTradeBaseline` never trades. It returns exactly 0 net bps and 0 final P&L
 
 **Price dislocations are common; executable opportunities are rare; oracle is positive; deployable models are negative.**
 
-- 35.1% of test-split minutes show |basis| > 10 bps
+- 35.1% of test-split minutes show |primary/max basis| > 10 bps (12.65% for USDC-specific basis)
 - 2.88% are executable at $10K after costs (12× price-to-execution ratio)
 - Oracle earns +161 bps; best ML model loses −49 bps; oracle gap = 210 bps
 - All non-oracle models produce negative net bps on the SVB test split

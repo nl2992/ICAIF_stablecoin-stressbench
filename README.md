@@ -15,7 +15,7 @@ Stablecoin StressBench is designed to test three hypotheses:
 
 ### Empirical results
 
-During the SVB-crisis test window (March 2023), **35.1% of 1-minute windows** showed a USDC cross-quote basis exceeding 10 bps on price alone — yet only **2.88% remained profitable** after a full VWAP order-book walk at $10K notional (including taker fees and market impact). This **12× price-to-execution gap** is the core quantitative claim of the benchmark.
+During the SVB-crisis test window (March 2023), **35.1% of 1-minute windows** showed a primary/max cross-quote basis exceeding 10 bps on price alone (12.65% for the USDC-specific basis) — yet only **2.88% remained profitable** after a full VWAP order-book walk at $10K notional (including taker fees and market impact). This **12× price-to-execution gap** is the core quantitative claim of the benchmark.
 
 The hindsight oracle yields **161–225 net bps per trade** across tasks, confirming profitable windows exist. Every ML and rule-based model tested produces **negative net bps** on the test split — the oracle gap is an execution-barrier problem, not a model-selection problem.
 

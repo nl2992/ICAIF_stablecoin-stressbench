@@ -2,7 +2,7 @@
 
 ## Study in One Paragraph
 
-This paper introduces **Stablecoin StressBench**, a transaction-cost-aware benchmark for evaluating machine learning models on stablecoin dislocation detection and arbitrage prediction. Using the March 2023 USDC/SVB de-peg as the primary test event, we show that while price-level signals fire frequently during stress (35.1% of 1-minute windows exceed 10 bps cross-quote basis during the test split), almost none survive a realistic execution filter: only 2.88% of those windows remain profitable at $10K notional after a full VWAP order-book walk inclusive of taker fees and market impact. The oracle upper bound confirms profitable windows exist (161–225 net bps on average), but every ML and rule-based model tested produces negative net bps on the test split, yielding a large and persistent **oracle gap**. The benchmark thus functions as a rigorous null result: it establishes that standard classification and regression models, even with rich microstructure features, do not yet solve the execution-barrier problem in stablecoin arbitrage.
+This paper introduces **Stablecoin StressBench**, a transaction-cost-aware benchmark for evaluating machine learning models on stablecoin dislocation detection and arbitrage prediction. Using the March 2023 USDC/SVB de-peg as the primary test event, we show that while price-level signals fire frequently during stress (35.1% of 1-minute windows exceed 10 bps primary/max cross-quote basis; 12.65% for the USDC-specific basis), almost none survive a realistic execution filter: only 2.88% of those windows remain profitable at $10K notional after a full VWAP order-book walk inclusive of taker fees and market impact. The oracle upper bound confirms profitable windows exist (161–225 net bps on average), but every ML and rule-based model tested produces negative net bps on the test split, yielding a large and persistent **oracle gap**. The benchmark thus functions as a rigorous null result: it establishes that standard classification and regression models, even with rich microstructure features, do not yet solve the execution-barrier problem in stablecoin arbitrage.
 
 ---
 
@@ -155,7 +155,7 @@ All non-oracle models produce **negative net bps** on the test split. The oracle
 
 ## Four Paper Claims
 
-1. **Price dislocations are frequent during stress.** In the SVB test split, 35.1% of 1-minute windows exceed a 10 bps USDC cross-quote basis. The signal is strong and persistent for days.
+1. **Price dislocations are frequent during stress.** In the SVB test split, 35.1% of 1-minute windows exceed a 10 bps primary/max cross-quote basis (12.65% for the USDC-specific basis). The signal is strong and persistent for days.
 
 2. **Most dislocations are not executable after costs.** Only 2.88% of windows remain profitable at $10K notional after a VWAP depth walk, taker fees, and market impact. The price-to-execution ratio is 12× at 10 bps and 29× unconditionally.
 

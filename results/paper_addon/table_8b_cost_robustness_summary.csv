@@ -1,0 +1,17 @@
+settlement_penalty_bps,fee_regime,price_signal_pct,executable_signal_pct,price_to_execution_ratio
+0,low_fee,12.646,5.834,2.17
+0,institutional_fee,12.646,6.105,2.07
+0,base_fee,12.646,5.644,2.24
+0,high_fee,12.646,5.455,2.32
+2,low_fee,12.646,5.644,2.24
+2,institutional_fee,12.646,5.764,2.19
+2,base_fee,12.646,5.455,2.32
+2,high_fee,12.646,5.303,2.38
+5,low_fee,12.646,5.442,2.32
+5,institutional_fee,12.646,5.455,2.32
+5,base_fee,12.646,5.164,2.45
+5,high_fee,12.646,5.07,2.49
+10,low_fee,12.646,5.032,2.51
+10,institutional_fee,12.646,5.07,2.49
+10,base_fee,12.646,4.88,2.59
+10,high_fee,12.646,4.811,2.63

@@ -12,8 +12,8 @@ StressBench is a transaction-cost-aware benchmark dataset for detecting, forecas
 |---|---|
 | **Version** | 0.1.0 |
 | **Date range** | 2022-01-10 – 2024-01-21 |
-| **Gold rows** | 57,719 (1-minute bars) |
-| **Gold columns** | 83 (21 features + 60 labels + 2 meta) |
+| **Gold rows** | 47,487 (1-minute bars) |
+| **Gold columns** | 125 (features + labels + meta) |
 | **Venues** | Binance spot, Coinbase REST, Kraken WS |
 | **Instruments** | 18 (USDC, USDT, DAI, BTC cross-pairs) |
 | **On-chain** | Ethereum mainnet ERC-20 transfers (USDC, USDT, DAI) |
@@ -83,7 +83,7 @@ Manually curated issuer-level events for USDC (Circle):
 | Etherscan ERC-20 transfers | `fetch_real_data.py` | `normalize_etherscan_transfers` | `feat_settlement_1m` | — |
 | The Graph Uniswap v3 swaps | `fetch_real_data.py` | `normalize_uniswap_swaps` | `feat_settlement_1m` | — |
 
-> **depth_source** tags each Silver book row by data quality.  `real_l2_*` rows represent actual limit-order book state and are required for paper-grade net-profit computations.  `synthetic_kline` rows are OHLCV-derived (5-level synthetic ladder) and are acceptable only for price-reference features.
+> **depth_source** tags each Silver book row by data quality. Valid values: `real_l2_snapshot` (full book snapshot from WebSocket/REST), `real_l2_incremental` (incremental diff updates reconstructed into full book), and `synthetic_kline` (5-level synthetic ladder inferred from OHLCV klines). Only `real_l2_snapshot` and `real_l2_incremental` rows are used for paper-grade net-profit computations. `synthetic_kline` rows are acceptable only for price-reference features.
 
 ---
 
@@ -135,7 +135,7 @@ One row per UTC minute; produced by `scripts/build_features.py`.
 | `net_profit_bps_q100000` | Same at $100K notional |
 | `net_profit_bps_q500000` | Same at $500K notional |
 | `buy_venue` / `sell_venue` | Best route identified by the VWAP walk |
-| `depth_source` | `"real_l2"` if any real L2 book was used; `"synthetic_kline"` otherwise |
+| `depth_source` | One of `"real_l2_snapshot"`, `"real_l2_incremental"`, or `"synthetic_kline"` — indicates book data quality; only `real_l2_*` values are used for paper-grade net-profit labels |
 
 ### Book microstructure columns (feat_book_1m, aggregated in dataset.parquet)
 
@@ -171,10 +171,10 @@ Binary columns (`_gt{N}bps`) are `int8` — 1 if `|future_basis| > N bps`.  Regr
 
 | Split | Rows | Dates |
 |---|---|---|
-| Train (3 control windows) | 30,252 | 21 days |
-| Validation (Terra/Luna 2022) | 11,568 | 8 days |
-| Test (SVB depeg + recovery 2023) | 15,899 | 11 days |
-| **Total** | **57,719** | **40 days** |
+| Train (3 control windows) | 20,125 | ~14 days |
+| Validation (Terra/Luna 2022) | 11,523 | ~8 days |
+| Test (USDC/SVB depeg 2023) | 15,839 | ~11 days |
+| **Total** | **47,487** | **~33 days** |
 
 ---
 
@@ -204,4 +204,4 @@ Binary columns (`_gt{N}bps`) are `int8` — 1 if `|future_basis| > N bps`.  Regr
 
 **Author:** Nigel Li (nl2992@columbia.edu)  
 **Affiliation:** Columbia University, Master of Arts in Financial Mathematics (MAFN)  
-**Paper:** Submitted to ICAIF 2024 competition track
+**Paper:** Submitted to ICAIF 2026

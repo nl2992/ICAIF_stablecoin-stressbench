@@ -4,7 +4,7 @@
 
 Stablecoin dislocations are often measured using quoted price deviations, but quoted price gaps are not necessarily executable. A dislocation is economically meaningful only if it survives order-book depth, VWAP execution, taker fees, market impact, and settlement frictions.
 
-During the March 2023 USDC/SVB de-peg — the primary test event in this benchmark — 35.1% of 1-minute windows showed a cross-quote basis exceeding 10 bps on price alone. After a full VWAP order-book walk at $10K notional including taker fees and market impact, only 2.88% remained profitable. This **12× price-to-execution gap** defines the core measurement challenge.
+During the March 2023 USDC/SVB de-peg — the primary test event in this benchmark — 35.1% of 1-minute windows showed a primary/max cross-quote basis exceeding 10 bps on price alone (12.65% for the USDC-specific basis). After a full VWAP order-book walk at $10K notional including taker fees and market impact, only 2.88% remained profitable. This **12× price-to-execution gap** defines the core measurement challenge.
 
 ## 2. Research Question
 
@@ -18,7 +18,7 @@ Stablecoin StressBench introduces an execution-aware benchmark that separates fo
 
 | Layer | Measure | Empirical result (test split) |
 |---|---|---|
-| 1. Price-only dislocation | `|cross_quote_basis_usdc_bps| > 10 bps` | 35.1% of minutes |
+| 1. Price-only dislocation | `|cross_quote_basis_maxabs_bps| > 10 bps` (primary/max basis; USDC-specific: 12.65%) | 35.1% of minutes |
 | 2. Gross arbitrage | Raw buy/sell spread | Positive in ~35% of minutes |
 | 3. Net executable arbitrage | VWAP walk + fees + impact | 2.88% of minutes at $10K |
 | 4. Predictable executable arbitrage | Ex-ante model identifies net-profitable minutes | 0% (all tested models negative) |
@@ -77,7 +77,7 @@ This is economically grounded: a strategy must have sufficient trade count to di
 
 The benchmark establishes three empirical facts:
 
-1. **Price dislocations are frequent.** 35.1% of SVB test-split minutes exceed 10 bps USDC basis.
+1. **Price dislocations are frequent.** 35.1% of SVB test-split minutes exceed 10 bps primary/max cross-quote basis (12.65% for the USDC-specific basis alone).
 2. **Executable opportunities are rare.** Only 2.88% survive a $10K VWAP execution filter (12× price-to-execution ratio).
 3. **The oracle gap is large.** The hindsight oracle earns +161 bps; the best ML model loses −49 bps; the gap is 210 bps.
 
@@ -93,11 +93,11 @@ The price-to-execution gap is recomputed across notional sizes ($10K–$500K), f
 ### 7b. Expected net-profit regressor
 Rather than classifying whether a threshold will be exceeded, the `ExpectedNetProfitRegressor` directly predicts `future_net_profit_bps_q10000`. It trades when predicted net profit exceeds a validation-calibrated floor. This targets the economic objective directly.
 
-### 7c. Uncertainty-aware abstention
-Bootstrap ensemble and quantile models abstain from trading when prediction uncertainty is high. Stricter abstention reduces false positives at the cost of trade count.
+### 7c. Uncertainty-aware abstention (future work)
+The uncertainty module (`src/stressbench/experiments/uncertainty.py`) implements bootstrap ensemble and quantile regression models that abstain when prediction uncertainty is high. Experiments comparing these abstention strategies against the no-trade baseline are reserved for future work due to the computational cost of bootstrap ensembles.
 
-### 7d. Threshold calibration ablation
-Alternative threshold rules (fixed 0.5/0.7, validation F1, validation mean bps, validation total P&L with different minimum trade counts) are compared to show that the negative result is not a threshold-selection artifact.
+### 7d. Threshold calibration sensitivity
+The primary threshold rule maximizes validation total P&L subject to ≥ 25 trades. Sensitivity to this choice is indicated by the robustness grid: fee and settlement parameter changes of realistic magnitudes do not change the qualitative null result (all non-oracle models remain economically negative). A full multi-rule threshold ablation (fixed 0.5/0.7, validation F1, validation mean bps) is planned as a follow-up.
 
 ### 7e. False-positive diagnosis
 Feature profiles of true positives vs false positives are compared to explain why models trade bad windows (large basis but insufficient depth, high spread, or unfavorable fee conditions).
