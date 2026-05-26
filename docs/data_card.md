@@ -26,8 +26,15 @@ StressBench is a transaction-cost-aware benchmark dataset for detecting, forecas
 ### Test split
 | Window | Dates | Reason |
 |---|---|---|
-| USDC SVB depeg | 2023-03-10 – 2023-03-14 | USDC reserve-bank stress / SVB collapse; peak deviation 350 bps |
+| USDC SVB depeg | 2023-03-10 – 2023-03-14 | USDC reserve-bank stress / SVB collapse; peak cross-quote BTC-route basis ~350 bps; raw USDC/USD spot peak ~−1300 bps (see note) |
 | USDC recovery | 2023-03-15 – 2023-03-20 | Recovery window post SVB resolution |
+
+> **Note on peak deviation figures.** Two distinct measurements appear in this codebase:
+> - **Cross-quote basis** (`cross_quote_basis_usdc_bps`): the BTC-route triangular basis, measuring USDC price via `(BTC_USDC − BTC_USDT)/BTC_USDT × 10,000`. Peak during SVB: approximately −350 bps on this metric.
+> - **Raw USDC/USD spot deviation**: the direct USDC-to-dollar exchange rate on secondary markets. Peak during SVB: approximately −1,300 bps ($0.87), widely reported and verified by Circle. This figure does NOT appear in the cross-quote basis columns.
+> 
+> The benchmark's classification labels (`label_basis_usdc_*`) use the cross-quote BTC-route basis.
+> The −1,300 bps figure is the secondary-market USDC/USD deviation and is cited for historical context only.
 
 ### Validation split
 | Window | Dates | Reason |
@@ -180,7 +187,7 @@ Binary columns (`_gt{N}bps`) are `int8` — 1 if `|future_basis| > N bps`.  Regr
 
 ## Known Limitations
 
-1. **Binance-only depth data**: Deep order-book reconstruction uses Binance USDM futures bookDepth for BTC and synthetic 1m klines for stablecoin pairs. Depth data for Coinbase and Kraken is unavailable without a Tardis subscription.
+1. **Depth coverage by venue**: The Gold dataset primarily uses Binance USDM futures bookDepth for BTC-route VWAP execution labels. The Silver pipeline supports Coinbase WebSocket L2 and Kraken WebSocket book (via live capture) and Tardis snapshots (via archive), but **full historical L2 for Coinbase and Kraken during the SVB period (March 2023) requires a Tardis subscription not included in the committed dataset.parquet**. Rows where Coinbase/Kraken L2 is unavailable use price-reference features only; net-profit labels are computed on the available real-L2 routes. See `depth_sources_used` and `is_paper_grade_depth` columns for per-row provenance. The phrase "execution-grade" refers to rows with at least one `real_l2_snapshot` or `real_l2_incremental` depth source — not necessarily full three-venue coverage.
 
 2. **Execution cost overestimate**: Net profit computations use BTCUSDT futures band-average prices as a proxy for the BTCUSDC buy side. This overstates price impact for small trades but is directionally correct for stress periods.
 

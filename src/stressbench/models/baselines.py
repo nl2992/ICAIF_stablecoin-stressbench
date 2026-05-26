@@ -23,15 +23,43 @@ logger = get_logger(__name__)
 
 
 class LastValueBaseline:
-    """Predict the last observed value of the target (random walk baseline)."""
+    """Predict the last observed value of the target (random walk baseline).
+
+    Args:
+        lag_col_idx: Explicit index of the column in X that contains the lagged
+            target value.  If None (default), the column with the highest
+            absolute correlation with y is selected automatically during fit().
+            Providing an explicit index is strongly preferred to avoid relying on
+            column ordering.
+    """
+
+    def __init__(self, lag_col_idx: int | None = None) -> None:
+        self._lag_col_idx: int | None = lag_col_idx
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "LastValueBaseline":
-        # No fitting required; last value is derived from the last feature column
-        self._last_col_idx = -1
+        if self._lag_col_idx is None:
+            # Auto-detect: use the column most correlated with y.
+            n_cols = X.shape[1]
+            corrs = []
+            for j in range(n_cols):
+                col = X[:, j]
+                mask = np.isfinite(col) & np.isfinite(y)
+                if mask.sum() < 2:
+                    corrs.append(0.0)
+                else:
+                    corrs.append(abs(float(np.corrcoef(col[mask], y[mask])[0, 1])))
+            self._lag_col_idx = int(np.argmax(corrs))
+            logger.debug(
+                "LastValueBaseline: auto-selected lag_col_idx=%d (corr=%.3f)",
+                self._lag_col_idx,
+                corrs[self._lag_col_idx],
+            )
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        return X[:, self._last_col_idx]
+        if self._lag_col_idx is None:
+            raise RuntimeError("Call fit() before predict().")
+        return X[:, self._lag_col_idx]
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         # For classification: sigmoid of last value
@@ -56,11 +84,20 @@ class RollingMeanBaseline:
 
 
 class AR1Baseline:
-    """Autoregressive model of order 1: y_hat(t) = alpha + beta * y(t-1)."""
+    """Autoregressive model of order 1: y_hat(t) = alpha + beta * y(t-1).
 
-    def __init__(self) -> None:
+    Args:
+        lag_col_idx: Explicit index of the column in X that contains y(t-1).
+            If None (default), the most-correlated column is selected during
+            fit().  Providing an explicit index is strongly preferred — the
+            previous default of silently using X[:, -1] was fragile and
+            depended on undocumented feature ordering.
+    """
+
+    def __init__(self, lag_col_idx: int | None = None) -> None:
         self._alpha: float = 0.0
         self._beta: float = 1.0
+        self._lag_col_idx: int | None = lag_col_idx
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "AR1Baseline":
         if len(y) < 2:
@@ -69,13 +106,34 @@ class AR1Baseline:
         y_curr = y[1:]
         cov = np.cov(y_lag, y_curr)
         var = np.var(y_lag)
-        self._beta = cov[0, 1] / var if var > 0 else 1.0
-        self._alpha = np.mean(y_curr) - self._beta * np.mean(y_lag)
+        self._beta = float(cov[0, 1] / var) if var > 0 else 1.0
+        self._alpha = float(np.mean(y_curr) - self._beta * np.mean(y_lag))
+
+        if self._lag_col_idx is None:
+            # Auto-detect the column most correlated with y_lag on the
+            # training rows (X[:-1] aligns with y_lag = y[:-1]).
+            X_train_lag = X[:-1]
+            n_cols = X_train_lag.shape[1]
+            corrs = []
+            for j in range(n_cols):
+                col = X_train_lag[:, j]
+                mask = np.isfinite(col) & np.isfinite(y_lag)
+                if mask.sum() < 2:
+                    corrs.append(0.0)
+                else:
+                    corrs.append(abs(float(np.corrcoef(col[mask], y_lag[mask])[0, 1])))
+            self._lag_col_idx = int(np.argmax(corrs))
+            logger.debug(
+                "AR1Baseline: auto-selected lag_col_idx=%d (corr=%.3f)",
+                self._lag_col_idx,
+                corrs[self._lag_col_idx],
+            )
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        # Assumes last column of X contains y(t-1)
-        y_lag = X[:, -1]
+        if self._lag_col_idx is None:
+            raise RuntimeError("Call fit() before predict().")
+        y_lag = X[:, self._lag_col_idx]
         return self._alpha + self._beta * y_lag
 
 

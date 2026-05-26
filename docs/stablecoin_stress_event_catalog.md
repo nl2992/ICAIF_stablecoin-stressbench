@@ -272,11 +272,14 @@ for SVB, resolving the uncertainty. USDC recovered to $0.997 by March 13 and to 
 **Peak depeg magnitude:** USDC: −1300 bps (verified); DAI: −200 bps; USDT: +50 bps (premium)
 
 **Data availability:**
-- Binance/Coinbase/Kraken real L2 snapshots: YES (captured during event)
-- VWAP labels at all notional sizes: YES
+- Binance USDM futures bookDepth: YES (real L2, primary depth source for VWAP labels)
+- Coinbase and Kraken real L2: available via live capture or Tardis archive (Tardis subscription required for historical replay; not in committed dataset.parquet)
+- VWAP net-profit labels: computed on available real-L2 routes; per-row provenance in `depth_sources_used` and `is_paper_grade_depth` columns
 - Full 5-day test window: YES
 
 **Coverage score:** 1.0
+
+> **Note on "execution-grade"**: execution-grade labels are computed from real L2 depth on at least one venue. Full three-venue coverage requires Tardis. See `docs/data_card.md` Known Limitation #1 for details.
 
 **Core benchmark results (all execution-grade, test split):**
 - 35.1% of minutes exceed 10 bps primary/max cross-quote basis (12.65% USDC-specific)
