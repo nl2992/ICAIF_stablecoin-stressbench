@@ -683,15 +683,20 @@ def _compute_net_profit_1m(
         if found_any:
             row["buy_venue"] = best_buy_v or ""
             row["sell_venue"] = best_sell_v or ""
-            # Propagate depth quality: real_l2 if any real-L2 book was used for
-            # this minute window, otherwise synthetic_kline (not paper-grade).
+            # Propagate depth quality using granular vocabulary.
             if "depth_source" in snap.columns:
-                ts_sources = (
-                    slice_t["depth_source"].drop_nulls().unique().to_list()
-                )
-                row["depth_source"] = (
-                    "real_l2" if "real_l2" in ts_sources else "synthetic_kline"
-                )
+                _real_sources = {"real_l2_snapshot", "real_l2_incremental"}
+                ts_sources = set(slice_t["depth_source"].drop_nulls().unique().to_list())
+                used_real = ts_sources & _real_sources
+                row["depth_sources_used"] = ",".join(sorted(ts_sources))
+                row["is_paper_grade_depth"] = bool(used_real)
+                # Pick the most granular tag for the primary depth_source column
+                if "real_l2_snapshot" in ts_sources:
+                    row["depth_source"] = "real_l2_snapshot"
+                elif "real_l2_incremental" in ts_sources:
+                    row["depth_source"] = "real_l2_incremental"
+                else:
+                    row["depth_source"] = "synthetic_kline"
             rows.append(row)
 
     return pl.DataFrame(rows) if rows else pl.DataFrame()

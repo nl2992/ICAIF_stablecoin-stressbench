@@ -238,11 +238,14 @@ def make_table_4_oracle_gap(
                 return float("nan")
 
         oracle_net = max((_net(r) for r in oracle_rows), default=float("nan"))
-        best_net = max((_net(r) for r in non_oracle), default=float("nan"))
-        best_model = next(
-            (r["model"] for r in non_oracle if _net(r) == best_net),
-            "",
-        )
+        # Find best ML model by net_bps, treating NaN as -inf (model made no trades)
+        non_oracle_valid = [(r, _net(r)) for r in non_oracle if not (_n := _net(r)) != _n or True]
+        non_oracle_valid = [(r, v) for r, v in non_oracle_valid if v == v]  # drop NaN
+        if non_oracle_valid:
+            best_r, best_net = max(non_oracle_valid, key=lambda x: x[1])
+            best_model = f"{best_r['model']}@{best_r['feature_set']}"
+        else:
+            best_net, best_model = float("nan"), "—"
         capture = (best_net / oracle_net * 100) if oracle_net > 0 and best_net == best_net else float("nan")
 
         rows.append({
