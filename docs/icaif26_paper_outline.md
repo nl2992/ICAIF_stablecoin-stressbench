@@ -166,10 +166,11 @@ Oracle profitable trades:        351  (2.22%)
 *All non-oracle models are economically negative on the test split.*
 
 ### 6.4 Robustness (Figures 8, 9)
-The price-to-execution gap persists:
-- Across notionals ($10K–$500K): smaller notionals are easier to fill but opportunity count drops sharply at $50K+
-- Across fee regimes (±50% base fees): the gap remains 5–15× at 10 bps threshold
-- Across settlement penalties (0–10 bps): monotone reduction in executable percentage
+The price-to-execution gap persists across all tested cost assumptions (forward rolling max of adjusted net profit over each horizon window; fee and settlement parameters genuinely affect executable percentages):
+- Across notionals ($10K–$500K): smaller notionals are easier to fill but opportunity count drops at $50K+
+- Across fee regimes (base → high fee, −2 bps adjustment): 5m executable drops from 5.64% → 5.46%; ratio rises from 2.24× → 2.32×
+- Across settlement penalties (0 → 10 bps): 5m executable drops from 5.64% → 4.88%; ratio rises to 2.59×
+- Combined worst case (high fee + 10 bps settlement): gap is monotonically larger than base case
 
 ### 6.5 Expected net-profit model
 Directly predicting net_profit_bps improves calibration vs classification models but does not cross into positive net bps territory on the test split.

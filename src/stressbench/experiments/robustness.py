@@ -8,6 +8,12 @@ Fee-regime adjustments are modelled as additive ±bps corrections to the
 committed net_profit_bps columns (which already include base fees). This
 is an approximation; exact decomposition would require separate fee columns.
 
+Executable signal uses the **forward rolling max** of adjusted net_profit over
+each horizon window, so fee and settlement parameters genuinely affect the
+executable percentage at every (fee, settlement, horizon) combination. This
+fixes the previous bug where precomputed label columns were used directly,
+causing fee/settlement parameters to have no effect.
+
 Results write to results/experiments_addon/. Baseline files are not touched.
 """
 
@@ -34,13 +40,15 @@ BASIS_THRESHOLDS_BPS = [0, 5, 10, 25, 50]
 SETTLEMENT_PENALTIES_BPS = [0, 2, 5, 10]
 
 FEE_REGIMES: dict[str, float] = {
-    "base_fee": 0.0,       # no adjustment
-    "low_fee": +2.0,        # lower fees → add 2 bps to net profit
-    "high_fee": -2.0,       # higher fees → subtract 2 bps
+    "base_fee": 0.0,            # no adjustment
+    "low_fee": +2.0,            # lower fees → add 2 bps to net profit
+    "high_fee": -2.0,           # higher fees → subtract 2 bps
     "institutional_fee": +3.0,  # institutional cap ~2 bps total vs typical 5 bps
 }
 
 HORIZONS = ["1m", "5m", "15m"]
+
+_HORIZON_STEPS: dict[str, int] = {"1m": 1, "5m": 5, "15m": 15}
 
 _NOTIONAL_TO_COL: dict[int, str] = {
     10_000: "net_profit_bps_q10000",
@@ -49,29 +57,25 @@ _NOTIONAL_TO_COL: dict[int, str] = {
     500_000: "net_profit_bps_q500000",
 }
 
-_NOTIONAL_TO_LABEL_PREFIX: dict[int, str] = {
-    10_000: "label_arb_q10000",
-    50_000: "label_arb_q50000",
-    100_000: "label_arb_q100000",
-    500_000: "label_arb_q500000",
-}
-
 _BASIS_COL = "cross_quote_basis_usdc_bps"
 
 
-class RobustnessRow(NamedTuple):
-    split: str
-    notional: int
-    basis_threshold_bps: int
-    settlement_penalty_bps: int
-    fee_regime: str
-    horizon: str
-    n_minutes: int
-    price_signal_pct: float
-    executable_signal_pct: float
-    price_to_execution_ratio: float
-    oracle_net_bps: float
-    oracle_n_trades: int
+def _forward_max(arr: np.ndarray, steps: int) -> np.ndarray:
+    """Forward rolling maximum: result[i] = max(arr[i], …, arr[i+steps-1]).
+
+    NaN entries in arr are ignored in the max (nanmax semantics). Windows that
+    consist entirely of NaN produce NaN in the result.
+
+    This mirrors how the precomputed label_arb_*_gt0bps columns are built:
+    a window is labelled executable if any minute within the horizon has
+    positive net profit.
+    """
+    result = arr.copy().astype(float)
+    for k in range(1, steps):
+        shifted = np.full_like(arr, np.nan, dtype=float)
+        shifted[: len(arr) - k] = arr[k:]
+        result = np.fmax(result, shifted)  # fmax ignores NaN
+    return result
 
 
 def compute_robustness_grid(
@@ -80,10 +84,19 @@ def compute_robustness_grid(
 ) -> list[dict]:
     """Compute price-to-execution gap across the full parameter grid.
 
+    For each (split × notional × basis_threshold × settlement_penalty ×
+    fee_regime × horizon):
+
+    - price_signal_pct   = fraction of minutes where |basis| > threshold
+    - executable_signal_pct = fraction where forward_max(adjusted_net) > 0
+                              over `horizon` steps, where:
+                              adjusted_net = net_profit - settlement_bps + fee_adj
+    - price_to_execution_ratio = price_signal_pct / executable_signal_pct
+
     Parameters
     ----------
     dataset_path:
-        Path to data/gold/dataset.parquet.
+        Path to data/gold/dataset.parquet (must contain net_profit_bps_q* cols).
     splits:
         Which dataset splits to include. Defaults to ["test"].
 
@@ -99,59 +112,60 @@ def compute_robustness_grid(
     rows: list[dict] = []
 
     for split in splits:
+        # Sort by timestamp so forward-window indexing is correct
         sdf = df.filter(pl.col("split") == split)
+        if "ts_1m_ns" in sdf.columns:
+            sdf = sdf.sort("ts_1m_ns")
         n = len(sdf)
         if n == 0:
             logger.warning("No rows for split=%s", split)
             continue
 
-        basis_vals = sdf[_BASIS_COL].to_numpy() if _BASIS_COL in sdf.columns else None
+        basis_vals = sdf[_BASIS_COL].to_numpy().astype(float) if _BASIS_COL in sdf.columns else None
 
         for notional in NOTIONALS:
             net_col = _NOTIONAL_TO_COL[notional]
-            label_prefix = _NOTIONAL_TO_LABEL_PREFIX[notional]
-
             if net_col not in sdf.columns:
                 logger.warning("Missing %s — skipping notional %d", net_col, notional)
                 continue
 
             net_vals = sdf[net_col].to_numpy().astype(float)
 
+            # Oracle: mean net profit on unadjusted profitable windows
+            # (oracle is a fixed baseline reference; we don't adjust it for fee scenarios)
+            valid = net_vals[~np.isnan(net_vals)]
+            oracle_net = float(np.mean(valid[valid > 0])) if (valid > 0).any() else float("nan")
+            oracle_n = int((valid > 0).sum())
+
             for threshold_bps in BASIS_THRESHOLDS_BPS:
-                # Price signal: |basis| > threshold
+                # Price signal: |basis| > threshold (independent of costs)
                 if basis_vals is not None:
-                    price_mask = np.abs(np.where(np.isnan(basis_vals), 0.0, basis_vals)) > threshold_bps
+                    basis_clean = np.where(np.isnan(basis_vals), 0.0, basis_vals)
+                    price_mask = np.abs(basis_clean) > threshold_bps
                     price_pct = float(price_mask.sum()) / n * 100
                 else:
                     price_pct = float("nan")
 
                 for settlement_bps in SETTLEMENT_PENALTIES_BPS:
                     for fee_regime, fee_adj in FEE_REGIMES.items():
-                        # Adjusted net profit
+                        # Adjusted net profit: lower fees → higher adjusted profit
                         adjusted = net_vals - settlement_bps + fee_adj
 
-                        # Oracle: mean net profit on profitable windows (base, no adj for oracle)
-                        valid = net_vals[~np.isnan(net_vals)]
-                        oracle_mask = valid > 0
-                        oracle_net = float(np.mean(valid[oracle_mask])) if oracle_mask.any() else float("nan")
-                        oracle_n = int(oracle_mask.sum())
-
                         for horizon in HORIZONS:
-                            label_col = f"{label_prefix}_{horizon}_gt0bps"
-                            if label_col in sdf.columns:
-                                # Use horizon label directly (pre-computed at correct horizon)
-                                label_vals = sdf[label_col].to_numpy().astype(float)
-                                valid_label = ~np.isnan(label_vals)
-                                exec_pct = (
-                                    float((label_vals[valid_label] == 1).sum()) / n * 100
-                                    if valid_label.any() else float("nan")
-                                )
-                            else:
-                                # Fall back to adjusted net_profit threshold
-                                valid_adj = adjusted[~np.isnan(adjusted)]
-                                exec_pct = float((valid_adj > 0).sum()) / n * 100
+                            steps = _HORIZON_STEPS[horizon]
+                            # Forward rolling max of adjusted net profit over horizon
+                            fwd_max = _forward_max(adjusted, steps)
+                            valid_fwd = ~np.isnan(fwd_max)
+                            exec_pct = (
+                                float((fwd_max[valid_fwd] > 0).sum()) / n * 100
+                                if valid_fwd.any() else float("nan")
+                            )
 
-                            ratio = (price_pct / exec_pct) if exec_pct > 0 else float("nan")
+                            ratio = (
+                                price_pct / exec_pct
+                                if exec_pct > 0 and exec_pct == exec_pct
+                                else float("nan")
+                            )
 
                             rows.append({
                                 "split": split,
