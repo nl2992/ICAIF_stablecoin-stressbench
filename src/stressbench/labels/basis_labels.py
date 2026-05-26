@@ -54,15 +54,22 @@ def add_basis_labels(
     df = df.sort(ts_col)
 
     for horizon_name, horizon_ns in _HORIZONS_NS.items():
-        # Shift: future basis = basis at t + horizon
-        # We use a join on ts_col + horizon_ns to avoid look-ahead leakage
+        # Shift: future basis = basis at t + horizon_ns.
+        # Build a lookup frame keyed at (t + horizon_ns) → shifted back to t,
+        # then join with join_asof (nearest, 90 s tolerance) to handle irregular
+        # or gapped data where t + horizon_ns may not have an exact match.
         future = df.select(
             [
                 (pl.col(ts_col) - horizon_ns).alias(ts_col),
                 pl.col(basis_col).alias(f"label_basis_{horizon_name}"),
             ]
+        ).sort(ts_col)
+        df = df.join_asof(
+            future,
+            on=ts_col,
+            strategy="nearest",
+            tolerance=90_000_000_000,  # 90 s in nanoseconds
         )
-        df = df.join(future, on=ts_col, how="left")
 
         # Classification labels
         for threshold in _THRESHOLDS_BPS:

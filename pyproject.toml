@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A transaction-cost-aware benchmark for detecting, forecasting, and economically ranking stablecoin dislocations."
 readme = "README.md"
 authors = [
-    { name = "Manus AI", email = "support@manus.im" }
+    { name = "Nigel Li", email = "nl2992@columbia.edu" }
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

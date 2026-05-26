@@ -1,4 +1,4 @@
-.PHONY: install test lint run-live pull-archive build-silver features labels train evaluate clean
+.PHONY: install test lint format run-live pull-archive build-features train evaluate pipeline clean
 
 install:
 	pip install -e .
@@ -18,22 +18,19 @@ run-live:
 	python scripts/start_live_capture.py
 
 pull-archive:
-	python scripts/pull_binance_archive.py
+	python scripts/pull_data.py
 
-build-silver:
-	python scripts/build_silver.py
-
-features:
+build-features:
 	python scripts/build_features.py
 
-labels:
-	python scripts/build_labels.py
-
 train:
-	python scripts/train_baselines.py
+	python scripts/train_models.py
 
 evaluate:
-	python scripts/evaluate.py
+	python scripts/evaluate_models.py
+
+pipeline:
+	python scripts/run_pipeline.py
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

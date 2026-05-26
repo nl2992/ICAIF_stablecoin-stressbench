@@ -67,20 +67,40 @@ def add_arbitrage_labels(
         _clean = f"_clean_net_{q}"
         df = df.with_columns(pl.col(net_col).fill_nan(None).alias(_clean))
 
-        for horizon_name, horizon_ns in _HORIZONS_NS.items():
-            # Rolling max of net profit over the next H minutes
-            # Implemented as a forward-looking rolling window via shift
+        # Time-based forward-looking rolling max using the reversed-frame trick:
+        #   1. Sort descending by ts_col.
+        #   2. Build an ascending proxy timestamp: proxy = ts_max + ts_min - ts.
+        #      In the reversed frame proxy increases as actual time decreases, so
+        #      a backward rolling window on proxy covers FORWARD real time.
+        #   3. Use rolling_max_by(by=proxy, window_size=horizon) — the window
+        #      [proxy - H, proxy] maps back to actual times [ts, ts + H].
+        #   4. Sort back to ascending ts.
+        ts_max_val = df[ts_col].max()
+        ts_min_val = df[ts_col].min()
+
+        df_rev = df.sort(ts_col, descending=True).with_columns(
+            (pl.lit(ts_max_val + ts_min_val) - pl.col(ts_col))
+            .cast(pl.Datetime("ns"))
+            .alias("_ts_proxy")
+        )
+
+        for horizon_name, _ in _HORIZONS_NS.items():
             rolling_max_col = f"_max_net_{q}_{horizon_name}"
-            df = df.with_columns(
+            # window_size uses Polars duration strings: "1m", "5m", "15m"
+            df_rev = df_rev.with_columns(
                 pl.col(_clean)
-                .rolling_max(window_size=int(horizon_ns // 60_000_000_000), min_periods=1)
-                .shift(-(int(horizon_ns // 60_000_000_000)))
+                .rolling_max_by(
+                    by="_ts_proxy",
+                    window_size=horizon_name,
+                    closed="right",
+                    min_periods=1,
+                )
                 .alias(rolling_max_col)
             )
 
             for threshold in _THRESHOLDS_BPS:
                 label_col = f"label_arb_q{q}_{horizon_name}_gt{int(threshold)}bps"
-                df = df.with_columns(
+                df_rev = df_rev.with_columns(
                     pl.when(pl.col(rolling_max_col).is_null())
                       .then(pl.lit(None).cast(pl.Int8))
                       .when(pl.col(rolling_max_col) > threshold)
@@ -88,8 +108,8 @@ def add_arbitrage_labels(
                       .otherwise(pl.lit(0).cast(pl.Int8))
                       .alias(label_col)
                 )
+            df_rev = df_rev.drop(rolling_max_col)
 
-            df = df.drop(rolling_max_col)
-        df = df.drop(_clean)
+        df = df_rev.sort(ts_col).drop("_ts_proxy").drop(_clean)
 
     return df
