@@ -1,0 +1,18 @@
+split,rows,source,notes
+test,15839,dataset.parquet,
+train,20125,dataset.parquet,
+validation,11523,dataset.parquet,
+total,47487,dataset.parquet,83 columns (60 label cols)
+bronze.aggTrades,2182116,pipeline_row_counts.csv,Binance Vision archive 2024-01-15 (5 symbols × 24 hours)
+bronze.klines,7200,pipeline_row_counts.csv,Binance Vision 1-minute klines 2024-01-15 (5 symbols × 24 hours)
+silver.aggTrades,220254497,pipeline_row_counts.csv,Normalized trade rows (all event windows)
+silver.depth,2377740,pipeline_row_counts.csv,Normalized Binance depth update rows (all event windows)
+silver.klines,72000,pipeline_row_counts.csv,Synthetic book levels from klines (5 levels bid+ask per bar)
+silver.level2,1136940,pipeline_row_counts.csv,Coinbase level2 order book rows (all event windows)
+silver.matches,113812,pipeline_row_counts.csv,Coinbase matches trade rows (all event windows)
+gold.feat_book_1m,332445,pipeline_row_counts.csv,1-minute microstructure aggregates (spread/depth/imbalance)
+gold.feat_basis_1m,57569,pipeline_row_counts.csv,1-minute cross-quote basis between venues
+gold.feat_net_profit_1m,55112,pipeline_row_counts.csv,1-minute VWAP-walk execution cost estimates
+gold.feat_fragmentation_1m,56909,pipeline_row_counts.csv,1-minute cross-venue mid dispersion
+gold.feat_stablecoin_dev_1m,105830,pipeline_row_counts.csv,1-minute per-asset deviation from $1.00
+gold.dataset,47487,pipeline_row_counts.csv,Final joined dataset (train=20125 / validation=11523 / test=15839)
