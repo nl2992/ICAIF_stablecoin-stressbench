@@ -41,7 +41,16 @@ writes to `results/experiments_addon/` and `results/paper_addon/` only.
 | Graph/network fragmentation analysis | Optional | Only if venue centrality improves FP diagnosis |
 | Block-bootstrap confidence intervals | Optional | Strengthens null result statistically |
 | Seed robustness sweep | Optional | Confirm ML results are not seed-sensitive |
-| LaTeX paper draft (`paper/main.tex`) | High | Next major deliverable |
+| LaTeX paper draft (`paper/main.tex`) | Done | 8-page ACM SIGCONF, compiles at 215KB |
+| Historical catalogue expansion (18 events, 7 mechanism classes) | Done | `configs/event_windows_historical.yaml` |
+| Source verification registry | Done | `src/stressbench/history/source_verification.py` |
+| Historical methodology doc | Done | `docs/historical_methodology.md` |
+| Historical tables (14–19) | Done | `results/paper_addon/table_{14..19}_*.csv` |
+| Price-grade features module | Done | `src/stressbench/history/price_grade_features.py` |
+| Source audit script | Done | `scripts/generate_source_audit_table.py` |
+| Historical tables scripts | Done | `scripts/rebuild_historical_tables.py`, `build_price_grade_event_features.py`, `make_mechanism_taxonomy_table.py`, `run_event_robustness.py` |
+| Expanded historical figures (25–28) | Done | `results/paper_addon/figures/figure_{25..28}_*.png` |
+| Historical layer tests | Done | `tests/test_historical_layer.py` — 12 tests passing |
 
 ## Key empirical numbers (for paper draft)
 

@@ -264,42 +264,53 @@ No lookahead: labels are constructed by
 \subsection{Historical Event Catalogue and Data Tiering}
 \label{sec:historical}
 
-Stablecoin stress events vary substantially in data availability.
-We classify the seven events from 2021--2023 by data tier:
+Stablecoin stress is not a single phenomenon.
+We catalogue 18 stress events from 2020--2023 spanning seven
+distinct failure mechanisms: \emph{algorithmic/reflexive}
+(FEI, IRON/TITAN, MIM, UST, USDD),
+\emph{fiat-reserve bank shock} (USDC/SVB),
+\emph{regulatory/issuer winddown} (BUSD, Binance conversion),
+\emph{exchange credit/liquidity} (Celsius/3AC, HUSD, FTX),
+\emph{DeFi pool imbalance} (Curve/UST, USDT/Curve, USDC/DAI secondary),
+\emph{collateral liquidation} (DAI Black Thursday),
+and \emph{RWA/niche stablecoin} (Acala~aUSD, USDR).
 
-\textbf{Tier~A} (execution-grade): real or reconstructable L2
-order-book depth exists; VWAP execution and
-$\text{net\_profit\_bps}$ are computable.
-\textbf{Tier~B} (price-grade): OHLCV, pool prices, or CEX
-trades exist; basis and depeg indicators are computable
-but not full execution labels.
-\textbf{Tier~C} (context-grade): data is partial; event is
-retained for historical reference only.
+Events are classified by data availability tier:
+
+\textbf{Tier~A} (execution-grade, $N{=}2$): full L2 order-book depth
+captured during the event; VWAP labels and oracle gap are computable.
+\textbf{Tier~B} (price/liquidity-grade, $N{=}11$): OHLCV, pool prices,
+or trade tape exist; basis indicators computable but not execution labels.
+\textbf{Tier~C} (context-grade, $N{=}5$): partial or reconstructed data;
+retained for mechanism taxonomy and historical framing only.
 
 \begin{center}
 {\small
-\begin{tabular}{llcc}
+\begin{tabular}{llccc}
 \toprule
-\textbf{Event} & \textbf{Date} & \textbf{Tier} & \textbf{Benchmark use}\\
+\textbf{Mechanism class} & \textbf{Rep.\ event} & \textbf{Tier} & \textbf{N} & \textbf{Benchmark use}\\
 \midrule
-IRON/TITAN collapse  & Jun 2021 & C & Context\\
-Terra/UST death spiral & May 2022 & B & Validation split\\
-FTX exchange collapse & Nov 2022 & B & Historical\\
-BUSD regulatory halt  & Feb 2023 & B & Historical\\
-\textbf{USDC/SVB stress}  & \textbf{Mar 2023} & \textbf{A} & \textbf{Primary test}\\
-USDC post-SVB recovery & Mar--Apr 2023 & A/B & Robustness\\
-USDT/Curve stress     & Jun 2023 & B & Historical\\
+Algorithmic / Reflexive & Terra/UST May 2022 & B & 5 & Validation split; context\\
+\textbf{Fiat-Reserve Bank Shock} & \textbf{USDC/SVB Mar 2023} & \textbf{A} & \textbf{2} & \textbf{Primary test split}\\
+Regulatory Winddown & BUSD Feb 2023 & B & 2 & Illustrative\\
+Exchange Credit / Liquidity & FTX Nov 2022 & B & 3 & Illustrative\\
+DeFi Pool Imbalance & USDT/Curve Jun 2023 & B & 3 & Illustrative\\
+Collateral / Liquidation & DAI Black Thursday 2020 & B & 1 & Above-peg context\\
+RWA / Niche Stablecoin & USDR Oct 2023 & B & 2 & Taxonomy context\\
 \bottomrule
 \end{tabular}
 }
 \end{center}
 
-\noindent All execution-grade claims in this paper are anchored
-to Tier-A events.
-Price-grade claims (basis frequency, depeg magnitude) extend
-to Tier-B.
-This prevents overstating execution conclusions where
-order-book depth is absent.
+\noindent All execution-grade claims in this paper (price-to-execution
+gap, oracle net bps, model evaluation) are anchored exclusively to the
+two Tier-A events.
+Price-grade claims (depeg magnitude, frequency comparisons) are labelled
+as estimates (\textit{est.}) for Tier-B events and are excluded from any
+arbitrage-profitability argument.
+Tier classification, source verification status, and coverage scores
+are formally encoded in \texttt{configs/event\_windows\_historical.yaml}
+and \texttt{src/stressbench/history/source\_verification.py}.
 
 \subsection{Feature Sets}
 \label{sec:features}
@@ -809,12 +820,18 @@ Total test minutes  &15,839 & 100\% &\\
 \section{Limitations and Future Work}
 \label{sec:limitations}
 
-\tightparagraph{Single primary stress event.}
-The test split covers one event (SVB March 2023).
+\tightparagraph{Single Tier-A stress event.}
+The test split covers one execution-grade event (SVB March 2023).
 The Terra/LUNA validation event provides some cross-event
-evidence, but future work should extend to the USDC
-recovery period (March 15 -- April 1, 2023) and the
-USDT/Curve stress event (June 2023).
+evidence, but future work should extend Tier-A coverage to the
+USDC recovery period (March 15 -- April 1, 2023),
+the USDT/Curve pool stress (June 2023),
+and — critically — events from other mechanism classes
+(algorithmic collapse, exchange credit shock, DeFi pool imbalance).
+The 18-event catalogue documents the data required; acquisition
+is the bottleneck, not methodology.
+Models trained on fiat-reserve bank shocks may not generalise
+to algorithmic-reflexive or exchange-credit failure modes.
 
 \tightparagraph{Settlement proxy.}
 CEX-to-CEX settlement latency is proxied via a fixed
@@ -854,9 +871,14 @@ are absent from the current feature set.
 \section{Conclusion}
 \label{sec:conclusion}
 
-Stablecoin StressBench introduces a transaction-cost-aware
-benchmark that separates price-level and execution-level
-stablecoin dislocations.
+Stablecoin stress is a recurring phenomenon across algorithmic,
+fiat-reserve, exchange-linked, regulatory, and DeFi-pool failure modes.
+Stablecoin StressBench catalogues 18 historical stress events spanning
+seven mechanism classes (2020--2023) and performs execution-aware
+arbitrage analysis on the subset where real L2 order-book depth
+supports VWAP net-profit labels.
+The core paper introduces a transaction-cost-aware benchmark that
+separates price-level and execution-level stablecoin dislocations.
 The central finding is a \textbf{12$\times$ price-to-execution
 gap} during the USDC/SVB crisis: 35.1\% of minutes show
 a cross-quote basis exceeding 10\,bps, yet only 2.88\%

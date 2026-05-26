@@ -1,8 +1,19 @@
-event_id,display_name,stablecoins,start,end,data_tier,coverage_score,peak_depeg_bps,empirical_use
-iron_titan_2021,IRON/TITAN Collapse,IRON,2021-06-16T00:00:00Z,2021-06-17T23:59:59Z,C,0.25,-10000,Taxonomy context only; no benchmark tasks
-terra_ust_2022,Terra/UST Collapse,"UST, USDT, DAI",2022-05-07T00:00:00Z,2022-05-14T23:59:59Z,B,0.5,-9800,Validation split illustrative; price-basis claims only
-ftx_collapse_2022,FTX Collapse,"USDT, USDC, DAI",2022-11-06T00:00:00Z,2022-11-12T23:59:59Z,B,0.5,-20,Illustrative exchange-specific credit shock; not in benchmark splits
-busd_regulatory_2023,BUSD Regulatory Winddown,"BUSD, USDC, USDT",2023-02-13T00:00:00Z,2023-03-08T23:59:59Z,B,0.5,-30,Illustrative regulatory winddown dynamics; not in primary benchmark splits
-usdc_svb_2023,USDC/SVB Stress,"USDC, DAI, USDT",2023-03-10T00:00:00Z,2023-03-14T23:59:59Z,A,1.0,-1300,PRIMARY benchmark test split; all paper claims anchored here
-usdc_svb_recovery_2023,USDC Recovery (Post-SVB),"USDC, DAI, USDT",2023-03-15T00:00:00Z,2023-04-01T23:59:59Z,A,0.75,-10,Test split recovery window; validates regime generalization
-usdt_curve_2023,USDT/Curve Pool Stress,"USDT, USDC, DAI",2023-06-12T00:00:00Z,2023-06-15T23:59:59Z,B,0.5,-8,Out-of-sample illustrative; motivates on-chain Curve data integration
+event_id,display_name,mechanism_class,stablecoins,start,end,data_tier,coverage_score,max_depeg_bps_est,duration_class,verification_status,empirical_use
+fei_launch_2021,FEI Launch Stress,Algorithmic / Reflexive,FEI,2021-04-01,2021-04-10,C,0.25,-2000,days,needs_source,Taxonomy context only; no benchmark tasks
+iron_titan_2021,IRON/TITAN Collapse,Algorithmic / Reflexive,IRON,2021-06-16,2021-06-17,C,0.25,-10000,hours,needs_source,Taxonomy context only; no benchmark tasks
+mim_wonderland_2022,MIM/Wonderland Shock,Algorithmic / Reflexive,MIM,2022-01-27,2022-02-03,B,0.5,-300,days,needs_source,Taxonomy context only; price-basis claims only if confirmed
+terra_ust_2022,Terra/UST Collapse,Algorithmic / Reflexive,"UST, USDT, DAI",2022-05-07,2022-05-14,B,0.5,-10000,weeks,verified,Validation split illustrative; price-basis claims only
+usdd_tron_2022,USDD/TRON Stress,Algorithmic / Reflexive,USDD,2022-06-13,2022-06-20,B,0.5,-200,days,needs_source,Taxonomy context only; not in benchmark splits
+celsius_3ac_2022,Celsius/3AC Contagion,Exchange Credit / Liquidity,"USDT, USDC, stETH",2022-06-10,2022-06-25,B,0.5,-100,weeks,needs_source,Taxonomy context only; liquidity contagion illustration
+husd_depeg_2022,HUSD Issuer Failure,Exchange Credit / Liquidity,HUSD,2022-08-18,2022-08-25,B,0.5,-800,days,needs_source,Taxonomy context only; not in benchmark splits
+ftx_collapse_2022,FTX Collapse,Exchange Credit / Liquidity,"USDT, USDC, DAI",2022-11-06,2022-11-12,B,0.5,-50,days,verified,Illustrative exchange-specific credit shock; not in benchmark splits
+busd_regulatory_2023,BUSD Regulatory Winddown,Regulatory / Issuer Winddown,"BUSD, USDC, USDT",2023-02-13,2023-03-08,B,0.5,-30,weeks,verified,Illustrative regulatory winddown dynamics; not in primary benchmark splits
+binance_stablecoin_conversion_2022,Binance USDC→BUSD Conversion,Regulatory / Issuer Winddown,"BUSD, USDC, TUSD",2022-09-01,2022-09-30,C,0.25,0,weeks,needs_source,"Context only; operational/policy event, not a stress event"
+usdc_svb_2023,USDC/SVB Stress (PRIMARY),Fiat-Reserve Bank Shock,"USDC, DAI, USDT",2023-03-10,2023-03-14,A,1.0,-1300,days,verified,PRIMARY benchmark test split; all paper claims anchored here
+usdc_svb_recovery_2023,USDC Recovery (Post-SVB),Fiat-Reserve Bank Shock,"USDC, DAI, USDT",2023-03-15,2023-04-01,A,0.75,-10,weeks,verified,Test split recovery window; validates regime generalization
+curve_3pool_ust_2022,Curve 3Pool / UST Stress,DeFi Pool Imbalance,"UST, USDC, USDT, DAI",2022-05-07,2022-05-14,B,0.5,-500,days,needs_source,DeFi contagion mechanism illustration; co-incident with terra_ust_2022
+usdt_curve_2023,USDT/Curve Pool Stress,DeFi Pool Imbalance,"USDT, USDC, DAI",2023-06-12,2023-06-15,B,0.5,-80,days,verified,Out-of-sample illustrative; motivates on-chain Curve data integration
+usdc_dai_secondary_svb_2023,USDC/DAI DeFi Secondary Stress,DeFi Pool Imbalance,"USDC, DAI, FRAX",2023-03-10,2023-03-15,B,0.75,-200,days,needs_source,DeFi contagion illustration co-incident with usdc_svb_2023; not separately benchmarked
+dai_black_thursday_2020,DAI Black Thursday,Collateral / Liquidation,"DAI, ETH",2020-03-12,2020-03-14,B,0.5,150,days,verified,Taxonomy context only; collateral-side stress illustration
+acala_ausd_2022,Acala aUSD Exploit,RWA / Niche Stablecoin,aUSD,2022-08-14,2022-08-21,C,0.25,-9900,days,needs_source,Taxonomy context only; exploit/hack mechanism
+usdr_2023,USDR RWA Failure,RWA / Niche Stablecoin,USDR,2023-10-11,2023-10-18,B,0.5,-5000,days,needs_source,Taxonomy context only; real-world-asset backing stress illustration

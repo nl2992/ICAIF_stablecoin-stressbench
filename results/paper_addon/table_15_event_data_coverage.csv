@@ -1,8 +1,19 @@
-event_id,price_data,trade_data,l2_data,dex_pool_data,onchain_data,execution_grade_available,coverage_score
-iron_titan_2021,1,0,0,1,0,0,0.25
-terra_ust_2022,1,1,0,1,1,0,0.5
-ftx_collapse_2022,1,1,0,0,1,0,0.5
-busd_regulatory_2023,1,0,0,0,1,0,0.5
-usdc_svb_2023,1,1,1,0,1,1,1.0
-usdc_svb_recovery_2023,1,1,1,0,0,1,0.75
-usdt_curve_2023,1,0,0,1,1,0,0.5
+event_id,data_tier,coverage_score,has_l2_depth,has_trade_tape,has_ohlcv,has_onchain,has_defi_pool,data_sources_count,data_sources_list
+fei_launch_2021,C,0.25,0,0,1,1,0,2,coingecko_ohlcv; uniswap_v2_swaps
+iron_titan_2021,C,0.25,0,0,1,1,0,2,coingecko_ohlcv; polygon_dex_swaps
+mim_wonderland_2022,B,0.5,0,0,1,1,1,3,abracadabra_onchain; coingecko_ohlcv; curve_mim_3pool_reserves
+terra_ust_2022,B,0.5,0,0,1,1,1,5,binance_ohlcv; coinbase_ohlcv; curve_pool_reserves; kraken_ohlcv; terra_onchain_transactions
+usdd_tron_2022,B,0.5,0,0,1,0,0,3,coingecko_ohlcv; huobi_ohlcv; poloniex_ohlcv
+celsius_3ac_2022,B,0.5,0,0,1,1,1,4,binance_ohlcv; coinbase_ohlcv; curve_steth_pool_reserves; onchain_celsius_outflows
+husd_depeg_2022,B,0.5,1,0,1,0,0,3,coingecko_ohlcv; huobi_ohlcv; huobi_partial_orderbook
+ftx_collapse_2022,B,0.5,1,0,1,1,0,5,binance_ohlcv; binance_partial_orderbook; coinbase_ohlcv; kraken_ohlcv; usdt_onchain_movements
+busd_regulatory_2023,B,0.5,1,0,1,0,0,3,binance_ohlcv; binance_partial_orderbook; paxos_attestation_reports
+binance_stablecoin_conversion_2022,C,0.25,0,0,1,0,0,2,binance_announcements; binance_ohlcv
+usdc_svb_2023,A,1.0,1,1,0,1,0,7,binance_real_l2_snapshot; binance_trade_tape; coinbase_real_l2_snapshot; coinbase_trade_tape; kraken_real_l2_snapshot; kraken_trade_tape; usdc_onchain_redemptions
+usdc_svb_recovery_2023,A,0.75,1,1,0,0,0,5,binance_real_l2_snapshot; binance_trade_tape; coinbase_real_l2_snapshot; coinbase_trade_tape; kraken_real_l2_snapshot
+curve_3pool_ust_2022,B,0.5,0,0,1,0,1,3,coingecko_ohlcv; curve_pool_reserves; subgraph_curve_swaps
+usdt_curve_2023,B,0.5,0,0,1,1,1,4,binance_ohlcv; coinbase_ohlcv; curve_pool_reserves; usdt_onchain_transfers
+usdc_dai_secondary_svb_2023,B,0.75,0,0,1,0,1,3,coingecko_ohlcv; curve_pool_reserves; makerdao_psm_data
+dai_black_thursday_2020,B,0.5,0,0,1,1,0,3,coinbase_ohlcv; ethereum_onchain_liquidations; makerdao_vault_data
+acala_ausd_2022,C,0.25,0,0,1,1,0,2,acala_onchain_data; coingecko_ohlcv
+usdr_2023,B,0.5,0,0,1,1,0,3,coingecko_ohlcv; polygon_dex_swaps; tangible_protocol_onchain

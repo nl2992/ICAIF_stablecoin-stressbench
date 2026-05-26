@@ -1,0 +1,8 @@
+mechanism_class,mechanism_label,mechanism_description,n_events,tier_A,tier_B,tier_C,max_depeg_bps_range,duration_classes,verified_events,benchmark_role
+algorithmic_reflexive,Algorithmic / Reflexive,Reflexive mint/burn or governance-token backing; failure triggered by bank-run dynamics,5,0,3,2,−200 to −10000,"days, hours, weeks",1,"Validation split (Terra/UST), context for others"
+fiat_reserve_bank_shock,Fiat-Reserve Bank Shock,Fiat-collateral reserve held at stressed bank; redemption uncertainty drives CEX basis,2,2,0,0,−10 to −1300,"days, weeks",2,Primary benchmark source (Tier A)
+regulatory_issuer_winddown,Regulatory / Issuer Winddown,Regulatory order or issuer policy reduces stablecoin supply; orderly managed winddown,2,0,1,1,−30,weeks,1,Illustrative regulatory winddown; not in benchmark splits
+exchange_credit_liquidity,Exchange Credit / Liquidity,Exchange insolvency or withdrawal freeze; credit contagion through shared collateral,3,0,3,0,−50 to −800,"days, weeks",1,Illustrative credit contagion; not in benchmark splits
+defi_pool_imbalance,DeFi Pool Imbalance,DEX/AMM pool becomes imbalanced; on-chain price diverges from CEX mid-price,3,0,3,0,−80 to −500,days,1,DeFi contagion illustration; motivates on-chain adapter
+collateral_liquidation_oracle,Collateral / Liquidation,Collateral price crash triggers forced liquidations; DAI trades above peg (demand shock),1,0,1,0,+150 (above peg),days,1,Above-peg stress illustration; different mechanism class
+rwa_niche_stablecoin,RWA / Niche Stablecoin,Real-world-asset backing or protocol exploit; illiquid collateral unable to meet redemptions,2,0,1,1,−5000 to −9900,days,0,Taxonomy / mechanism diversity only
