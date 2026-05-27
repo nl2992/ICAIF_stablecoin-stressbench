@@ -184,36 +184,42 @@ Griffin and Shams \cite{griffin2020tether} study Tether price
 manipulation; our contribution is execution microstructure, not flow
 manipulation.
 
-\tightparagraph{Limits to arbitrage.}
-Shleifer and Vishny \cite{shleifer1997limits} and
-Gromb and Vayanos \cite{gromb2010limits} establish the general theory.
-Hautsch et al.\ \cite{hautsch2018blockchain} model blockchain-specific
-limits to arbitrage (settlement finality, gas costs, latency);
-Makarov and Schoar \cite{makarov2020trading} provide empirical evidence
-of persistent crypto price gaps across venues.
-We provide an execution-aware empirical measurement of stablecoin
-arbitrage barriers during a real stress event, using documented
-order-book depth provenance.
+\tightparagraph{Limits to arbitrage and crypto market fragmentation.}
+Shleifer and Vishny \cite{shleifer1997limits} and Gromb and Vayanos
+\cite{gromb2010limits} establish the general theory.
+Makarov and Schoar \cite{makarov2020trading} show persistent
+cross-venue crypto price gaps — confirming that gaps exist but are
+not automatically executable profits.
+Hautsch et al.\ \cite{hautsch2018blockchain} show settlement latency
+and transfer friction are first-order arbitrage costs; we extend this
+to stablecoin cross-quote routes.
+The relative-value threshold-rule tradition \cite{gatev2006pairs}
+motivates our price-basis rules; we show such rules overfire once
+depth and fees are imposed.
 
 \tightparagraph{Market microstructure and optimal execution.}
 Glosten and Milgrom \cite{glosten1985bid} establish the theoretical
 basis for adverse selection during stress.
-Cont and Kukanov \cite{cont2013optimal} develop optimal routing
-across fragmented limit-order books, motivating our VWAP
-depth-walk formulation.
-Adams et al.\ \cite{adams2021uniswap} characterise AMM liquidity
-dynamics, informing our settlement-penalty modelling.
+Cont and Kukanov \cite{cont2013optimal} develop optimal routing across
+fragmented limit-order books; the key insight is that the relevant
+object is the executable VWAP price, not the quoted price.
+Stablecoin cross-quote arbitrage is structurally a triangular
+arbitrage problem: direct and indirect exchange-rate paths should
+agree in frictionless markets, but VWAP book-walking reveals when
+they do not survive costs \cite{adams2021uniswap}.
 
 \tightparagraph{Financial ML benchmarks and model validation.}
 L\'{o}pez de Prado \cite{lopezdeprado2018} introduces meta-labeling
 to separate primary signal generation from execution filtering —
-directly applicable to our setting where price signals are plentiful
-but most are not executable.
-Cintra and Holloway \cite{cintra2023bocpd} apply BOCPD to Curve
-StableSwap pool reserves and detect the May~2022 Terra/UST de-peg
-with a 12-hour lead; we find BOCPD achieves only AUROC~0.23 on CEX
-cross-quote data, suggesting the pool-reserve signal does not
-transfer directly.
+directly applicable where price signals are plentiful but most do
+not survive costs.
+Adams and MacKay \cite{adamsmackay2007bocpd} introduce Bayesian
+online changepoint detection (BOCPD); Cintra and Holloway
+\cite{cintra2023bocpd} apply it to Curve pool reserves and detect
+the May~2022 Terra depeg with a 12-hour lead.
+Their target is \emph{depeg risk}; ours is \emph{executable
+arbitrage} — related but distinct, as we find BOCPD achieves only
+AUROC~0.23 on CEX cross-quote data.
 No prior benchmark provides execution-aware stablecoin arbitrage
 labels with documented route-depth provenance and a systematic
 price-to-execution gap analysis.
@@ -465,34 +471,19 @@ validity.
 Table~\ref{tab:stress_roles} documents permitted uses per event.
 
 \tightparagraph{Mechanism mini-cases.}
-\textit{Algorithmic/reflexive.}
-Terra/UST and IRON/TITAN exemplify reflexive designs where
-stabilisation depends on endogenous demand for a linked token;
-these events motivate the validation split and taxonomy but are not
-used for Tier-A execution inference.
-\textit{Fiat-reserve shock.}
-USDC/SVB is the primary execution-labelled test because it combines a
-large secondary-market dislocation with usable route-depth provenance
-and a CEX-listed route that is absent in DeFi-dominant collapses.
-\textit{Exchange-credit stress.}
-FTX and Celsius/3AC represent custody and counterparty shocks; the
-stablecoin basis widens due to venue segmentation rather than issuer
-reserve quality, and CEX depth data during the panic is not available
-in any public archive.
-\textit{DeFi pool imbalance.}
-USDT/Curve Jun~2023 shows that stablecoin stress can appear first
-through pool composition and LP withdrawal rather than CEX price;
-the benchmark includes it as context but treats CEX-route arbitrage
-labels as the primary evaluation target.
-
-Terra/UST serves as the validation split (Tier~B, Algorithmic/reflexive
-mechanism): it is used for threshold calibration and exposes the
-thresholding procedure to independent stress dynamics before final
-evaluation.
-It is \emph{not} used to claim a second execution-labelled result —
-the validation split has kline-proxy route labels ($2.30\%$ executable
-at \$10K, 10\,bps threshold) but lacks the real-L2 route provenance
-required for execution P\&L inference comparable to the Tier-A test.
+Each mechanism class produces a distinct execution friction
+(Table~\ref{tab:mechanism_friction}).
+Algorithmic collapses (Terra/UST, IRON/TITAN) destabilise the
+reference price itself, disabling the route.
+Fiat-reserve shocks (USDC/SVB) widen spreads as market depth
+withdraws; USDC/SVB is the primary execution-labelled test because
+it combines a large dislocation with CEX route-depth provenance.
+Exchange-credit events (FTX, Celsius/3AC) cause venue segmentation;
+no public archive holds depth data for those windows.
+DeFi pool imbalance (USDT/Curve) manifests first in AMM reserves,
+not CEX cross-quote prices, and is context-only.
+Terra/UST serves as the validation split for threshold calibration;
+it is \emph{not} used to claim a second Tier-A result.
 
 \subsection{Feature Sets}
 \label{sec:features}
@@ -625,14 +616,17 @@ windows exist and to calibrate the oracle gap.
 \subsection{Model Ladder}
 \label{sec:stack}
 
-The model stack is a ladder of increasingly realistic baselines,
-progressing from economic anchors through naive price rules,
-time-series persistence, interpretable linear models, nonlinear
-tabular models, direct expected-profit regression, and
-finance-specific filters.
-The purpose is not to exhaust all possible architectures; it is to
-establish whether progressively stronger and more economically
-aligned models can close the oracle gap.
+The benchmark frames stablecoin arbitrage prediction as three nested
+problems: (1)~\emph{cross-quote parity} — do prices imply a basis?
+(2)~\emph{microstructure} — does the basis survive VWAP depth-walk
+and costs? (3)~\emph{statistical learning} — can features at $t$
+predict whether future net profit is positive?
+The model ladder addresses each layer in turn, ranging from economic
+anchors to price rules, time-series baselines, interpretable linear
+models \cite{tibshirani1996lasso}, nonlinear ensembles
+\cite{breiman2001random,chen2016xgboost}, expected-profit regression,
+meta-labeling, and regime detectors — establishing whether stronger
+models can close the oracle gap.
 
 \tightparagraph{Economic anchors.}
 \texttt{NoTrade} (the economic floor: $0$ net bps) and
@@ -672,7 +666,7 @@ learns $\hat{y}_{\text{meta}} = \Pr[\text{net}(q,t) > 0 \mid
 \text{primary fires}]$ and filters predicted false positives.
 
 \tightparagraph{Regime detectors.}
-EWMA z-score, CUSUM, and BOCPD \cite{cintra2023bocpd}
+EWMA z-score, CUSUM, and BOCPD \cite{adamsmackay2007bocpd,cintra2023bocpd}
 identify stress regimes from the basis time series as two-stage
 precursors: detect stress first, then apply execution filters only
 during detected regimes.
@@ -1186,6 +1180,32 @@ Vidal-Tom\`{a}s, D., Briola, A., and Aste, T.\ (2023).
 \newblock FTX's downfall and Binance's consolidation: The fragility of
   centralised exchanges.
 \newblock {\em SSRN Working Paper}.
+
+\bibitem{gatev2006pairs}
+Gatev, E., Goetzmann, W.~N., and Rouwenhorst, K.~G.\ (2006).
+\newblock Pairs trading: Performance of a relative-value arbitrage rule.
+\newblock {\em Review of Financial Studies}, 19(3):797--827.
+
+\bibitem{tibshirani1996lasso}
+Tibshirani, R.\ (1996).
+\newblock Regression shrinkage and selection via the lasso.
+\newblock {\em Journal of the Royal Statistical Society, Series B},
+  58(1):267--288.
+
+\bibitem{breiman2001random}
+Breiman, L.\ (2001).
+\newblock Random forests.
+\newblock {\em Machine Learning}, 45(1):5--32.
+
+\bibitem{chen2016xgboost}
+Chen, T. and Guestrin, C.\ (2016).
+\newblock XGBoost: A scalable tree boosting system.
+\newblock In {\em Proceedings of KDD}, pp.~785--794. ACM.
+
+\bibitem{adamsmackay2007bocpd}
+Adams, R.~P. and MacKay, D.~J.~C.\ (2007).
+\newblock Bayesian online changepoint detection.
+\newblock {\em arXiv:0710.3742}.
 
 \end{thebibliography}
 
