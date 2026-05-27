@@ -1,7 +1,7 @@
 model,feature_set,target_col,n_train,n_val,n_test,n_features,calibrated_threshold_bps,val_n_trades,val_net_bps,test_n_trades,test_net_bps_captured,test_hit_rate_above_cost,test_false_positive_cost,test_final_pnl_bps,test_oracle_capture_pct
-expected_net_lgbm,price_only,net_profit_bps_q10000,20125,11523,15839,5,-82.936,577,-75.096,1610,-61.406,0.0745,-88.156,-98863.74,-27.3
-expected_net_lgbm,price_plus_book,net_profit_bps_q10000,20125,11523,15839,12,-76.668,577,-83.481,140,-71.156,0.0,-71.156,-9961.82,-31.7
-expected_net_lgbm,price_book_frag,net_profit_bps_q10000,20125,11523,15839,15,-74.711,577,-85.987,59,-72.964,0.0,-72.964,-4304.87,-32.5
-expected_net_xgb,price_only,net_profit_bps_q10000,20125,11523,15839,5,-78.373,575,-74.294,211,-68.324,0.0664,-90.136,-14416.45,-30.4
-expected_net_xgb,price_plus_book,net_profit_bps_q10000,20125,11523,15839,12,-71.366,577,-84.023,57,-72.936,0.0,-74.158,-4157.36,-32.5
-expected_net_xgb,price_book_frag,net_profit_bps_q10000,20125,11523,15839,15,-70.434,576,-86.312,89,-76.311,0.0,-76.311,-6791.68,-34.0
+expected_net_lgbm,price_only,net_profit_bps_q10000,28776,11526,15832,5,-81.442,377,-62.245,537,-73.846,0.0633,-95.256,-39655.09,-32.8
+expected_net_lgbm,price_plus_book,net_profit_bps_q10000,28776,11526,15832,12,-82.914,570,-83.443,34,-79.306,0.0294,-82.368,-2696.4,-35.3
+expected_net_lgbm,price_book_frag,net_profit_bps_q10000,28776,11526,15832,15,-84.338,577,-84.356,322,-78.193,0.0373,-88.754,-25178.03,-34.8
+expected_net_xgb,price_only,net_profit_bps_q10000,28776,11526,15832,5,-81.229,555,-91.446,70,-57.201,0.0857,-82.781,-4004.07,-25.4
+expected_net_xgb,price_plus_book,net_profit_bps_q10000,28776,11526,15832,12,-80.757,577,-88.781,1513,-56.193,0.0734,-83.527,-85019.67,-25.0
+expected_net_xgb,price_book_frag,net_profit_bps_q10000,28776,11526,15832,15,-82.956,577,-87.512,1743,-51.66,0.0941,-83.317,-90043.7,-23.0

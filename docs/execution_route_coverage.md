@@ -59,23 +59,23 @@ bookDepth, which is not committed to the public release.
 
 ### Coverage by event window
 
-| Event | Split | Period | Binance depth in repo | Coinbase L2 in repo | Route complete? | Execution-grade? |
-|-------|-------|--------|-----------------------|---------------------|-----------------|-----------------|
-| Calm control | train | Jan 2022 | kline-proxy (synthetic_kline) | kline-proxy (synthetic_kline) | route legs present | **No — proxy only** |
-| Terra/UST | validation | May 7–14, 2022 | kline-proxy (synthetic_kline) | kline-proxy (synthetic_kline) | route legs present | **No — proxy only** |
+| Event | Split | Period | Binance BTCUSDT depth in repo | Coinbase L2 in repo | Route complete? | Execution-grade? |
+|-------|-------|--------|-------------------------------|---------------------|-----------------|-----------------|
+| Calm control | train | Jan 2022 | kline-proxy (2022 not in Binance Vision archive) | kline-proxy (synthetic_kline) | route legs present | **No — 2022 not in public archive** |
+| Terra/UST | validation | May 7–14, 2022 | kline-proxy (2022 not in Binance Vision archive) | kline-proxy (synthetic_kline) | route legs present | **No — 2022 not in public archive** |
 | BUSD regulatory | (not in splits) | Feb 1–7, 2023 | BTCUSDT + ETHUSDT only (no BTCUSDC, no USDCUSDT) | kline-proxy | **USDC route missing** | No |
-| USDC/SVB | test | Mar 10–20, 2023 | kline-proxy (synthetic_kline) | kline-proxy (synthetic_kline) | route legs present | **No — proxy only** |
+| USDC/SVB | test | Mar 10–20, 2023 | **real futures bookDepth** (`raw_source: binance:futures_bookdepth`) | kline-proxy (synthetic_kline) | BTCUSDT sell leg real L2; BTCUSDC buy leg synthetic | **Sell leg real L2 ✓** |
 | FTX collapse | (not in splits) | Nov 2022 | None | None | No | No |
 | Celsius/3AC | (not in splits) | Jun 2022 | None | None | No | No |
-| USDT/Curve | (not in splits) | Jun 2023 | None | None | No | No |
+| USDT/Curve | (not in splits) | Jun 2023 | real futures bookDepth (not in benchmark split) | None | No (out of benchmark) | No |
 | IRON/TITAN | (not in splits) | Jun 2021 | None | None | No | No |
 
-**For the committed `dataset.parquet`**: The `net_profit_bps_q10000` column was originally
-computed from Binance bookDepth real-time snapshots. Those raw bookDepth files are not
-committed to the public repository. For full reproducibility of paper-grade net_profit labels,
-the pipeline requires either:
-- Binance bookDepth API access and re-ingestion for benchmark dates, or
-- A Tardis subscription to download archived L2 snapshots
+**For the committed `dataset.parquet`**: The `net_profit_bps_q10000` column is
+computed from Binance USDM futures bookDepth (`raw_source: binance:futures_bookdepth`)
+for 2023 and 2024 benchmark windows, and kline-proxy (`raw_source: binance:klines`)
+for 2022 windows (Binance Vision does not include futures bookDepth before 2023).
+The Coinbase BTC-USD sell leg uses kline-proxy for all windows; reproducing
+paper-grade Coinbase L2 depth requires a Tardis subscription.
 
 ---
 
@@ -115,10 +115,10 @@ Even if Tardis archives were acquired, each event would require:
 
 ## Summary: Route Completeness Verdict
 
-| Event | Route legs in repo | depth_source (current) | Can compute net_profit? | Tier |
-|-------|---------------------|------------------------|------------------------|------|
-| Calm control (train) | Yes | synthetic_kline | Proxy only | A (committed labels) |
-| Terra/UST (validation) | Yes | synthetic_kline | Proxy only | A (committed labels) |
-| USDC/SVB (test) | Yes | synthetic_kline | Proxy only | A (committed labels) |
+| Event | Route legs in repo | BTCUSDT depth_source | Can compute net_profit? | Tier |
+|-------|---------------------|----------------------|------------------------|------|
+| Calm control (train) | Yes | synthetic_kline (2022 not in Binance Vision) | Via committed dataset.parquet | A (committed labels) |
+| Terra/UST (validation) | Yes | synthetic_kline (2022 not in Binance Vision) | Via committed dataset.parquet | A (committed labels) |
+| USDC/SVB (test) | Yes | **binance:futures_bookdepth** (real L2) | Yes — real sell-leg L2 | **A (real L2 sell leg)** |
 | BUSD regulatory | Partial (USDC route missing) | synthetic_kline | No (USDC leg missing) | B |
 | FTX, Celsius, USDT/Curve, others | None | — | No | B or C |
