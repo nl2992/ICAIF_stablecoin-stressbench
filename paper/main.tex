@@ -28,6 +28,11 @@
 \definecolor{colblue}{HTML}{75B2DD}
 \definecolor{colgold}{HTML}{F2A900}
 
+%% ---- Line-breaking tolerance (two-column narrow columns) ---
+\setlength{\emergencystretch}{3em}
+\tolerance=1000
+\hbadness=1500
+
 %% ---- Convenience macros ------------------------------------
 \newcommand{\bps}{\,\text{bps}}
 \newcommand{\nb}[1]{\textbf{#1}}
@@ -122,30 +127,33 @@ A hindsight oracle confirms that profitable windows exist, yet
 rule-based models, ML classifiers, and direct expected-profit
 regressors all fail to capture them out of sample.
 The result reframes stablecoin arbitrage prediction as an
-execution-barrier problem: the hard problem is not detecting that a
-stablecoin price moved, but identifying which dislocations
+execution-barrier problem: the hard problem is not detecting that
+a stablecoin price moved, but identifying which dislocations
 survive execution.
 
 \tightparagraph{Contributions.} We make four contributions.
+\begin{sloppypar}
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
   \item \textbf{Execution-aware stablecoin benchmark.}
         Per-minute labels distinguish quoted price dislocations from
         executable arbitrage opportunities using order-book depth,
         VWAP book-walking, fees, notional size, and settlement
         penalties.
-  \item \textbf{Historical stress-event framework.}
-        We catalogue stablecoin stress events across mechanism
-        classes and classify each event by data availability.
-        Tier-A events support execution-aware labels; Tier-B events
-        support price and liquidity analysis; Tier-C events support
-        historical taxonomy only.
-  \item \textbf{Price-to-execution and oracle-gap evidence.}
+  \item \textbf{Historical stress-event taxonomy.}
+        We catalogue 18 canonical pre-2024 stablecoin stress events
+        across seven mechanism classes and classify each by data
+        availability.
+        A cross-mechanism check (Terra/LUNA validation split) confirms
+        the price-to-execution gap under an independent mechanism
+        (algorithmic/reflexive): 5.9$\times$ ratio vs.\ 12$\times$
+        for the Tier-A test.
+  \item \textbf{Execution gap and oracle gap: evidence.}
         In the USDC/SVB Tier-A test event, 34.3\% of minutes exceed
         a 10\,bps max cross-quote basis threshold, but only
         2.88\% remain executable at \$10K.
-        A hindsight oracle is profitable on every task; on the
-        executable arbitrage tasks the oracle gap exceeds 260\,bps
-        and all deployable models are economically negative.
+        A hindsight oracle earns positive bps on every task; the
+        oracle gap exceeds 260\,bps on executable tasks and all
+        active models are economically negative.
   \item \textbf{Literature-motivated model ladder.}
         We evaluate economic anchors, naive price rules, time-series
         baselines, regularized linear models, tree ensembles, direct
@@ -154,6 +162,7 @@ survive execution.
         This ladder establishes reproducible baseline failures for
         future models attempting to close the oracle gap.
 \end{enumerate}
+\end{sloppypar}
 
 This paper fits ICAIF as financial benchmark construction for
 blockchain and cryptocurrency markets, combining market
@@ -167,8 +176,8 @@ of financial models, and economic evaluation of ML systems.
 
 \tightparagraph{Stablecoin stress and depegs.}
 The USDC/SVB episode (March 2023) produced well-documented price
-fragmentation across venues; we focus on the ex-ante predictability
-question that event documentation does not address.
+fragmentation across venues; we address the ex-ante predictability
+question that event studies leave open.
 Kwon et al.\ \cite{kwon2023luna} analyse Terra/LUNA collapse mechanics;
 we use May~2022 as our validation split event.
 Griffin and Shams \cite{griffin2020tether} study Tether price
@@ -189,8 +198,8 @@ order-book depth provenance.
 \tightparagraph{Market microstructure and optimal execution.}
 Glosten and Milgrom \cite{glosten1985bid} establish the theoretical
 basis for adverse selection during stress.
-Cont and Kukanov \cite{cont2013optimal} develop optimal order-routing
-across fragmented limit-order books, which motivates our VWAP
+Cont and Kukanov \cite{cont2013optimal} develop optimal routing
+across fragmented limit-order books, motivating our VWAP
 depth-walk formulation.
 Adams et al.\ \cite{adams2021uniswap} characterise AMM liquidity
 dynamics, informing our settlement-penalty modelling.
@@ -229,8 +238,8 @@ BTC-USDT depth alongside Coinbase BTC-USD as the reference leg.
 
 \textbf{Depth provenance and route completeness.}
 The pipeline tags every depth record with a provenance field:
-\texttt{binance:futures\_bookdepth} for real Binance USDM futures
-bookDepth snapshots, or \texttt{binance:klines} / \texttt{coinbase:candles}
+\texttt{binance:\allowbreak{}futures\_bookdepth} for real futures
+bookDepth snapshots, or \texttt{binance:klines}/\texttt{coinbase:candles}
 for kline-synthesised approximations.
 Table~\ref{tab:route_provenance} summarises per-leg provenance for the
 primary execution label.
@@ -246,51 +255,51 @@ The net-profit labels reported in this paper are therefore
 \emph{execution-labelled route estimates with documented real/proxy
 depth provenance}, not fully route-complete real-L2 replay on every
 leg for all windows.
-A fully route-complete benchmark for 2022 events and the BTCUSDC buy
+Full route-complete coverage for 2022 events and the BTCUSDC buy
 leg in 2023 requires a paid Tardis archive subscription.
 
 \begin{table}[t]
 \centering
-\caption{Route-leg depth provenance for the primary cross-quote label.}
+\caption{Route-leg depth provenance per benchmark window.}
 \label{tab:route_provenance}
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{3pt}
 {\small
-\begin{tabular}{lllll}
+\begin{tabular}{lp{2.2cm}p{2.2cm}}
 \toprule
-\textbf{Leg} & \textbf{Instrument} & \textbf{Venue} &
-\textbf{SVB test (Mar 2023)} & \textbf{2024 windows}\\
+\textbf{Leg (instrument)} & \textbf{SVB test Mar~2023} & \textbf{2024 windows}\\
 \midrule
-Buy   & BTC-USDC & Binance & kline-proxy$^\dagger$ & real L2 (futures)\\
-Cross & USDC-USDT & Binance & real L2 (Mar~12--20) & real L2 (futures)\\
-Sell  & BTC-USDT & Binance & real L2 (futures) & real L2 (futures)\\
-Ref   & BTC-USD  & Coinbase & candle-proxy & candle-proxy\\
+Buy — BTC-USDC    & kline-proxy$^\dagger$    & real L2 (futures)\\
+Cross — USDC-USDT & real L2 (Mar~12--20)    & real L2 (futures)\\
+Sell — BTC-USDT   & real L2 (futures)       & real L2 (futures)\\
+Ref — BTC-USD     & candle-proxy            & candle-proxy\\
 \bottomrule
 \end{tabular}
 }
 \vspace{2pt}
-{\footnotesize $^\dagger$BTC-USDC perpetual did not exist on Binance before 2024;
-kline-proxy used for 2022--2023 windows. 2022 windows use kline-proxy on all legs
-(Binance Vision archive does not include futures bookDepth before 2023).}
+{\footnotesize $^\dagger$BTC-USDC perpetual not listed on Binance until Jan~2024.
+All 2022 windows: kline-proxy on all legs (Binance Vision archive predates 2023).}
 \end{table}
 
 \begin{table}[t]
 \centering
 \caption{Dataset coverage by split.}
 \label{tab:dataset}
-\setlength{\tabcolsep}{5pt}
+\setlength{\tabcolsep}{4pt}
+{\small
 \begin{tabular}{llrr}
 \toprule
-\textbf{Split} & \textbf{Event} & \textbf{Minutes} & \textbf{Pos.\,rate}\\
+\textbf{Split} & \textbf{Event} & \textbf{Min.} & \textbf{Pos.}\\
 \midrule
-Train      & Calm control (3 windows) & 28,776 & 0.00\%\\
-Validation & Terra/LUNA, May 2022     & 11,526 & 2.30\%\\
-Test       & USDC/SVB, Mar 2023       & 15,832 & 2.88\%\\
+Train      & Calm control ($\times$3) & 28,776 & 0.00\%\\
+Validation & Terra/LUNA May~2022      & 11,526 & 2.30\%\\
+Test       & USDC/SVB Mar~2023        & 15,832 & 2.88\%\\
 \midrule
 Total      &                          & 56,134 & \\
 \bottomrule
 \end{tabular}
+}
 \vspace{2pt}
-{\footnotesize Positive rate = \texttt{net\_profit\_bps\_q10000} $> 10$\,bps.}
+{\footnotesize Pos.\ = \texttt{net\_profit\_bps\_q10000} $> 10\bps$.}
 \end{table}
 
 \subsection{Event-Based Split Design}
@@ -352,13 +361,13 @@ claims this paper may make (Table~\ref{tab:tiers}).
 \label{tab:tiers}
 \setlength{\tabcolsep}{4pt}
 {\small
-\begin{tabular}{clp{3.6cm}}
+\begin{tabular}{cp{2.3cm}p{2.8cm}}
 \toprule
 \textbf{Tier} & \textbf{Data} & \textbf{Permitted claims}\\
 \midrule
-A ($N{=}2$)  & Frozen execution labels with documented route-depth provenance & Execution gap, oracle gap, P\&L, model eval (subject to provenance caveat)\\
-B ($N{=}11$) & OHLCV / pool data    & Peg magnitude (est.), liquidity stress context\\
-C ($N{=}5$)  & Partial / DEX-only   & Mechanism taxonomy and historical context only\\
+A ($N{=}2$)  & Execution labels with documented route provenance & Exec.\ gap, oracle gap, P\&L, model eval (provenance caveat)\\
+B ($N{=}11$) & OHLCV / pool data    & Peg magnitude (est.), liquidity context\\
+C ($N{=}5$)  & Partial / DEX-only   & Mechanism taxonomy only\\
 \bottomrule
 \end{tabular}
 }
@@ -371,8 +380,8 @@ this paper are anchored to the USDC/SVB stress test; the recovery
 window serves as a Tier-A comparator, not an independent stress
 mechanism.
 Price-grade claims for Tier-B events are labelled as estimates
-(\textit{est.}) and are excluded from any
-arbitrage-profitability argument.
+(\textit{est.}) and excluded from any arbitrage-profitability
+argument.
 
 \textbf{L2 data availability is not equivalent to execution-grade coverage.}
 A stablecoin arbitrage label requires route-complete depth: synchronized
@@ -388,44 +397,102 @@ Those events support price and taxonomy claims only
 
 \begin{table}[t]
 \centering
-\caption{Stress-event roles in Stablecoin StressBench.}
+\caption{Stress-event roles and permitted claims in Stablecoin StressBench.}
 \label{tab:stress_roles}
-\setlength{\tabcolsep}{3pt}
+\setlength{\tabcolsep}{2pt}
 {\small
-\begin{tabular}{llll}
+\begin{tabular}{lllp{2.0cm}}
 \toprule
-\textbf{Event} & \textbf{Mechanism} & \textbf{Tier} & \textbf{Role}\\
+\textbf{Event} & \textbf{Mechanism} & \textbf{Tier} & \textbf{Permitted use}\\
 \midrule
-Terra/UST 2022    & Algorithmic/reflexive    & Validation     & Threshold calibration\\
-USDC/SVB 2023     & Fiat-reserve bank shock  & A              & Main execution test\\
-USDC recovery     & Fiat-reserve recovery    & A              & Comparator\\
-USDT/Curve 2023   & DeFi pool imbalance      & B              & Price/liquidity context\\
-FTX 2022          & Exchange credit/liq.     & B              & Market stress context\\
-BUSD 2023         & Regulatory winddown      & B              & Issuer/regulatory context\\
-IRON/TITAN 2021   & Algorithmic/reflexive    & C              & Taxonomy context\\
+Terra/UST 2022  & Alg./reflexive       & Val. & Threshold calibration; cross-mechanism check\\
+USDC/SVB 2023   & Fiat-reserve shock   & A    & Main exec.\ test; all claims\\
+USDC recovery   & Fiat-reserve recov.  & A    & Comparator only\\
+USDT/Curve 2023 & DeFi pool imbalance  & B    & Price/liq.\ context (est.)\\
+FTX 2022        & Exchange credit      & B    & Market-stress context (est.)\\
+BUSD 2023       & Regulatory winddown  & B    & Issuer/reg.\ context (est.)\\
+IRON/TITAN 2021 & Alg./reflexive       & C    & Mechanism taxonomy only\\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-Table~\ref{tab:stress_roles} clarifies how the historical catalogue is
-used.
-The catalogue establishes that stablecoin stress recurs across
-mechanisms, but only Tier-A events support execution-aware P\&L
-claims.
-USDC/SVB is the primary execution-grade test;
-USDC recovery is a Tier-A comparator;
-and Tier-B / Tier-C events provide external validity and mechanism
-taxonomy rather than arbitrage-profitability evidence.
+\begin{table}[t]
+\centering
+\caption{Mechanism classes and expected execution frictions.}
+\label{tab:mechanism_friction}
+\setlength{\tabcolsep}{3pt}
+{\small
+\begin{tabular}{p{1.9cm}p{2.1cm}p{2.1cm}}
+\toprule
+\textbf{Mechanism} & \textbf{Stress channel} & \textbf{Execution friction}\\
+\midrule
+Alg./reflexive    & Redemption spiral       & Unstable ref.\ price; thin book as peg breaks\\
+Fiat-reserve shock& Reserve uncertainty     & Depth withdrawal; spread widening\\
+Exchange credit   & Venue insolvency        & Venue segmentation; bilateral credit risk\\
+DeFi pool imbal.  & LP withdrawal           & AMM slippage; pool concentration\\
+Regulatory w/d    & Issuer migration        & Fragmented order flow; supply shift\\
+Collateral liq.   & Oracle dependency       & Cascading fills; stale marks\\
+RWA/niche         & Illiquid collateral     & Thin market; settlement uncertainty\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+Tables~\ref{tab:stress_roles}--\ref{tab:mechanism_friction} clarify how
+the historical catalogue is used.
+Each mechanism class produces a different execution friction
+(Table~\ref{tab:mechanism_friction}): algorithmic collapses destabilise
+the reference price itself; fiat-reserve shocks widen spreads as depth
+withdraws; exchange-credit events segment venues; DeFi imbalances shift
+slippage to AMM curves.
+Only Tier-A events support execution-aware P\&L claims.
+The catalogue is a \emph{canonical stress taxonomy}, not a complete
+census: it covers the major pre-2024 mechanism classes that are useful
+for benchmark design; post-2023 regulatory and product-design changes
+(e.g.\ federal stablecoin regulation and synthetic-dollar
+products) are outside the empirical scope and left for future work.
+
+\tightparagraph{Non-claims.}
+Stablecoin StressBench does not claim to reconstruct every historical
+stablecoin arbitrage route, nor that all depeg episodes contain
+executable arbitrage.
+Only the USDC/SVB test window is used for the main price-to-execution
+and oracle-gap claims.
+Terra/UST provides validation-split calibration and a cross-mechanism
+consistency check; other events provide mechanism taxonomy and external
+validity.
+Table~\ref{tab:stress_roles} documents permitted uses per event.
+
+\tightparagraph{Mechanism mini-cases.}
+\textit{Algorithmic/reflexive.}
+Terra/UST and IRON/TITAN exemplify reflexive designs where
+stabilisation depends on endogenous demand for a linked token;
+these events motivate the validation split and taxonomy but are not
+used for Tier-A execution inference.
+\textit{Fiat-reserve shock.}
+USDC/SVB is the primary execution-labelled test because it combines a
+large secondary-market dislocation with usable route-depth provenance
+and a CEX-listed route that is absent in DeFi-dominant collapses.
+\textit{Exchange-credit stress.}
+FTX and Celsius/3AC represent custody and counterparty shocks; the
+stablecoin basis widens due to venue segmentation rather than issuer
+reserve quality, and CEX depth data during the panic is not available
+in any public archive.
+\textit{DeFi pool imbalance.}
+USDT/Curve Jun~2023 shows that stablecoin stress can appear first
+through pool composition and LP withdrawal rather than CEX price;
+the benchmark includes it as context but treats CEX-route arbitrage
+labels as the primary evaluation target.
 
 Terra/UST serves as the validation split (Tier~B, Algorithmic/reflexive
 mechanism): it is used for threshold calibration and exposes the
 thresholding procedure to independent stress dynamics before final
 evaluation.
-It is \emph{not} used to claim a second execution-grade result —
-the validation split has executable-arb labels ($2.30\%$ net-profitable
-at \$10K, 10\,bps threshold) but lacks the full Tier-A L2 depth
-reconstruction required for execution P\&L inference.
+It is \emph{not} used to claim a second execution-labelled result —
+the validation split has kline-proxy route labels ($2.30\%$ executable
+at \$10K, 10\,bps threshold) but lacks the real-L2 route provenance
+required for execution P\&L inference comparable to the Tier-A test.
 
 \subsection{Feature Sets}
 \label{sec:features}
@@ -433,12 +500,13 @@ reconstruction required for execution P\&L inference.
 We define four nested feature sets from narrowest to broadest:
 
 \vspace{3pt}
-\begin{tabular}{ll}
+{\small
+\begin{tabular}{lp{3.2cm}}
 \texttt{price\_only}        & 5 cross-quote basis columns\\
-\texttt{price\_plus\_book}  & +7 microstructure cols (spread, depth, imbalance)\\
-\texttt{price\_book\_frag}  & +3 cross-venue fragmentation cols\\
-\texttt{price\_book\_settle}& +7 on-chain settlement proxies\\
-\end{tabular}
+\texttt{price\_plus\_book}  & $+$7 microstructure cols (spread, depth, imbalance)\\
+\texttt{price\_book\_frag}  & $+$3 cross-venue fragmentation cols\\
+\texttt{price\_book\_settle}& $+$7 on-chain settlement proxies\\
+\end{tabular}}
 \vspace{3pt}
 
 The nesting structure isolates the marginal value of each
@@ -457,21 +525,24 @@ economically at Layer~2.
 
 \begin{table}[t]
 \centering
-\caption{Three layers of stablecoin dislocation measured by
-  Stablecoin StressBench (USDC/SVB test split, \$10K notional).}
+\caption{Three layers of stablecoin dislocation (USDC/SVB test
+  split, \$10K notional).}
 \label{tab:layers}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lp{3.6cm}r}
+\setlength{\tabcolsep}{3pt}
+{\small
+\begin{tabular}{p{1.8cm}p{2.8cm}r}
 \toprule
-\textbf{Layer} & \textbf{What it measures} & \textbf{SVB freq.}\\
+\textbf{Layer} & \textbf{What it measures} & \textbf{SVB\%}\\
 \midrule
-1.\ Optical dislocation    & Quoted basis ${>}10\bps$ on price data       & 34.3\%\\
-2.\ Executable opportunity & Net profit ${>}10\bps$ after VWAP, fees, costs & 2.88\%\\
-3.\ Predictable ex ante    & Model identifies window before execution      & No active model\\
+1.\ Optical    & Quoted basis ${>}10\bps$ on prices      & 34.3\%\\
+2.\ Executable & Net profit ${>}10\bps$ after costs      & 2.88\%\\
+3.\ Predictable& Model predicts window ex ante           & None\\
 \bottomrule
 \end{tabular}
+}
 \vspace{2pt}
-{\footnotesize Layer~3 frequency: every active non-oracle strategy that takes trades produces negative net bps; abstention (no-trade) is the zero-P\&L floor.}
+\noindent{\footnotesize Layer~3: no active non-oracle model achieves
+positive net bps; \texttt{NoTrade} is the economic floor.}
 \end{table}
 
 \noindent The gap between Layer~1 and Layer~2 is the
@@ -485,13 +556,12 @@ Both are central measurements of this benchmark.
 The cross-quote USDC basis at time $t$ is:
 \[
   b_{\text{USDC}}(t) = 10{,}000 \times
-    \frac{P_{\text{BTC-via-USDC}}(t) - P_{\text{BTC-direct}}(t)}
-         {P_{\text{BTC-direct}}(t)}
+    \frac{P_{\text{BTC/USDC}}(t) - P_{\text{BTC/USD}}(t)}
+         {P_{\text{BTC/USD}}(t)}
   \quad [\text{bps}]
 \]
-where $P_{\text{BTC-via-USDC}}$ is the effective BTC price obtained by
-converting USD~$\to$ USDC~$\to$ BTC relative to the direct BTC-USD
-market.
+where $P_{\text{BTC/USDC}}$ is the effective BTC price obtained via
+USDC and $P_{\text{BTC/USD}}$ is the direct BTC-USD price.
 We also compute the max-absolute basis
 $b_{\max}(t) = \max(|b_{\text{USDC}}|, |b_{\text{USDT}}|)$
 as a broader stress detector.
@@ -506,17 +576,14 @@ Primary classification task: \task{basis\_usdc\_1m\_gt10bps}.
 \subsection{VWAP Execution Walk}
 \label{sec:vwap}
 
-For each minute window and notional $q \in \{\$10\text{K},
-\$50\text{K}, \$100\text{K}, \$500\text{K}\}$, we simulate a
-round-trip execution:
+For each minute window and notional size $q$ (\$10K, \$50K,
+\$100K, \$500K), we simulate a round-trip execution:
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=1pt]
-  \item Walk the available execution-grade bid and ask ladders
-        for routes with confirmed real-L2 provenance
-        to fill $q$ notional, recording the VWAP price at
-        each level consumed.
-  \item Compute the gross spread:
-        $\text{gross}(q) = \text{VWAP}_{\text{sell}} -
-        \text{VWAP}_{\text{buy}}$.
+  \item Walk the bid/ask ladders for routes with confirmed
+        depth provenance to fill $q$ notional, recording the
+        VWAP price at each level consumed.
+  \item Gross spread: $\text{gross}(q) =
+        \text{VWAP}_{\text{sell}} - \text{VWAP}_{\text{buy}}$.
   \item Deduct taker fees on both legs and a settlement
         delay penalty.
 \end{enumerate}
@@ -535,11 +602,10 @@ round-trip execution:
 
 where $f_{\text{buy}}, f_{\text{sell}}$ are venue taker fees
 and $\delta_{\text{settle}}$ is a settlement penalty proxy.
-Primary economic task: \task{executable\_arb\_q10000\_5m}.
-The forward-max in Eq.~(\ref{eq:label}) asks:
-\emph{does a profitable window exist within the next $h$ minutes?}
-— matching the practical constraint that a trader can execute at any
-point within the horizon.
+Primary economic task: {\small\ttfamily executable\_\allowbreak{}arb\_\allowbreak{}q10000\_\allowbreak{}5m}.
+The forward-max in Eq.~(\ref{eq:label}) asks whether any profitable
+window exists in the next $h$ minutes, matching the constraint
+that a trader may execute at any point in the horizon.
 
 \subsection{Oracle Upper Bound}
 \label{sec:oracle}
@@ -576,9 +642,9 @@ aligned models can close the oracle gap.
 \texttt{PriceBasis10bps} (trade when $|b_{\text{USDC}}| > 10\bps$),
 \texttt{PriceBasis25bps}, and
 \texttt{GrossArbThreshold} (gross spread $> 0$).
-These test whether threshold rules on price data are sufficient;
-motivated by \cite{hautsch2018blockchain}, execution frictions are
-expected to make raw price rules uneconomic.
+These test whether threshold rules on price data suffice;
+following \cite{hautsch2018blockchain}, execution frictions
+are expected to make raw price rules uneconomic.
 
 \tightparagraph{Statistical baselines.}
 \texttt{LastValue} (AR0), \texttt{RollingMean}, \texttt{AR1} —
@@ -628,15 +694,16 @@ strategies from winning on small-sample artefacts.
 \subsection{Evaluation Protocol}
 \label{sec:eval}
 
+\begin{sloppypar}
 \textit{Primary (economic):}
-\texttt{net\_bps\_captured} (mean net bps per trade),
+\texttt{net\_bps\_captured} (mean net bps/trade),
 \texttt{hit\_rate\_above\_cost},
 \texttt{final\_pnl\_usd},
-\texttt{oracle\_capture\_pct}
-($=$ net bps / oracle net bps).
+\texttt{oracle\_capture\_pct} (net bps $\div$ oracle net bps).
 
 \textit{Secondary (statistical):}
 AUROC, AUPRC, Brier score, $n_{\text{trades}}$.
+\end{sloppypar}
 
 The \texttt{NoTrade} baseline ($= 0$ net bps) is the economic floor:
 a model that loses money is worse than abstaining entirely,
@@ -669,13 +736,14 @@ The gap persists at every threshold level, widening sharply below
 \caption{Price-to-execution gap (test split, \$10K notional,
   1-minute same-window horizon).}
 \label{tab:gap}
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{3pt}
+{\small
 \begin{tabular}{rrrrr}
 \toprule
 \textbf{Thresh.} &
-\textbf{Price\,(max)} &
-\textbf{Price\,(USDC)} &
-\textbf{Exec.\,(\$10K)} &
+\textbf{P$_{\max}$} &
+\textbf{P$_{\text{USDC}}$} &
+\textbf{Exec.} &
 \textbf{Ratio}\\
 \midrule
  0\,bps & 95.86\% & 82.96\% & 3.34\% & 29$\times$\\
@@ -684,6 +752,7 @@ The gap persists at every threshold level, widening sharply below
 25\,bps &  9.54\% &  6.48\% & 2.62\% &  3.6$\times$\\
 \bottomrule
 \end{tabular}
+}
 \end{table}
 
 \begin{figure}[t]
@@ -896,34 +965,67 @@ arbitrage leg.
 \subsection{Stress Recurs Across Mechanisms, But Execution Labels Are Scarce}
 \label{sec:stress_recurrence}
 
-The benchmark is evaluated on a single Tier-A stress event, which
-raises the question of whether the price-to-execution gap and oracle
-gap are specific to the USDC/SVB episode.
-The historical catalogue (Table~\ref{tab:stress_roles}) provides
-indirect evidence that execution barriers are a structural property
-of stablecoin stress rather than an artefact of one event.
+The benchmark's main execution result rests on USDC/SVB.
+A natural question is whether the price-to-execution gap and oracle gap
+are specific to fiat-reserve bank shocks, or whether they generalise
+to other mechanisms.
 
-Across seven mechanism classes, stress events share common features:
-a price dislocation arises rapidly, order-book depth deteriorates at
-the moment when arbitrage would be most profitable, and settlement
-risk rises simultaneously.
-This pattern holds regardless of whether the stress originates from a
-bank-reserve shock (USDC/SVB), an algorithmic-reflexive collapse
-(Terra/UST), an exchange credit event (FTX), a DeFi pool imbalance
-(USDT/Curve), or a regulatory winddown (BUSD).
+\tightparagraph{Cross-mechanism check: Terra/LUNA.}
+The Terra/LUNA validation split provides the strongest available
+cross-mechanism evidence from within the benchmark.
+Table~\ref{tab:cross_mechanism} compares key metrics across both events.
+The Terra/LUNA split ($N{=}11{,}526$ min, May~2022) uses kline-proxy
+route depth (Binance Vision 2022 predates the bookDepth archive);
+labels are not execution-grade to the SVB standard.
+Nevertheless, the directional pattern is consistent: 13.46\% of minutes
+show a price-basis above 10\,bps, but only 2.30\% survive execution at
+\$10K notional — a 5.9$\times$ execution gap.
+The hindsight oracle on the validation split earns $+87.6\bps$ per
+trade, compared with $+260\bps$ on the Tier-A test split.
+The lower oracle bps reflect the mechanics of an algorithmic collapse:
+during the Terra spiral, the route was impaired by unstable reference
+pricing, limiting achievable profit even with perfect foresight.
 
-The constraint is not whether stress occurs — it does, repeatedly —
-but whether execution-grade order-book data exists to measure the
-gap precisely.
-Only Tier-A events provide the L2 depth required for VWAP label
-construction.
-The Terra/LUNA validation split ($N{=}11{,}526$ minutes,
-13.46\% price-basis positive, 2.30\% executable at \$10K) demonstrates
-similar dynamics under an independent mechanism, but without the
-full Tier-A execution reconstruction needed for P\&L claims.
+\begin{table}[t]
+\centering
+\caption{Cross-mechanism comparison: USDC/SVB vs.\ Terra/LUNA.}
+\label{tab:cross_mechanism}
+\setlength{\tabcolsep}{3pt}
+{\small
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metric} & \textbf{USDC/SVB} & \textbf{Terra/LUNA}\\
+\textbf{} & \textbf{(Tier-A test)} & \textbf{(Val.\ kline-proxy)}\\
+\midrule
+Minutes                         & 15,832   & 11,526\\
+Mechanism                       & Fiat-reserve & Alg./reflexive\\
+Price-basis ${>}10\bps$ (max)   & 34.3\%   & 13.5\%\\
+Executable ${>}10\bps$ (\$10K)  & 2.88\%   & 2.30\%\\
+Price-to-exec ratio             & $12\times$  & $5.9\times$\\
+Oracle (hindsight, ${>}10\bps$) & $+260\bps$  & $+88\bps$$^\dagger$\\
+Route depth                     & 2-of-3 real L2 & kline-proxy\\
+\bottomrule
+\end{tabular}
+}
+\vspace{2pt}
+{\footnotesize $^\dagger$Kline-proxy labels; directional comparison only — not
+execution-grade on same standard as Tier-A.}
+\end{table}
+
+The cross-mechanism pattern supports the paper's central claim:
+price dislocations are common across mechanism types, but executable
+windows are rare in both cases.
+The oracle gap persists even when the mechanism differs, consistent with
+execution barriers being structural rather than event-specific.
+
+The constraint is not whether stress occurs — it does, repeatedly and
+across diverse mechanisms — but whether route-provenance data supports
+execution-grade label construction.
+Only Tier-A events provide that standard.
 Expanding Tier-A coverage to additional mechanism classes is the
-primary path to testing whether the oracle gap generalises across
-stress regimes.
+primary path to testing whether the oracle gap quantitatively
+generalises; Table~\ref{tab:mechanism_friction} identifies the dominant
+execution friction that differs across class.
 
 %% =============================================================
 \section{Limitations}
@@ -937,8 +1039,18 @@ classes; the 18-event catalogue documents the data requirements.
 Models trained on fiat-reserve bank shocks may not generalise to
 algorithmic-reflexive or exchange-credit failure modes.
 
-\tightparagraph{Historical catalogue is broader than benchmark.}
-Tier-B and Tier-C events support price and taxonomy claims only.
+\tightparagraph{Historical catalogue is canonical, not exhaustive.}
+The 18-event catalogue spans 2020--2023 and covers the major pre-2024
+mechanism classes.
+It is designed as a benchmark taxonomy, not as a complete census of
+stablecoin disturbances through 2026.
+Post-2023 regulatory changes (e.g.\ the U.S.\ federal stablecoin
+framework), the emergence of synthetic-dollar and yield-bearing
+stablecoin products, and the changing role of Treasury/repo markets
+in backing stablecoin reserves are outside the empirical scope.
+Tier-B and Tier-C events support price and taxonomy claims only;
+exclusion of other events reflects the absence of route-complete depth
+data, not a judgment that those events were insignificant.
 The benchmark deliberately separates what can be claimed from Tier-A
 data from what can only be described at Tier-B or Tier-C.
 
@@ -977,15 +1089,17 @@ The central result of this paper is that they mostly are not:
 basis above 10\,bps, but only 2.88\% remain net-profitable after VWAP
 book-walking and costs at \$10K notional — a 12$\times$ price-to-execution gap.
 
+\begin{sloppypar}
 Profitable windows do exist: a hindsight oracle earns
 $+162.2\bps$ per trade on the USDC-basis task, confirming that
-execution-grade opportunities are real, not artefacts of label construction.
-On the executable arbitrage tasks every active non-oracle strategy —
+execution-grade opportunities are real, not label artefacts.
+On executable arbitrage tasks every active non-oracle strategy —
 price rules, ML classifiers, tree ensembles, and a direct
-expected-net-profit regressor — produces negative net bps out of sample;
-abstention remains the zero-P\&L floor.
-The oracle gap exceeds 260\,bps on the executable arbitrage tasks and
+expected-net-profit regressor — produces negative net bps out of
+sample; abstention remains the economic floor.
+The oracle gap exceeds 260\,bps on executable arbitrage tasks and
 persists across fee regimes, settlement penalties, and notional sizes.
+\end{sloppypar}
 
 Stablecoin StressBench shows that the main challenge is not
 observing price dislocations, but predicting which dislocations
