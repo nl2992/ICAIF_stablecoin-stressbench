@@ -108,7 +108,7 @@ CURATED_ISSUER_EVENTS: list[dict[str, Any]] = [
         stablecoin="USDC",
         event_type="banking_counterparty_news",
         description="Silicon Valley Bank (SVB) placed into FDIC receivership. "
-                    "Circle disclosed $3.3B of USDC reserves held at SVB.",
+        "Circle disclosed $3.3B of USDC reserves held at SVB.",
         source_url="https://www.circle.com/blog/an-update-on-usdc-and-silicon-valley-bank",
         event_severity="high",
         effective_date="2023-03-10",
@@ -118,7 +118,7 @@ CURATED_ISSUER_EVENTS: list[dict[str, Any]] = [
         stablecoin="USDC",
         event_type="redemption_update",
         description="Circle announced USDC redemptions would resume at 1:1 "
-                    "following FDIC guarantee of SVB deposits.",
+        "following FDIC guarantee of SVB deposits.",
         source_url="https://www.circle.com/blog/usdc-liquidity-operations-update",
         event_severity="high",
         effective_date="2023-03-13",
@@ -145,12 +145,7 @@ def save_issuer_events_to_bronze(
         return None
 
     root = root or bronze_root()
-    out_dir = (
-        root
-        / "venue=issuer"
-        / "channel=issuer_event"
-        / f"symbol={stablecoin}"
-    )
+    out_dir = root / "venue=issuer" / "channel=issuer_event" / f"symbol={stablecoin}"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / f"issuer_events-{stablecoin}.parquet"
 

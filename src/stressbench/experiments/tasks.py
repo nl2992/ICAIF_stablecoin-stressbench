@@ -37,7 +37,6 @@ TASKS: dict[str, dict] = {
         "net_profit_col": "net_profit_bps_q50000",
         "description": "USDC primary basis >10 bps in 1 minute (benchmark default)",
     },
-
     # ------------------------------------------------------------------
     # USDC-specific basis tasks (for SVB / USDC depeg event analysis)
     # ------------------------------------------------------------------
@@ -68,7 +67,6 @@ TASKS: dict[str, dict] = {
         "net_profit_col": "net_profit_bps_q50000",
         "description": "USDC-specific basis >25 bps in 15 minutes",
     },
-
     # ------------------------------------------------------------------
     # Max-absolute basis tasks (generic stress detector)
     # ------------------------------------------------------------------
@@ -81,7 +79,6 @@ TASKS: dict[str, dict] = {
         "net_profit_col": "net_profit_bps_q50000",
         "description": "Max-absolute cross-quote basis >10 bps in 1 minute",
     },
-
     # ------------------------------------------------------------------
     # Executable arbitrage tasks (label derived from net_profit_bps)
     # ------------------------------------------------------------------

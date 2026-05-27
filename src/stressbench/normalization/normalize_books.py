@@ -283,27 +283,29 @@ def normalize_binance_klines(df: pl.DataFrame) -> pl.DataFrame:
                 ("bid", bid_price, taker_sell * _SIZE_SCHEDULE[i]),
                 ("ask", ask_price, taker_buy * _SIZE_SCHEDULE[i]),
             ):
-                records.append({
-                    "ts_event_ns": ts_ns,
-                    "ts_receive_ns": row.get("ts_receive_ns", ts_ns),
-                    "venue_id": "binance",
-                    "instrument_id": make_instrument_id("binance", symbol),
-                    "native_symbol": symbol,
-                    "side": side,
-                    "level": i,
-                    "price": px,
-                    "size": sz,
-                    "checksum": None,
-                    "raw_source": "binance:klines",
-                    "payload_hash": row.get("payload_hash", ""),
-                    "depth_source": "synthetic_kline",
-                    "is_crossed_book": False,
-                    "is_negative_size": False,
-                    "is_sequence_gap": False,
-                    "is_checksum_failed": False,
-                    "is_stale_quote": False,
-                    "is_resync_period": False,
-                })
+                records.append(
+                    {
+                        "ts_event_ns": ts_ns,
+                        "ts_receive_ns": row.get("ts_receive_ns", ts_ns),
+                        "venue_id": "binance",
+                        "instrument_id": make_instrument_id("binance", symbol),
+                        "native_symbol": symbol,
+                        "side": side,
+                        "level": i,
+                        "price": px,
+                        "size": sz,
+                        "checksum": None,
+                        "raw_source": "binance:klines",
+                        "payload_hash": row.get("payload_hash", ""),
+                        "depth_source": "synthetic_kline",
+                        "is_crossed_book": False,
+                        "is_negative_size": False,
+                        "is_sequence_gap": False,
+                        "is_checksum_failed": False,
+                        "is_stale_quote": False,
+                        "is_resync_period": False,
+                    }
+                )
 
     if not records:
         return pl.DataFrame()
@@ -353,16 +355,22 @@ def _apply_quality_flags(df: pl.DataFrame) -> pl.DataFrame:
         return df
 
     # Detect crossed books: best_bid >= best_ask per instrument/timestamp
-    bids = df.filter(pl.col("side") == "bid").filter(pl.col("level") == 0).select(
-        ["ts_event_ns", "instrument_id", pl.col("price").alias("best_bid")]
+    bids = (
+        df.filter(pl.col("side") == "bid")
+        .filter(pl.col("level") == 0)
+        .select(["ts_event_ns", "instrument_id", pl.col("price").alias("best_bid")])
     )
-    asks = df.filter(pl.col("side") == "ask").filter(pl.col("level") == 0).select(
-        ["ts_event_ns", "instrument_id", pl.col("price").alias("best_ask")]
+    asks = (
+        df.filter(pl.col("side") == "ask")
+        .filter(pl.col("level") == 0)
+        .select(["ts_event_ns", "instrument_id", pl.col("price").alias("best_ask")])
     )
     bbo = bids.join(asks, on=["ts_event_ns", "instrument_id"], how="inner")
-    crossed = bbo.filter(pl.col("best_bid") >= pl.col("best_ask")).select(
-        ["ts_event_ns", "instrument_id"]
-    ).with_columns(pl.lit(True).alias("_crossed"))
+    crossed = (
+        bbo.filter(pl.col("best_bid") >= pl.col("best_ask"))
+        .select(["ts_event_ns", "instrument_id"])
+        .with_columns(pl.lit(True).alias("_crossed"))
+    )
 
     df = df.join(crossed, on=["ts_event_ns", "instrument_id"], how="left")
     df = df.with_columns(
@@ -376,6 +384,7 @@ def _parse_coinbase_ts(ts_str: str) -> int:
     if not ts_str:
         return 0
     from datetime import datetime, timezone
+
     try:
         dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
         return int(dt.timestamp() * 1e9)

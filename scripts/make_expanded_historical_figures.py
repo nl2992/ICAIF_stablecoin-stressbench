@@ -122,9 +122,27 @@ def fig25_mechanism_taxonomy(events: dict) -> None:
     tier_b_vals = [t[1] for t in tiers_per_class]
     tier_c_vals = [t[2] for t in tiers_per_class]
 
-    ax1.bar(x, tier_c_vals, bar_w, bottom=bottoms_c, color=C_GREY, label="Tier C", alpha=0.85)
-    ax1.bar(x, tier_b_vals, bar_w, bottom=bottoms_b, color=C_BLUE, label="Tier B", alpha=0.85)
-    ax1.bar(x, tier_a_vals, bar_w, bottom=bottoms_a, color=C_NAVY, label="Tier A", alpha=0.9)
+    ax1.bar(
+        x,
+        tier_c_vals,
+        bar_w,
+        bottom=bottoms_c,
+        color=C_GREY,
+        label="Tier C",
+        alpha=0.85,
+    )
+    ax1.bar(
+        x,
+        tier_b_vals,
+        bar_w,
+        bottom=bottoms_b,
+        color=C_BLUE,
+        label="Tier B",
+        alpha=0.85,
+    )
+    ax1.bar(
+        x, tier_a_vals, bar_w, bottom=bottoms_a, color=C_NAVY, label="Tier A", alpha=0.9
+    )
 
     ax1.set_xticks(x)
     ax1.set_xticklabels(labels, fontsize=8, rotation=30, ha="right")
@@ -145,12 +163,17 @@ def fig25_mechanism_taxonomy(events: dict) -> None:
     for bar, val in zip(bars, max_depegs):
         if val > 0:
             ax2.text(
-                val + 50, bar.get_y() + bar.get_height() / 2,
+                val + 50,
+                bar.get_y() + bar.get_height() / 2,
                 f"{int(val)} bps" if val < 5000 else f"−{int(val/100):.0f}%",
-                va="center", fontsize=7.5, color=C_NAVY,
+                va="center",
+                fontsize=7.5,
+                color=C_NAVY,
             )
 
-    ax2.set_xlabel("Peak Depeg Magnitude (bps, log scale) — est. for Tier B/C", fontsize=9)
+    ax2.set_xlabel(
+        "Peak Depeg Magnitude (bps, log scale) — est. for Tier B/C", fontsize=9
+    )
     ax2.set_xscale("log")
     ax2.set_xlim(1, 30000)
     ax2.set_title("Max Depeg by Mechanism Class", fontsize=10, color=C_NAVY)
@@ -160,10 +183,13 @@ def fig25_mechanism_taxonomy(events: dict) -> None:
 
     # Footnote
     fig.text(
-        0.01, -0.04,
+        0.01,
+        -0.04,
         "Tier B/C max depeg values are estimates from event_windows_historical.yaml; "
         "use 'est.' notation in paper. Tier A = USDC/SVB only.",
-        fontsize=7, color=C_GREY, style="italic",
+        fontsize=7,
+        color=C_GREY,
+        style="italic",
     )
 
     plt.tight_layout()
@@ -178,21 +204,46 @@ def fig25_mechanism_taxonomy(events: dict) -> None:
 
 def fig26_coverage_matrix(events: dict) -> None:
     source_types = ["L2 Depth", "Trade Tape", "OHLCV", "On-chain", "DEX/Pool"]
-    L2 = {"binance_real_l2_snapshot", "coinbase_real_l2_snapshot",
-          "kraken_real_l2_snapshot", "binance_partial_orderbook",
-          "huobi_partial_orderbook"}
+    L2 = {
+        "binance_real_l2_snapshot",
+        "coinbase_real_l2_snapshot",
+        "kraken_real_l2_snapshot",
+        "binance_partial_orderbook",
+        "huobi_partial_orderbook",
+    }
     TAPE = {"binance_trade_tape", "coinbase_trade_tape", "kraken_trade_tape"}
-    OHLCV = {"binance_ohlcv", "coinbase_ohlcv", "kraken_ohlcv",
-             "coingecko_ohlcv", "huobi_ohlcv", "poloniex_ohlcv"}
-    ONCHAIN = {"usdc_onchain_redemptions", "terra_onchain_transactions",
-               "usdt_onchain_movements", "ethereum_onchain_liquidations",
-               "makerdao_vault_data", "onchain_celsius_outflows",
-               "acala_onchain_data", "tangible_protocol_onchain",
-               "uniswap_v2_swaps", "polygon_dex_swaps", "abracadabra_onchain",
-               "usdt_onchain_transfers", "paxos_attestation_reports"}
-    DEX = {"curve_pool_reserves", "curve_3pool_reserves", "curve_mim_3pool_reserves",
-           "curve_steth_pool_reserves", "subgraph_curve_swaps",
-           "makerdao_psm_data", "binance_announcements"}
+    OHLCV = {
+        "binance_ohlcv",
+        "coinbase_ohlcv",
+        "kraken_ohlcv",
+        "coingecko_ohlcv",
+        "huobi_ohlcv",
+        "poloniex_ohlcv",
+    }
+    ONCHAIN = {
+        "usdc_onchain_redemptions",
+        "terra_onchain_transactions",
+        "usdt_onchain_movements",
+        "ethereum_onchain_liquidations",
+        "makerdao_vault_data",
+        "onchain_celsius_outflows",
+        "acala_onchain_data",
+        "tangible_protocol_onchain",
+        "uniswap_v2_swaps",
+        "polygon_dex_swaps",
+        "abracadabra_onchain",
+        "usdt_onchain_transfers",
+        "paxos_attestation_reports",
+    }
+    DEX = {
+        "curve_pool_reserves",
+        "curve_3pool_reserves",
+        "curve_mim_3pool_reserves",
+        "curve_steth_pool_reserves",
+        "subgraph_curve_swaps",
+        "makerdao_psm_data",
+        "binance_announcements",
+    }
 
     type_sets = [L2, TAPE, OHLCV, ONCHAIN, DEX]
 
@@ -229,15 +280,21 @@ def fig26_coverage_matrix(events: dict) -> None:
             for j in range(len(source_types)):
                 ax.add_patch(
                     mpatches.FancyBboxPatch(
-                        (j - 0.5, i - 0.5), 1, 1,
+                        (j - 0.5, i - 0.5),
+                        1,
+                        1,
                         boxstyle="square,pad=0",
-                        edgecolor=C_NAVY, linewidth=1.5, fill=False,
+                        edgecolor=C_NAVY,
+                        linewidth=1.5,
+                        fill=False,
                     )
                 )
 
     ax.set_title(
         "Historical Event × Data Source Coverage Matrix\n(dark = Tier A, medium = Tier B, white = absent)",
-        fontsize=11, fontweight="bold", color=C_NAVY,
+        fontsize=11,
+        fontweight="bold",
+        color=C_NAVY,
     )
     ax.set_xlabel("Data Source Type", fontsize=10)
     ax.set_ylabel("Event (Tier)", fontsize=10)
@@ -273,8 +330,16 @@ def fig27_event_timeline(events: dict) -> None:
         mc = ev.get("mechanism_class", "unknown")
         tier = ev.get("data_tier", "C")
         depeg = abs(ev.get("max_depeg_bps_est", 0))
-        ev_data.append({"id": eid, "start": start, "end": end,
-                        "mc": mc, "tier": tier, "depeg": depeg})
+        ev_data.append(
+            {
+                "id": eid,
+                "start": start,
+                "end": end,
+                "mc": mc,
+                "tier": tier,
+                "depeg": depeg,
+            }
+        )
 
     ev_data.sort(key=lambda x: x["start"])
 
@@ -298,16 +363,27 @@ def fig27_event_timeline(events: dict) -> None:
         # Size by depeg magnitude
         height = 0.5 + min(ev["depeg"] / 3000, 0.45)
         rect = mpatches.FancyBboxPatch(
-            (xs, y - height / 2), width, height,
+            (xs, y - height / 2),
+            width,
+            height,
             boxstyle="round,pad=1",
-            facecolor=color, edgecolor="white", linewidth=0.8, alpha=0.85,
+            facecolor=color,
+            edgecolor="white",
+            linewidth=0.8,
+            alpha=0.85,
         )
         ax.add_patch(rect)
         # Label short event ID
         short = ev["id"].replace("_202", " '2").replace("_", " ")[:18]
         ax.text(
-            xs + width / 2, y, short,
-            ha="center", va="center", fontsize=5.5, color="white", fontweight="bold",
+            xs + width / 2,
+            y,
+            short,
+            ha="center",
+            va="center",
+            fontsize=5.5,
+            color="white",
+            fontweight="bold",
         )
 
     # X-axis: date ticks
@@ -322,7 +398,10 @@ def fig27_event_timeline(events: dict) -> None:
         current = datetime.date(y2, m2, 1)
 
     tick_days = [to_days(d) for d in quarter_starts]
-    tick_labels = [d.strftime("%b '%y") if d.month == 1 else d.strftime("%b") for d in quarter_starts]
+    tick_labels = [
+        d.strftime("%b '%y") if d.month == 1 else d.strftime("%b")
+        for d in quarter_starts
+    ]
 
     ax.set_xlim(0, to_days(end_date))
     ax.set_ylim(-0.8, len(MECHANISM_ORDER) - 0.2)
@@ -345,7 +424,9 @@ def fig27_event_timeline(events: dict) -> None:
     ax.set_title(
         "Stablecoin Stress Event Timeline 2020–2023 by Mechanism Class and Data Tier\n"
         "(bar width = event duration; height proportional to peak depeg magnitude)",
-        fontsize=11, fontweight="bold", color=C_NAVY,
+        fontsize=11,
+        fontweight="bold",
+        color=C_NAVY,
     )
     ax.set_xlabel("Date", fontsize=10)
     ax.spines["top"].set_visible(False)
@@ -364,10 +445,13 @@ def fig27_event_timeline(events: dict) -> None:
 def fig28_tierb_depeg_panel(events: dict) -> None:
     # Collect Tier B events with nonzero depeg
     tier_b_events = [
-        (eid, ev) for eid, ev in events.items()
+        (eid, ev)
+        for eid, ev in events.items()
         if ev.get("data_tier") == "B" and abs(ev.get("max_depeg_bps_est", 0)) > 0
     ]
-    tier_b_events.sort(key=lambda x: abs(x[1].get("max_depeg_bps_est", 0)), reverse=True)
+    tier_b_events.sort(
+        key=lambda x: abs(x[1].get("max_depeg_bps_est", 0)), reverse=True
+    )
 
     labels = []
     depegs = []
@@ -387,28 +471,43 @@ def fig28_tierb_depeg_panel(events: dict) -> None:
     fig, ax = plt.subplots(figsize=(10, 6))
 
     y = np.arange(len(labels))
-    bars = ax.barh(y, depegs, color=colors_list, edgecolor="white", linewidth=0.5, alpha=0.88)
+    bars = ax.barh(
+        y, depegs, color=colors_list, edgecolor="white", linewidth=0.5, alpha=0.88
+    )
 
     # Add value labels
     for bar, val in zip(bars, depegs):
         ax.text(
-            val + 20, bar.get_y() + bar.get_height() / 2,
+            val + 20,
+            bar.get_y() + bar.get_height() / 2,
             f"~{int(val)} bps",
-            va="center", fontsize=8, color=C_NAVY,
+            va="center",
+            fontsize=8,
+            color=C_NAVY,
         )
 
     # Reference line: USDC/SVB Tier A peak
     ax.axvline(1300, color=C_NAVY, linewidth=1.5, linestyle="--", alpha=0.7)
-    ax.text(1320, len(labels) - 0.5, "USDC/SVB\nTier A peak\n(−1300 bps)",
-            fontsize=7.5, color=C_NAVY, va="top")
+    ax.text(
+        1320,
+        len(labels) - 0.5,
+        "USDC/SVB\nTier A peak\n(−1300 bps)",
+        fontsize=7.5,
+        color=C_NAVY,
+        va="top",
+    )
 
     ax.set_yticks(y)
     ax.set_yticklabels(labels, fontsize=9)
-    ax.set_xlabel("Peak Depeg Magnitude (bps) — estimated, Tier B events only", fontsize=9)
+    ax.set_xlabel(
+        "Peak Depeg Magnitude (bps) — estimated, Tier B events only", fontsize=9
+    )
     ax.set_title(
         "Tier B Historical Events: Peak Depeg Severity (Estimated)\n"
         "vs. USDC/SVB Tier A Benchmark (−1300 bps verified)",
-        fontsize=11, fontweight="bold", color=C_NAVY,
+        fontsize=11,
+        fontweight="bold",
+        color=C_NAVY,
     )
 
     # Legend by mechanism
@@ -418,7 +517,10 @@ def fig28_tierb_depeg_panel(events: dict) -> None:
         if mc not in seen:
             seen.add(mc)
             handles.append(
-                mpatches.Patch(facecolor=color, label=MECHANISM_LABELS.get(mc, mc).replace("\n", " "))
+                mpatches.Patch(
+                    facecolor=color,
+                    label=MECHANISM_LABELS.get(mc, mc).replace("\n", " "),
+                )
             )
     ax.legend(handles=handles, loc="lower right", fontsize=7.5, framealpha=0.9)
 
@@ -426,10 +528,13 @@ def fig28_tierb_depeg_panel(events: dict) -> None:
     ax.spines["right"].set_visible(False)
 
     fig.text(
-        0.01, -0.04,
+        0.01,
+        -0.04,
         "All Tier B magnitudes are estimates (est.) from event_windows_historical.yaml. "
         "Exact values require on-chain or exchange data pull. Do not cite as exact bps in paper.",
-        fontsize=7, color=C_GREY, style="italic",
+        fontsize=7,
+        color=C_GREY,
+        style="italic",
     )
 
     plt.tight_layout()

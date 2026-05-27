@@ -52,6 +52,7 @@ _MAX_BOOK_LEVELS = 25
 # Timestamp helpers
 # ---------------------------------------------------------------------------
 
+
 def _ts_to_ns(ts: str | float | int | None) -> int:
     """Convert a Tardis timestamp to nanoseconds since epoch.
 
@@ -83,6 +84,7 @@ def _ts_to_ns(ts: str | float | int | None) -> int:
 # ---------------------------------------------------------------------------
 # Trades normalizer
 # ---------------------------------------------------------------------------
+
 
 def normalize_tardis_trades(df: pl.DataFrame) -> pl.DataFrame:
     """Normalize Tardis ``trades`` CSV records into Silver trade-level rows.
@@ -125,22 +127,24 @@ def normalize_tardis_trades(df: pl.DataFrame) -> pl.DataFrame:
         side_raw = str(payload.get("side", "")).lower()
         side = side_raw if side_raw in ("buy", "sell") else "unknown"
 
-        records.append({
-            "ts_event_ns": ts_event_ns,
-            "ts_receive_ns": row.get("ts_receive_ns", ts_event_ns),
-            "venue_id": venue_id,
-            "instrument_id": make_instrument_id(venue_id, native_symbol),
-            "native_symbol": native_symbol,
-            "trade_id": str(payload.get("id", "")),
-            "side": side,
-            "price": price,
-            "size": size,
-            "notional_usd": None,
-            "raw_source": f"{venue_id}:tardis_trades",
-            "payload_hash": row.get("payload_hash", ""),
-            "ingest_batch_id": row.get("ingest_batch_id", ""),
-            "is_outlier_price": False,
-        })
+        records.append(
+            {
+                "ts_event_ns": ts_event_ns,
+                "ts_receive_ns": row.get("ts_receive_ns", ts_event_ns),
+                "venue_id": venue_id,
+                "instrument_id": make_instrument_id(venue_id, native_symbol),
+                "native_symbol": native_symbol,
+                "trade_id": str(payload.get("id", "")),
+                "side": side,
+                "price": price,
+                "size": size,
+                "notional_usd": None,
+                "raw_source": f"{venue_id}:tardis_trades",
+                "payload_hash": row.get("payload_hash", ""),
+                "ingest_batch_id": row.get("ingest_batch_id", ""),
+                "is_outlier_price": False,
+            }
+        )
 
     if not records:
         return pl.DataFrame()
@@ -158,6 +162,7 @@ def normalize_tardis_trades(df: pl.DataFrame) -> pl.DataFrame:
 # ---------------------------------------------------------------------------
 # Book snapshot normalizer (book_snapshot_1s)
 # ---------------------------------------------------------------------------
+
 
 def normalize_tardis_book_snapshot_1s(df: pl.DataFrame) -> pl.DataFrame:
     """Normalize Tardis ``book_snapshot_1s`` CSV records into Silver book rows.
@@ -198,27 +203,29 @@ def normalize_tardis_book_snapshot_1s(df: pl.DataFrame) -> pl.DataFrame:
                 if price <= 0:
                     continue
 
-                records.append({
-                    "ts_event_ns": ts_event_ns,
-                    "ts_receive_ns": ts_receive_ns,
-                    "venue_id": venue_id,
-                    "instrument_id": make_instrument_id(venue_id, native_symbol),
-                    "native_symbol": native_symbol,
-                    "side": side,
-                    "level": i,
-                    "price": price,
-                    "size": size,
-                    "checksum": None,
-                    "raw_source": f"{venue_id}:tardis_book_snapshot",
-                    "payload_hash": row.get("payload_hash", ""),
-                    "depth_source": "real_l2_snapshot",
-                    "is_crossed_book": False,
-                    "is_negative_size": size < 0,
-                    "is_sequence_gap": False,
-                    "is_checksum_failed": False,
-                    "is_stale_quote": False,
-                    "is_resync_period": False,
-                })
+                records.append(
+                    {
+                        "ts_event_ns": ts_event_ns,
+                        "ts_receive_ns": ts_receive_ns,
+                        "venue_id": venue_id,
+                        "instrument_id": make_instrument_id(venue_id, native_symbol),
+                        "native_symbol": native_symbol,
+                        "side": side,
+                        "level": i,
+                        "price": price,
+                        "size": size,
+                        "checksum": None,
+                        "raw_source": f"{venue_id}:tardis_book_snapshot",
+                        "payload_hash": row.get("payload_hash", ""),
+                        "depth_source": "real_l2_snapshot",
+                        "is_crossed_book": False,
+                        "is_negative_size": size < 0,
+                        "is_sequence_gap": False,
+                        "is_checksum_failed": False,
+                        "is_stale_quote": False,
+                        "is_resync_period": False,
+                    }
+                )
 
     if not records:
         return pl.DataFrame()
@@ -228,6 +235,7 @@ def normalize_tardis_book_snapshot_1s(df: pl.DataFrame) -> pl.DataFrame:
 # ---------------------------------------------------------------------------
 # Incremental L2 normalizer (incremental_book_L2)
 # ---------------------------------------------------------------------------
+
 
 def normalize_tardis_incremental_book_l2(df: pl.DataFrame) -> pl.DataFrame:
     """Normalize Tardis ``incremental_book_L2`` CSV records into Silver book rows.
@@ -277,27 +285,29 @@ def normalize_tardis_incremental_book_l2(df: pl.DataFrame) -> pl.DataFrame:
         level = level_counters.get(key, 0)
         level_counters[key] = level + 1
 
-        records.append({
-            "ts_event_ns": ts_event_ns,
-            "ts_receive_ns": ts_receive_ns,
-            "venue_id": venue_id,
-            "instrument_id": make_instrument_id(venue_id, native_symbol),
-            "native_symbol": native_symbol,
-            "side": side,
-            "level": level,
-            "price": price,
-            "size": size,
-            "checksum": None,
-            "raw_source": f"{venue_id}:tardis_incremental_book",
-            "payload_hash": row.get("payload_hash", ""),
-            "depth_source": "real_l2_incremental",
-            "is_crossed_book": False,
-            "is_negative_size": size < 0,
-            "is_sequence_gap": False,
-            "is_checksum_failed": False,
-            "is_stale_quote": False,
-            "is_resync_period": False,
-        })
+        records.append(
+            {
+                "ts_event_ns": ts_event_ns,
+                "ts_receive_ns": ts_receive_ns,
+                "venue_id": venue_id,
+                "instrument_id": make_instrument_id(venue_id, native_symbol),
+                "native_symbol": native_symbol,
+                "side": side,
+                "level": level,
+                "price": price,
+                "size": size,
+                "checksum": None,
+                "raw_source": f"{venue_id}:tardis_incremental_book",
+                "payload_hash": row.get("payload_hash", ""),
+                "depth_source": "real_l2_incremental",
+                "is_crossed_book": False,
+                "is_negative_size": size < 0,
+                "is_sequence_gap": False,
+                "is_checksum_failed": False,
+                "is_stale_quote": False,
+                "is_resync_period": False,
+            }
+        )
 
     if not records:
         return pl.DataFrame()
@@ -308,17 +318,16 @@ def normalize_tardis_incremental_book_l2(df: pl.DataFrame) -> pl.DataFrame:
 # Quality flag helper
 # ---------------------------------------------------------------------------
 
+
 def _apply_crossed_flag(df: pl.DataFrame) -> pl.DataFrame:
     """Mark rows where best bid >= best ask at the same timestamp/instrument."""
     if df.is_empty():
         return df
-    bids = (
-        df.filter((pl.col("side") == "bid") & (pl.col("level") == 0))
-        .select(["ts_event_ns", "instrument_id", pl.col("price").alias("best_bid")])
+    bids = df.filter((pl.col("side") == "bid") & (pl.col("level") == 0)).select(
+        ["ts_event_ns", "instrument_id", pl.col("price").alias("best_bid")]
     )
-    asks = (
-        df.filter((pl.col("side") == "ask") & (pl.col("level") == 0))
-        .select(["ts_event_ns", "instrument_id", pl.col("price").alias("best_ask")])
+    asks = df.filter((pl.col("side") == "ask") & (pl.col("level") == 0)).select(
+        ["ts_event_ns", "instrument_id", pl.col("price").alias("best_ask")]
     )
     bbo = bids.join(asks, on=["ts_event_ns", "instrument_id"], how="inner")
     crossed = (

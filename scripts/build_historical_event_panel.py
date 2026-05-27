@@ -19,15 +19,15 @@ from __future__ import annotations
 
 import argparse
 import csv
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 import numpy as np
 import polars as pl
 
 from stressbench.common.logging import get_logger
-from stressbench.history.event_catalog import EVENT_CATALOG, load_event_windows_yaml
 from stressbench.history.data_availability import PREDEFINED_COVERAGE
+from stressbench.history.event_catalog import EVENT_CATALOG, load_event_windows_yaml
 
 logger = get_logger(__name__)
 
@@ -63,30 +63,39 @@ def _build_panel(df: pl.DataFrame, events: dict) -> pl.DataFrame:
         sub = df.filter(mask)
 
         if sub.is_empty():
-            logger.info("Event %s: no rows found in dataset (ts range [%d, %d])", event_id, start_ns, end_ns)
+            logger.info(
+                "Event %s: no rows found in dataset (ts range [%d, %d])",
+                event_id,
+                start_ns,
+                end_ns,
+            )
             continue
 
         # Tag rows with event metadata
         tier_val = ev["data_tier"]
         tier_str = tier_val.value if hasattr(tier_val, "value") else str(tier_val)
-        sub = sub.with_columns([
-            pl.lit(event_id).alias("event_id"),
-            pl.lit(tier_str).alias("data_tier"),
-            pl.lit(float(ev["coverage_score"])).alias("coverage_score"),
-            pl.lit(", ".join(ev.get("stablecoins", []))).alias("event_stablecoins"),
-        ])
+        sub = sub.with_columns(
+            [
+                pl.lit(event_id).alias("event_id"),
+                pl.lit(tier_str).alias("data_tier"),
+                pl.lit(float(ev["coverage_score"])).alias("coverage_score"),
+                pl.lit(", ".join(ev.get("stablecoins", []))).alias("event_stablecoins"),
+            ]
+        )
         frames.append(sub)
         logger.info("Event %s: found %d rows (tier=%s)", event_id, len(sub), tier_str)
 
     if not frames:
         logger.warning("No rows found for any event window")
         # Return empty frame with event columns added
-        return df.head(0).with_columns([
-            pl.lit("").alias("event_id"),
-            pl.lit("").alias("data_tier"),
-            pl.lit(0.0).alias("coverage_score"),
-            pl.lit("").alias("event_stablecoins"),
-        ])
+        return df.head(0).with_columns(
+            [
+                pl.lit("").alias("event_id"),
+                pl.lit("").alias("data_tier"),
+                pl.lit(0.0).alias("coverage_score"),
+                pl.lit("").alias("event_stablecoins"),
+            ]
+        )
 
     return pl.concat(frames)
 
@@ -97,17 +106,19 @@ def _build_catalog_table(events: dict) -> list[dict]:
     for event_id, ev in events.items():
         tier_val = ev["data_tier"]
         tier_str = tier_val.value if hasattr(tier_val, "value") else str(tier_val)
-        rows.append({
-            "event_id": event_id,
-            "display_name": ev.get("display_name", event_id),
-            "stablecoins": ", ".join(ev.get("stablecoins", [])),
-            "start": ev["start"],
-            "end": ev["end"],
-            "data_tier": tier_str,
-            "coverage_score": ev["coverage_score"],
-            "peak_depeg_bps": ev.get("peak_depeg_bps", ""),
-            "empirical_use": ev.get("empirical_use", ""),
-        })
+        rows.append(
+            {
+                "event_id": event_id,
+                "display_name": ev.get("display_name", event_id),
+                "stablecoins": ", ".join(ev.get("stablecoins", [])),
+                "start": ev["start"],
+                "end": ev["end"],
+                "data_tier": tier_str,
+                "coverage_score": ev["coverage_score"],
+                "peak_depeg_bps": ev.get("peak_depeg_bps", ""),
+                "empirical_use": ev.get("empirical_use", ""),
+            }
+        )
     return rows
 
 
@@ -118,16 +129,18 @@ def _build_coverage_table(events: dict) -> list[dict]:
         profile = PREDEFINED_COVERAGE.get(event_id)
         if profile is None:
             continue
-        rows.append({
-            "event_id": event_id,
-            "price_data": int(profile.price_data),
-            "trade_data": int(profile.trade_data),
-            "l2_data": int(profile.l2_data),
-            "dex_pool_data": int(profile.dex_pool_data),
-            "onchain_data": int(profile.onchain_data),
-            "execution_grade_available": int(profile.execution_grade_available),
-            "coverage_score": profile.coverage_score,
-        })
+        rows.append(
+            {
+                "event_id": event_id,
+                "price_data": int(profile.price_data),
+                "trade_data": int(profile.trade_data),
+                "l2_data": int(profile.l2_data),
+                "dex_pool_data": int(profile.dex_pool_data),
+                "onchain_data": int(profile.onchain_data),
+                "execution_grade_available": int(profile.execution_grade_available),
+                "coverage_score": profile.coverage_score,
+            }
+        )
     return rows
 
 
@@ -160,11 +173,17 @@ def main() -> None:
 
     # Per-event summary
     if len(panel) > 0 and "event_id" in panel.columns:
-        summary = panel.group_by("event_id").agg([
-            pl.len().alias("n_rows"),
-            pl.col("data_tier").first().alias("data_tier"),
-            pl.col("coverage_score").first().alias("coverage_score"),
-        ]).sort("event_id")
+        summary = (
+            panel.group_by("event_id")
+            .agg(
+                [
+                    pl.len().alias("n_rows"),
+                    pl.col("data_tier").first().alias("data_tier"),
+                    pl.col("coverage_score").first().alias("coverage_score"),
+                ]
+            )
+            .sort("event_id")
+        )
         logger.info("Panel summary:\n%s", summary)
 
     # Table 14: Event catalog

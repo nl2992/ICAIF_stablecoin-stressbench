@@ -24,8 +24,12 @@ from stressbench.experiments.tasks import TASKS
 logger = get_logger(__name__)
 
 _EXCLUDE_COLS = {
-    "split", "ts_1m_ns", "basis_primary_asset",
-    "buy_venue", "sell_venue", "depth_source",
+    "split",
+    "ts_1m_ns",
+    "basis_primary_asset",
+    "buy_venue",
+    "sell_venue",
+    "depth_source",
 }
 
 # Sources treated as real executable L2 depth (not synthetic)
@@ -41,7 +45,8 @@ def _resolve_feature_cols(
     requested = FEATURE_SETS.get(feature_set_name)
     if requested is None:
         return [
-            c for c in df.columns
+            c
+            for c in df.columns
             if not c.startswith("label_") and c not in _EXCLUDE_COLS
         ]
     available = set(df.columns)
@@ -49,7 +54,9 @@ def _resolve_feature_cols(
     if missing:
         logger.warning(
             "Feature set '%s': dropping %d absent columns: %s",
-            feature_set_name, len(missing), missing,
+            feature_set_name,
+            len(missing),
+            missing,
         )
     return [c for c in requested if c in available]
 
@@ -129,7 +136,11 @@ def _calibrate_threshold(
         # No candidate met min_trades — fall back to 0.5 without constraint
         signal_05 = (y_proba > 0.5).astype(np.int8)
         best_n = int(signal_05.sum())
-    mean_net = float(np.mean(y_net[(y_proba > best_t).astype(bool)])) if best_n > 0 else float("nan")
+    mean_net = (
+        float(np.mean(y_net[(y_proba > best_t).astype(bool)]))
+        if best_n > 0
+        else float("nan")
+    )
     return best_t, mean_net, best_n
 
 
@@ -196,22 +207,34 @@ def run_experiment(
 
     feature_cols = _resolve_feature_cols(df, feature_set_name, label_col)
     if not feature_cols:
-        raise ValueError(f"No feature columns available for feature set '{feature_set_name}'")
+        raise ValueError(
+            f"No feature columns available for feature set '{feature_set_name}'"
+        )
 
     logger.info(
         "Experiment: task=%s  features=%s (%d cols)  model=%s",
-        task_name, feature_set_name, len(feature_cols), model_name,
+        task_name,
+        feature_set_name,
+        len(feature_cols),
+        model_name,
     )
 
     # Build model now that feature_cols are known — critical for index-based baselines
     model = model_factory(model_name, feature_cols)
 
-    X_train, y_train, _ = _load_split(df, "train", label_col, feature_cols, net_profit_col)
-    X_val, y_val, y_net_val = _load_split(df, "validation", label_col, feature_cols, net_profit_col)
-    X_test, y_test, y_net_test = _load_split(df, "test", label_col, feature_cols, net_profit_col)
+    X_train, y_train, _ = _load_split(
+        df, "train", label_col, feature_cols, net_profit_col
+    )
+    X_val, y_val, y_net_val = _load_split(
+        df, "validation", label_col, feature_cols, net_profit_col
+    )
+    X_test, y_test, y_net_test = _load_split(
+        df, "test", label_col, feature_cols, net_profit_col
+    )
 
     # Fit: oracle gets y_net at fit time; others use train labels
     import inspect
+
     sig = inspect.signature(model.fit)
     if "y_net_profit" in sig.parameters:
         model.fit(X_test, y_test, y_net_profit=y_net_test)
@@ -226,10 +249,14 @@ def run_experiment(
         try:
             y_val_proba = model.predict_proba(X_val)[:, 1]
             y_val_proba = np.clip(y_val_proba, 0.0, 1.0)
-            val_threshold, val_net_bps, val_n_trades = _calibrate_threshold(y_val_proba, y_net_val)
+            val_threshold, val_net_bps, val_n_trades = _calibrate_threshold(
+                y_val_proba, y_net_val
+            )
             logger.info(
                 "  Val threshold: %.2f  (val net_bps=%.1f  n_trades=%d)",
-                val_threshold, val_net_bps, val_n_trades,
+                val_threshold,
+                val_net_bps,
+                val_n_trades,
             )
         except (AttributeError, ValueError):
             pass
@@ -259,7 +286,9 @@ def run_experiment(
     result["n_test"] = len(y_test)
     result["feature_cols"] = feature_cols
     result["validation_threshold"] = round(val_threshold, 4)
-    result["validation_net_bps"] = round(val_net_bps, 2) if not np.isnan(val_net_bps) else None
+    result["validation_net_bps"] = (
+        round(val_net_bps, 2) if not np.isnan(val_net_bps) else None
+    )
     result["validation_n_trades"] = val_n_trades
     result["validation_objective"] = "total_pnl_min25trades"
 

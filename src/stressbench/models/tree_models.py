@@ -55,7 +55,9 @@ class LGBMWrapper:
         try:
             import lightgbm as lgb
         except ImportError:
-            raise ImportError("lightgbm is required. Install with: pip install lightgbm")
+            raise ImportError(
+                "lightgbm is required. Install with: pip install lightgbm"
+            )
 
         if self.task == "regression":
             self._model = lgb.LGBMRegressor(**self.params)

@@ -170,6 +170,7 @@ def _parse_coinbase_ts(ts_str: str) -> int:
     if not ts_str:
         return 0
     from datetime import datetime, timezone
+
     try:
         dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
         return int(dt.timestamp() * 1e9)
@@ -182,6 +183,7 @@ def _parse_kraken_ts(ts) -> int:
     if isinstance(ts, str):
         try:
             from datetime import datetime, timezone
+
             dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
             return int(dt.timestamp() * 1e9)
         except ValueError:

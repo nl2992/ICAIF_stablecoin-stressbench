@@ -17,7 +17,9 @@ import pytest
 from stressbench.models.meta_labeling import MetaLabelingFilter
 
 
-def _make_data(n: int, primary_rate: float = 0.4, meta_pos_rate: float = 0.3, seed: int = 42) -> tuple:
+def _make_data(
+    n: int, primary_rate: float = 0.4, meta_pos_rate: float = 0.3, seed: int = 42
+) -> tuple:
     """Generate synthetic (X, y_primary, y_meta) data.
 
     X[:, 0] = basis signal (positive = large basis, negative = small basis)
@@ -53,9 +55,9 @@ class TestMetaLabelingOnlyFitsWherePrimaryFires:
         model.fit(X, y_primary, y_meta)
 
         # n_primary_fires_train should equal sum of y_primary
-        assert model.n_primary_fires_train == int(y_primary.sum()), (
-            f"Expected {int(y_primary.sum())} fires, got {model.n_primary_fires_train}"
-        )
+        assert model.n_primary_fires_train == int(
+            y_primary.sum()
+        ), f"Expected {int(y_primary.sum())} fires, got {model.n_primary_fires_train}"
         # n_meta_positive_train <= n_primary_fires_train
         assert model.n_meta_positive_train <= model.n_primary_fires_train
 
@@ -72,9 +74,9 @@ class TestMetaLabelingPredictZeroWhenPrimarySilent:
         X_silent[:, 0] = 1.0  # 1 bps << 10 bps threshold
 
         predictions = model.predict(X_silent)
-        assert np.all(predictions == 0), (
-            f"Expected all zeros when primary silent, got {predictions.sum()} non-zero"
-        )
+        assert np.all(
+            predictions == 0
+        ), f"Expected all zeros when primary silent, got {predictions.sum()} non-zero"
 
 
 class TestMetaLabelingPredictProbaShape:
@@ -85,7 +87,10 @@ class TestMetaLabelingPredictProbaShape:
         model.fit(X, y_primary, y_meta)
 
         proba = model.predict_proba(X)
-        assert proba.shape == (len(X), 2), f"Expected shape ({len(X)}, 2), got {proba.shape}"
+        assert proba.shape == (
+            len(X),
+            2,
+        ), f"Expected shape ({len(X)}, 2), got {proba.shape}"
         assert np.all(proba >= 0.0), "Probabilities must be >= 0"
         assert np.all(proba <= 1.0), "Probabilities must be <= 1"
         # Rows should sum to 1
@@ -106,14 +111,14 @@ class TestMetaLabelingFitPredictRoundtrip:
         # All predictions of 1 should have been triggered by primary signal
         primary = (np.abs(X[:, 0]) > 10.0).astype(np.int8)
         # Where preds == 1, primary must also be 1
-        assert np.all(primary[preds.astype(bool)] == 1), (
-            "All predictions of 1 must have primary signal = 1"
-        )
+        assert np.all(
+            primary[preds.astype(bool)] == 1
+        ), "All predictions of 1 must have primary signal = 1"
 
         # Where primary == 0, predict must be 0
-        assert np.all(preds[~primary.astype(bool)] == 0), (
-            "All non-primary-fire rows must have prediction = 0"
-        )
+        assert np.all(
+            preds[~primary.astype(bool)] == 0
+        ), "All non-primary-fire rows must have prediction = 0"
 
         # predict_proba[:, 0] where primary = 0 should be 1.0
         np.testing.assert_allclose(
@@ -154,10 +159,12 @@ class TestMetaLabelingHandlesNoPrimaryFiresInSplit:
         n = 100
         rng = np.random.RandomState(5)
         # Basis values all small — no primary fires
-        X = np.column_stack([
-            rng.uniform(-5, 5, n),  # basis << 10 bps
-            rng.randn(n, 3),
-        ]).astype(np.float32)
+        X = np.column_stack(
+            [
+                rng.uniform(-5, 5, n),  # basis << 10 bps
+                rng.randn(n, 3),
+            ]
+        ).astype(np.float32)
         y_primary = np.zeros(n, dtype=np.int8)  # no fires
         y_meta = np.zeros(n, dtype=np.int8)
 

@@ -47,27 +47,50 @@ _COINBASE_PRODUCTS = ["BTC-USD", "USDT-USD"]  # USDC-USD not listed on Coinbase 
 
 # All benchmark event windows (mirrors event_windows.yaml)
 _ALL_WINDOWS: dict[str, tuple[str, str]] = {
-    "usdc_depeg_2023":        ("2023-03-10", "2023-03-14"),
-    "usdc_depeg_recovery":    ("2023-03-15", "2023-03-20"),
-    "terra_luna_2022":        ("2022-05-07", "2022-05-14"),
+    "usdc_depeg_2023": ("2023-03-10", "2023-03-14"),
+    "usdc_depeg_recovery": ("2023-03-15", "2023-03-20"),
+    "terra_luna_2022": ("2022-05-07", "2022-05-14"),
     "normal_control_feb2023": ("2023-02-01", "2023-02-07"),
     "normal_control_jan2022": ("2022-01-10", "2022-01-16"),
-    "normal_control_q12024":  ("2024-01-15", "2024-01-21"),
+    "normal_control_q12024": ("2024-01-15", "2024-01-21"),
 }
 
 # Silver schemas
 _TRADE_COLS = [
-    "ts_event_ns", "ts_receive_ns", "venue_id", "instrument_id",
-    "native_symbol", "trade_id", "side", "price", "size",
-    "notional_usd", "raw_source", "payload_hash", "ingest_batch_id",
+    "ts_event_ns",
+    "ts_receive_ns",
+    "venue_id",
+    "instrument_id",
+    "native_symbol",
+    "trade_id",
+    "side",
+    "price",
+    "size",
+    "notional_usd",
+    "raw_source",
+    "payload_hash",
+    "ingest_batch_id",
     "is_outlier_price",
 ]
 _BOOK_COLS = [
-    "ts_event_ns", "ts_receive_ns", "venue_id", "instrument_id",
-    "native_symbol", "side", "level", "price", "size",
-    "checksum", "raw_source", "payload_hash",
-    "is_crossed_book", "is_negative_size", "is_sequence_gap",
-    "is_checksum_failed", "is_stale_quote", "is_resync_period",
+    "ts_event_ns",
+    "ts_receive_ns",
+    "venue_id",
+    "instrument_id",
+    "native_symbol",
+    "side",
+    "level",
+    "price",
+    "size",
+    "checksum",
+    "raw_source",
+    "payload_hash",
+    "is_crossed_book",
+    "is_negative_size",
+    "is_sequence_gap",
+    "is_checksum_failed",
+    "is_stale_quote",
+    "is_resync_period",
 ]
 
 # Synthetic book: number of depth levels to generate per side from kline data
@@ -77,6 +100,7 @@ _BOOK_LEVELS = 5
 # ---------------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------------
+
 
 def _date_range(start: str, end: str) -> list[str]:
     s, e = date.fromisoformat(start), date.fromisoformat(end)
@@ -131,9 +155,14 @@ def _get_zip_csv(url: str) -> bytes | None:
 # ---------------------------------------------------------------------------
 
 _AGG_COLS = [
-    "agg_trade_id", "price", "quantity",
-    "first_trade_id", "last_trade_id",
-    "transact_time", "is_buyer_maker", "is_best_match",
+    "agg_trade_id",
+    "price",
+    "quantity",
+    "first_trade_id",
+    "last_trade_id",
+    "transact_time",
+    "is_buyer_maker",
+    "is_best_match",
 ]
 _AGG_DTYPES = {
     "agg_trade_id": pl.Int64,
@@ -171,28 +200,29 @@ def ingest_binance_aggtrades(
     med = float(df["price"].median() or 0)
 
     df = (
-        df
-        .with_columns([
-            (pl.col("transact_time") * 1_000_000).alias("ts_event_ns"),
-            pl.lit(instrument_id).alias("instrument_id"),
-            pl.lit("binance").alias("venue_id"),
-            pl.lit(symbol).alias("native_symbol"),
-            pl.col("agg_trade_id").cast(pl.Utf8).alias("trade_id"),
-            pl.when(pl.col("is_buyer_maker").str.to_lowercase() == "true")
-              .then(pl.lit("sell"))
-              .otherwise(pl.lit("buy"))
-              .alias("side"),
-            pl.col("quantity").alias("size"),
-            pl.lit(None).cast(pl.Float64).alias("notional_usd"),
-            pl.lit("binance:aggTrades").alias("raw_source"),
-            pl.lit("").alias("payload_hash"),
-            pl.lit("binance_vision_archive").alias("ingest_batch_id"),
-            (
-                ((pl.col("price") - med).abs() / med > 0.05)
-                if med > 0
-                else pl.lit(False)
-            ).alias("is_outlier_price"),
-        ])
+        df.with_columns(
+            [
+                (pl.col("transact_time") * 1_000_000).alias("ts_event_ns"),
+                pl.lit(instrument_id).alias("instrument_id"),
+                pl.lit("binance").alias("venue_id"),
+                pl.lit(symbol).alias("native_symbol"),
+                pl.col("agg_trade_id").cast(pl.Utf8).alias("trade_id"),
+                pl.when(pl.col("is_buyer_maker").str.to_lowercase() == "true")
+                .then(pl.lit("sell"))
+                .otherwise(pl.lit("buy"))
+                .alias("side"),
+                pl.col("quantity").alias("size"),
+                pl.lit(None).cast(pl.Float64).alias("notional_usd"),
+                pl.lit("binance:aggTrades").alias("raw_source"),
+                pl.lit("").alias("payload_hash"),
+                pl.lit("binance_vision_archive").alias("ingest_batch_id"),
+                (
+                    ((pl.col("price") - med).abs() / med > 0.05)
+                    if med > 0
+                    else pl.lit(False)
+                ).alias("is_outlier_price"),
+            ]
+        )
         .with_columns(pl.col("ts_event_ns").alias("ts_receive_ns"))
         .with_columns((pl.col("ts_event_ns") // 3_600_000_000_000).alias("_hour_idx"))
     )
@@ -201,7 +231,9 @@ def ingest_binance_aggtrades(
     for (hour_idx,), grp in df.group_by(["_hour_idx"]):
         hour = int(hour_idx) % 24
         out = grp.select(_TRADE_COLS)
-        _write_silver(silver_root, "binance", "aggTrades", symbol, date_str, hour, out, overwrite)
+        _write_silver(
+            silver_root, "binance", "aggTrades", symbol, date_str, hour, out, overwrite
+        )
         total += len(out)
 
     logger.info("  [binance aggTrades] %s %s → %d rows", symbol, date_str, total)
@@ -213,9 +245,18 @@ def ingest_binance_aggtrades(
 # ---------------------------------------------------------------------------
 
 _KLINE_COLS = [
-    "open_time", "open", "high", "low", "close", "volume",
-    "close_time", "quote_volume", "trade_count",
-    "taker_buy_base", "taker_buy_quote", "ignore",
+    "open_time",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "close_time",
+    "quote_volume",
+    "trade_count",
+    "taker_buy_base",
+    "taker_buy_quote",
+    "ignore",
 ]
 _KLINE_DTYPES = {c: pl.Float64 for c in _KLINE_COLS}
 _KLINE_DTYPES["open_time"] = pl.Int64
@@ -248,7 +289,7 @@ def _kline_to_book_records(
 
     records: list[dict] = []
     size_schedule = [0.30, 0.25, 0.20, 0.15, 0.10]  # sums to 1.0
-    spread_schedule = [1.0, 2.0, 3.5, 6.0, 10.0]    # multiples of half_spread
+    spread_schedule = [1.0, 2.0, 3.5, 6.0, 10.0]  # multiples of half_spread
 
     for i in range(_BOOK_LEVELS):
         bid_price = mid - spread_schedule[i] * half_spread
@@ -302,21 +343,24 @@ def ingest_binance_klines(
     instrument_id = f"binance:{symbol}"
     all_records: list[dict] = []
     for row in df.iter_rows(named=True):
-        all_records.extend(_kline_to_book_records(row, instrument_id, "binance", symbol))
+        all_records.extend(
+            _kline_to_book_records(row, instrument_id, "binance", symbol)
+        )
 
     if not all_records:
         return 0
 
-    book_df = (
-        pl.DataFrame(all_records)
-        .with_columns((pl.col("ts_event_ns") // 3_600_000_000_000).alias("_hour_idx"))
+    book_df = pl.DataFrame(all_records).with_columns(
+        (pl.col("ts_event_ns") // 3_600_000_000_000).alias("_hour_idx")
     )
 
     total = 0
     for (hour_idx,), grp in book_df.group_by(["_hour_idx"]):
         hour = int(hour_idx) % 24
         out = grp.select(_BOOK_COLS)
-        _write_silver(silver_root, "binance", "depth", symbol, date_str, hour, out, overwrite)
+        _write_silver(
+            silver_root, "binance", "depth", symbol, date_str, hour, out, overwrite
+        )
         total += len(out)
 
     logger.info("  [binance klines→book] %s %s → %d records", symbol, date_str, total)
@@ -373,76 +417,90 @@ def ingest_binance_futures_bookdepth(
     )
 
     # Tag bid/ask sides and compute absolute percentage level
-    raw = raw.with_columns([
-        pl.when(pl.col("percentage") < 0)
-          .then(pl.lit("bid"))
-          .otherwise(pl.lit("ask"))
-          .alias("side"),
-        pl.col("percentage").abs().alias("abs_pct"),
-    ])
+    raw = raw.with_columns(
+        [
+            pl.when(pl.col("percentage") < 0)
+            .then(pl.lit("bid"))
+            .otherwise(pl.lit("ask"))
+            .alias("side"),
+            pl.col("percentage").abs().alias("abs_pct"),
+        ]
+    )
 
     # Sort so shift() computes incremental depth correctly within each (ts, side) group
     raw = raw.sort(["ts_event_ns", "side", "abs_pct"])
 
     # Cumulative → incremental depth and notional via shift within group
-    raw = raw.with_columns([
-        pl.col("depth").shift(1).over(["ts_event_ns", "side"]).alias("prev_depth"),
-        pl.col("notional").shift(1).over(["ts_event_ns", "side"]).alias("prev_notional"),
-    ]).with_columns([
-        pl.when(pl.col("abs_pct") == 1)
-          .then(pl.col("depth"))
-          .otherwise(pl.col("depth") - pl.col("prev_depth"))
-          .alias("incr_depth"),
-        pl.when(pl.col("abs_pct") == 1)
-          .then(pl.col("notional"))
-          .otherwise(pl.col("notional") - pl.col("prev_notional"))
-          .alias("incr_notional"),
-    ])
+    raw = raw.with_columns(
+        [
+            pl.col("depth").shift(1).over(["ts_event_ns", "side"]).alias("prev_depth"),
+            pl.col("notional")
+            .shift(1)
+            .over(["ts_event_ns", "side"])
+            .alias("prev_notional"),
+        ]
+    ).with_columns(
+        [
+            pl.when(pl.col("abs_pct") == 1)
+            .then(pl.col("depth"))
+            .otherwise(pl.col("depth") - pl.col("prev_depth"))
+            .alias("incr_depth"),
+            pl.when(pl.col("abs_pct") == 1)
+            .then(pl.col("notional"))
+            .otherwise(pl.col("notional") - pl.col("prev_notional"))
+            .alias("incr_notional"),
+        ]
+    )
 
     # Band-average price = total notional in band / BTC depth in band
     raw = raw.with_columns(
         pl.when(pl.col("incr_depth") > 0)
-          .then(pl.col("incr_notional") / pl.col("incr_depth"))
-          .otherwise(pl.lit(None).cast(pl.Float64))
-          .alias("price")
+        .then(pl.col("incr_notional") / pl.col("incr_depth"))
+        .otherwise(pl.lit(None).cast(pl.Float64))
+        .alias("price")
     ).filter(pl.col("incr_depth") > 0)
 
     # level index: abs_pct 1→0, 2→1, 3→2, 4→3, 5→4 (matches kline convention)
     instrument_id = f"binance:{symbol}"
-    raw = raw.with_columns([
-        (pl.col("abs_pct") - 1).cast(pl.Int64).alias("level"),
-        pl.col("ts_event_ns").alias("ts_receive_ns"),
-        pl.lit("binance").alias("venue_id"),
-        pl.lit(instrument_id).alias("instrument_id"),
-        pl.lit(symbol).alias("native_symbol"),
-        pl.col("incr_depth").alias("size"),
-        pl.lit(None).alias("checksum"),
-        pl.lit("binance:futures_bookdepth").alias("raw_source"),
-        pl.lit("").alias("payload_hash"),
-        pl.lit(False).alias("is_crossed_book"),
-        pl.lit(False).alias("is_negative_size"),
-        pl.lit(False).alias("is_sequence_gap"),
-        pl.lit(False).alias("is_checksum_failed"),
-        pl.lit(False).alias("is_stale_quote"),
-        pl.lit(False).alias("is_resync_period"),
-    ]).with_columns(
-        (pl.col("ts_event_ns") // 3_600_000_000_000).alias("_hour_idx")
-    )
+    raw = raw.with_columns(
+        [
+            (pl.col("abs_pct") - 1).cast(pl.Int64).alias("level"),
+            pl.col("ts_event_ns").alias("ts_receive_ns"),
+            pl.lit("binance").alias("venue_id"),
+            pl.lit(instrument_id).alias("instrument_id"),
+            pl.lit(symbol).alias("native_symbol"),
+            pl.col("incr_depth").alias("size"),
+            pl.lit(None).alias("checksum"),
+            pl.lit("binance:futures_bookdepth").alias("raw_source"),
+            pl.lit("").alias("payload_hash"),
+            pl.lit(False).alias("is_crossed_book"),
+            pl.lit(False).alias("is_negative_size"),
+            pl.lit(False).alias("is_sequence_gap"),
+            pl.lit(False).alias("is_checksum_failed"),
+            pl.lit(False).alias("is_stale_quote"),
+            pl.lit(False).alias("is_resync_period"),
+        ]
+    ).with_columns((pl.col("ts_event_ns") // 3_600_000_000_000).alias("_hour_idx"))
 
     total = 0
     for (hour_idx,), grp in raw.group_by(["_hour_idx"]):
         hour = int(hour_idx) % 24
         out = grp.select(_BOOK_COLS)
-        _write_silver(silver_root, "binance", "depth", symbol, date_str, hour, out, overwrite)
+        _write_silver(
+            silver_root, "binance", "depth", symbol, date_str, hour, out, overwrite
+        )
         total += len(out)
 
-    logger.info("  [binance futures bookdepth] %s %s → %d records", symbol, date_str, total)
+    logger.info(
+        "  [binance futures bookdepth] %s %s → %d records", symbol, date_str, total
+    )
     return total
 
 
 # ---------------------------------------------------------------------------
 # Coinbase REST candles → Silver trades + books
 # ---------------------------------------------------------------------------
+
 
 def _fetch_coinbase_candles(
     product_id: str,
@@ -504,7 +562,14 @@ def ingest_coinbase_candles(
     trade_records: list[dict] = []
     book_records: list[dict] = []
 
-    for ts, low_p, high_p, open_p, close_p, vol in rows:  # Coinbase: [time, low, high, open, close, vol]
+    for (
+        ts,
+        low_p,
+        high_p,
+        open_p,
+        close_p,
+        vol,
+    ) in rows:  # Coinbase: [time, low, high, open, close, vol]
         ts_ns = int(ts) * 1_000_000_000
         mid = float(close_p)
         if mid <= 0:
@@ -513,77 +578,109 @@ def ingest_coinbase_candles(
         half_spread = max(hl_range / 2, mid * 0.00005)
         vol_f = max(float(vol), 1e-9)
 
-        trade_records.append(dict(
+        trade_records.append(
+            dict(
+                ts_event_ns=ts_ns,
+                ts_receive_ns=ts_ns,
+                venue_id="coinbase",
+                instrument_id=instrument_id,
+                native_symbol=product_id,
+                trade_id=str(ts),
+                side="buy",
+                price=mid,
+                size=vol_f / 2,
+                notional_usd=None,
+                raw_source="coinbase:candles",
+                payload_hash="",
+                ingest_batch_id="coinbase_api",
+                is_outlier_price=False,
+            )
+        )
+
+        size_schedule = [0.30, 0.25, 0.20, 0.15, 0.10]
+        spread_schedule = [1.0, 2.0, 3.5, 6.0, 10.0]
+        base = dict(
             ts_event_ns=ts_ns,
             ts_receive_ns=ts_ns,
             venue_id="coinbase",
             instrument_id=instrument_id,
             native_symbol=product_id,
-            trade_id=str(ts),
-            side="buy",
-            price=mid,
-            size=vol_f / 2,
-            notional_usd=None,
+            checksum=None,
             raw_source="coinbase:candles",
             payload_hash="",
-            ingest_batch_id="coinbase_api",
-            is_outlier_price=False,
-        ))
-
-        size_schedule = [0.30, 0.25, 0.20, 0.15, 0.10]
-        spread_schedule = [1.0, 2.0, 3.5, 6.0, 10.0]
-        base = dict(
-            ts_event_ns=ts_ns, ts_receive_ns=ts_ns,
-            venue_id="coinbase", instrument_id=instrument_id,
-            native_symbol=product_id, checksum=None,
-            raw_source="coinbase:candles", payload_hash="",
-            is_crossed_book=False, is_negative_size=False,
-            is_sequence_gap=False, is_checksum_failed=False,
-            is_stale_quote=False, is_resync_period=False,
+            is_crossed_book=False,
+            is_negative_size=False,
+            is_sequence_gap=False,
+            is_checksum_failed=False,
+            is_stale_quote=False,
+            is_resync_period=False,
         )
         for i in range(_BOOK_LEVELS):
-            book_records.append({
-                **base, "side": "bid", "level": i,
-                "price": mid - spread_schedule[i] * half_spread,
-                "size": vol_f * size_schedule[i] / 2,
-            })
-            book_records.append({
-                **base, "side": "ask", "level": i,
-                "price": mid + spread_schedule[i] * half_spread,
-                "size": vol_f * size_schedule[i] / 2,
-            })
+            book_records.append(
+                {
+                    **base,
+                    "side": "bid",
+                    "level": i,
+                    "price": mid - spread_schedule[i] * half_spread,
+                    "size": vol_f * size_schedule[i] / 2,
+                }
+            )
+            book_records.append(
+                {
+                    **base,
+                    "side": "ask",
+                    "level": i,
+                    "price": mid + spread_schedule[i] * half_spread,
+                    "size": vol_f * size_schedule[i] / 2,
+                }
+            )
 
     total = 0
     if trade_records:
-        tdf = (
-            pl.DataFrame(trade_records)
-            .with_columns((pl.col("ts_event_ns") // 3_600_000_000_000).alias("_h"))
+        tdf = pl.DataFrame(trade_records).with_columns(
+            (pl.col("ts_event_ns") // 3_600_000_000_000).alias("_h")
         )
         for (h,), grp in tdf.group_by(["_h"]):
             out = grp.select(_TRADE_COLS)
             _write_silver(
-                silver_root, "coinbase", "matches", symbol, date_str, int(h) % 24, out, overwrite
+                silver_root,
+                "coinbase",
+                "matches",
+                symbol,
+                date_str,
+                int(h) % 24,
+                out,
+                overwrite,
             )
             total += len(out)
 
     if book_records:
-        bdf = (
-            pl.DataFrame(book_records)
-            .with_columns((pl.col("ts_event_ns") // 3_600_000_000_000).alias("_h"))
+        bdf = pl.DataFrame(book_records).with_columns(
+            (pl.col("ts_event_ns") // 3_600_000_000_000).alias("_h")
         )
         for (h,), grp in bdf.group_by(["_h"]):
             out = grp.select(_BOOK_COLS)
             _write_silver(
-                silver_root, "coinbase", "level2", symbol, date_str, int(h) % 24, out, overwrite
+                silver_root,
+                "coinbase",
+                "level2",
+                symbol,
+                date_str,
+                int(h) % 24,
+                out,
+                overwrite,
             )
 
-    logger.info("  [coinbase candles] %s %s → %d trade rows", product_id, date_str, total)
+    logger.info(
+        "  [coinbase candles] %s %s → %d trade rows", product_id, date_str, total
+    )
     return total
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -654,18 +751,25 @@ def main() -> None:
 
     logger.info(
         "Fetching %d date(s) across %d window(s): %s",
-        len(all_dates), len(args.windows), sorted(args.windows),
+        len(all_dates),
+        len(args.windows),
+        sorted(args.windows),
     )
     logger.info("Binance symbols: %s", args.symbols)
     if not args.skip_coinbase:
         logger.info("Coinbase products: %s", args.coinbase_products)
 
     if args.dry_run:
-        logger.info("[DRY RUN] Would fetch %d × %d Binance files + Coinbase candles.",
-                    len(sorted(all_dates)), len(args.symbols))
+        logger.info(
+            "[DRY RUN] Would fetch %d × %d Binance files + Coinbase candles.",
+            len(sorted(all_dates)),
+            len(args.symbols),
+        )
         if getattr(args, "futures_bookdepth", False):
-            logger.info("[DRY RUN] Would also fetch futures bookDepth for %s.",
-                        _FUTURES_BOOKDEPTH_SYMBOLS)
+            logger.info(
+                "[DRY RUN] Would also fetch futures bookDepth for %s.",
+                _FUTURES_BOOKDEPTH_SYMBOLS,
+            )
         return
 
     total_rows = 0
@@ -682,11 +786,16 @@ def main() -> None:
 
     # Binance USDM futures bookDepth: real depth snapshots for liquid symbols
     if getattr(args, "futures_bookdepth", False):
-        logger.info("Fetching Binance USDM futures bookDepth for %s", _FUTURES_BOOKDEPTH_SYMBOLS)
+        logger.info(
+            "Fetching Binance USDM futures bookDepth for %s", _FUTURES_BOOKDEPTH_SYMBOLS
+        )
         for date_str in sorted(all_dates):
             for symbol in _FUTURES_BOOKDEPTH_SYMBOLS:
                 total_rows += ingest_binance_futures_bookdepth(
-                    symbol, date_str, silver_root, overwrite=True  # always overwrite kline-derived
+                    symbol,
+                    date_str,
+                    silver_root,
+                    overwrite=True,  # always overwrite kline-derived
                 )
 
     # Coinbase: paginated REST candles
@@ -701,7 +810,8 @@ def main() -> None:
     n_parquet = sum(1 for _ in silver_root.glob("**/*.parquet"))
     logger.info(
         "Fetch complete: %d total rows written to %d Silver parquet files.",
-        total_rows, n_parquet,
+        total_rows,
+        n_parquet,
     )
 
 

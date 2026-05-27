@@ -104,14 +104,13 @@ def write_raw_batch(
     for rec in records:
         row = dict(rec)
         import json
+
         row["payload"] = json.dumps(row["payload"], sort_keys=True)
         serialisable.append(row)
 
     file = path / f"part-{uuid.uuid4().hex}.parquet"
     pl.DataFrame(serialisable).write_parquet(file)
-    logger.info(
-        "Wrote %d records to %s", len(records), file
-    )
+    logger.info("Wrote %d records to %s", len(records), file)
     return file
 
 

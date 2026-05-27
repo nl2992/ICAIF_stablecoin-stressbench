@@ -12,10 +12,13 @@ Outputs:
 """
 
 import os
+
 import pandas as pd
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-IN_PATH = os.path.join(REPO_ROOT, "results", "paper_addon", "table_21_stress_case_metrics.csv")
+IN_PATH = os.path.join(
+    REPO_ROOT, "results", "paper_addon", "table_21_stress_case_metrics.csv"
+)
 OUT_DIR = os.path.join(REPO_ROOT, "results", "paper_addon")
 OUT_PATH = os.path.join(OUT_DIR, "table_22_stress_summary_for_paper.csv")
 
@@ -47,25 +50,38 @@ def main():
     df = pd.DataFrame(rows)
 
     # Rename and select columns for the paper-facing table
-    out = pd.DataFrame({
-        "event_id": df["event_id"],
-        "event_name": df["event_name"],
-        "mechanism_class": df["mechanism_class"],
-        "data_tier": df["data_tier"],
-        "role_in_paper": df["role_in_paper"],
-        "n_minutes": df["n_minutes"],
-        "max_abs_basis_bps": df["max_abs_basis_bps"],
-        "pct_gt_10bps": df["pct_gt_10bps"],
-        "exec_label_available": df["exec_label_available"],
-        "exec_positive_rate_5m_q10k": df["exec_positive_rate_5m_q10k"],
-        "claim_allowed": df["claim_allowed"],
-    })
+    out = pd.DataFrame(
+        {
+            "event_id": df["event_id"],
+            "event_name": df["event_name"],
+            "mechanism_class": df["mechanism_class"],
+            "data_tier": df["data_tier"],
+            "role_in_paper": df["role_in_paper"],
+            "n_minutes": df["n_minutes"],
+            "max_abs_basis_bps": df["max_abs_basis_bps"],
+            "pct_gt_10bps": df["pct_gt_10bps"],
+            "exec_label_available": df["exec_label_available"],
+            "exec_positive_rate_5m_q10k": df["exec_positive_rate_5m_q10k"],
+            "claim_allowed": df["claim_allowed"],
+        }
+    )
 
     out.to_csv(OUT_PATH, index=False)
     print(f"Wrote {len(out)} rows → {OUT_PATH}")
     print()
-    print(out[["event_id", "data_tier", "role_in_paper", "n_minutes",
-               "pct_gt_10bps", "exec_label_available", "exec_positive_rate_5m_q10k"]].to_string(index=False))
+    print(
+        out[
+            [
+                "event_id",
+                "data_tier",
+                "role_in_paper",
+                "n_minutes",
+                "pct_gt_10bps",
+                "exec_label_available",
+                "exec_positive_rate_5m_q10k",
+            ]
+        ].to_string(index=False)
+    )
 
 
 if __name__ == "__main__":

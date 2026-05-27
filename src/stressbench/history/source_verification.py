@@ -43,7 +43,6 @@ class EventSourceRecord:
 # ---------------------------------------------------------------------------
 
 EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
-
     # ── fei_launch_2021 ─────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="fei_launch_2021",
@@ -59,7 +58,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "Use 'est.' notation only; do not cite specific bps in paper tables."
         ),
     ),
-
     # ── iron_titan_2021 ─────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="iron_titan_2021",
@@ -76,7 +74,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "QuickSwap data to confirm. Do not cite intermediate depeg values."
         ),
     ),
-
     # ── mim_wonderland_2022 ─────────────────────────────────────────────────
     EventSourceRecord(
         event_id="mim_wonderland_2022",
@@ -92,7 +89,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "against on-chain Curve MIM-3pool data. Use 'est.' notation only."
         ),
     ),
-
     # ── terra_ust_2022 ──────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="terra_ust_2022",
@@ -121,7 +117,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "Treat as approximately correct; exact timing may vary by block timestamp."
         ),
     ),
-
     # ── usdd_tron_2022 ──────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="usdd_tron_2022",
@@ -136,7 +131,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "magnitude not confirmed from primary source. Use 'est.' notation only."
         ),
     ),
-
     # ── celsius_3ac_2022 ────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="celsius_3ac_2022",
@@ -164,7 +158,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "Do not cite -100 bps in paper tables."
         ),
     ),
-
     # ── husd_depeg_2022 ─────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="husd_depeg_2022",
@@ -180,7 +173,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "Use 'est.' notation only."
         ),
     ),
-
     # ── ftx_collapse_2022 ───────────────────────────────────────────────────
     EventSourceRecord(
         event_id="ftx_collapse_2022",
@@ -206,7 +198,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "small but non-zero basis widening. Use -50 bps as conservative upper bound."
         ),
     ),
-
     # ── busd_regulatory_2023 ────────────────────────────────────────────────
     EventSourceRecord(
         event_id="busd_regulatory_2023",
@@ -231,7 +222,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "Magnitude is conservative; primary CEX data supports this range."
         ),
     ),
-
     # ── binance_stablecoin_conversion_2022 ──────────────────────────────────
     EventSourceRecord(
         event_id="binance_stablecoin_conversion_2022",
@@ -246,7 +236,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "No depeg event occurred (conversions at par). Include for operational context only."
         ),
     ),
-
     # ── usdc_svb_2023 ───────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="usdc_svb_2023",
@@ -282,7 +271,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
         use_in_paper=True,
         notes="Primary regulatory source; date and nature confirmed.",
     ),
-
     # ── usdc_svb_recovery_2023 ──────────────────────────────────────────────
     EventSourceRecord(
         event_id="usdc_svb_recovery_2023",
@@ -304,7 +292,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
         use_in_paper=True,
         notes="Confirmed by real exchange data in benchmark dataset.",
     ),
-
     # ── curve_3pool_ust_2022 ────────────────────────────────────────────────
     EventSourceRecord(
         event_id="curve_3pool_ust_2022",
@@ -320,7 +307,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "only in paper; do not cite -500 bps."
         ),
     ),
-
     # ── usdt_curve_2023 ─────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="usdt_curve_2023",
@@ -336,7 +322,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "CEX-side -8 bps figure is well-sourced."
         ),
     ),
-
     # ── usdc_dai_secondary_svb_2023 ─────────────────────────────────────────
     EventSourceRecord(
         event_id="usdc_dai_secondary_svb_2023",
@@ -353,7 +338,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "do not double-count. Use mechanism description only."
         ),
     ),
-
     # ── dai_black_thursday_2020 ─────────────────────────────────────────────
     EventSourceRecord(
         event_id="dai_black_thursday_2020",
@@ -379,7 +363,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
         use_in_paper=True,
         notes="Widely cited in academic literature on MakerDAO. Primary source URL not available.",
     ),
-
     # ── acala_ausd_2022 ─────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="acala_ausd_2022",
@@ -395,7 +378,6 @@ EVENT_SOURCE_REGISTRY: List[EventSourceRecord] = [
             "from primary on-chain data. Include for mechanism taxonomy only."
         ),
     ),
-
     # ── usdr_2023 ───────────────────────────────────────────────────────────
     EventSourceRecord(
         event_id="usdr_2023",

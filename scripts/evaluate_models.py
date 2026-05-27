@@ -37,7 +37,7 @@ def parse_args() -> argparse.Namespace:
         "--allow-synthetic",
         action="store_true",
         help="Generate synthetic demo data if dataset.parquet is missing. "
-             "For CI/demo only — never use for paper results.",
+        "For CI/demo only — never use for paper results.",
     )
     return parser.parse_args()
 
@@ -60,7 +60,9 @@ def load_test_data(
                 "Run scripts/build_features.py first, "
                 "or pass --allow-synthetic for demo/CI mode."
             )
-        logger.warning("No data found; generating synthetic test data (--allow-synthetic).")
+        logger.warning(
+            "No data found; generating synthetic test data (--allow-synthetic)."
+        )
         rng = np.random.default_rng(99)
         n = 2_000
         X = rng.standard_normal((n, 20)).astype(np.float32)
@@ -79,8 +81,7 @@ def load_test_data(
     if feature_cols is None:
         _excl = {"split", "ts_1m_ns"}
         feature_cols = [
-            c for c in df.columns
-            if not c.startswith("label_") and c not in _excl
+            c for c in df.columns if not c.startswith("label_") and c not in _excl
         ]
 
     X_raw = test_df.select(feature_cols).to_numpy().astype(np.float32)
@@ -99,9 +100,16 @@ def load_test_data(
     # Use the smallest notional for economic metrics — q10000 has most valid values
     # (larger notionals are often NaN due to insufficient book depth)
     net_col = next(
-        (c for c in ["net_profit_bps_q10000", "net_profit_bps_q50000",
-                     "net_profit_bps_q100000", "net_profit_bps_q500000"]
-         if c in test_df.columns),
+        (
+            c
+            for c in [
+                "net_profit_bps_q10000",
+                "net_profit_bps_q50000",
+                "net_profit_bps_q100000",
+                "net_profit_bps_q500000",
+            ]
+            if c in test_df.columns
+        ),
         None,
     )
     if net_col:

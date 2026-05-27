@@ -44,7 +44,9 @@ def _date_range(start: datetime, end: datetime) -> list[str]:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Pull raw market data to Bronze layer.")
+    parser = argparse.ArgumentParser(
+        description="Pull raw market data to Bronze layer."
+    )
     parser.add_argument(
         "--start",
         required=True,
@@ -86,12 +88,16 @@ def parse_args() -> argparse.Namespace:
 # Canonicalization helpers — vendor staging → canonical Bronze layout
 # ---------------------------------------------------------------------------
 
-def _canonicalize_binance(csv_paths: list[Path], symbol: str, bronze_root: Path) -> None:
+
+def _canonicalize_binance(
+    csv_paths: list[Path], symbol: str, bronze_root: Path
+) -> None:
     """Convert downloaded Binance archive CSVs into canonical Bronze Parquet."""
     from stressbench.ingestion.archive_to_bronze import (
         binance_aggtrades_to_bronze,
         binance_klines_to_bronze,
     )
+
     for csv_path in csv_paths:
         if not csv_path or not csv_path.exists():
             continue
@@ -100,7 +106,9 @@ def _canonicalize_binance(csv_paths: list[Path], symbol: str, bronze_root: Path)
         try:
             date = "-".join(parts[-3:])  # last three segments = YYYY-MM-DD
         except IndexError:
-            logger.warning("Cannot parse date from %s; skipping canonicalizer.", csv_path)
+            logger.warning(
+                "Cannot parse date from %s; skipping canonicalizer.", csv_path
+            )
             continue
         name_lower = csv_path.name.lower()
         if "aggtrades" in name_lower:
@@ -108,7 +116,9 @@ def _canonicalize_binance(csv_paths: list[Path], symbol: str, bronze_root: Path)
         elif "klines" in name_lower or "1m" in name_lower:
             binance_klines_to_bronze(csv_path, symbol, date, bronze_root)
         else:
-            logger.debug("No canonicalizer for Binance file %s; skipping.", csv_path.name)
+            logger.debug(
+                "No canonicalizer for Binance file %s; skipping.", csv_path.name
+            )
 
 
 def _canonicalize_tardis(
@@ -123,12 +133,14 @@ def _canonicalize_tardis(
     if not file_path or not Path(file_path).exists():
         return
     from stressbench.ingestion.archive_to_bronze import tardis_to_bronze
+
     tardis_to_bronze(Path(file_path), exchange, symbol, data_type, date, bronze_root)
 
 
 # ---------------------------------------------------------------------------
 # Binance archive
 # ---------------------------------------------------------------------------
+
 
 def pull_binance_archive(
     start: datetime,
@@ -158,10 +170,15 @@ def pull_binance_archive(
         if dry_run:
             logger.info(
                 "[DRY RUN] Would pull Binance archive: symbol=%s, %s → %s, types=%s",
-                symbol, start_date, end_date, _BINANCE_DATA_TYPES,
+                symbol,
+                start_date,
+                end_date,
+                _BINANCE_DATA_TYPES,
             )
             continue
-        logger.info("Pulling Binance archive: symbol=%s, %s → %s", symbol, start_date, end_date)
+        logger.info(
+            "Pulling Binance archive: symbol=%s, %s → %s", symbol, start_date, end_date
+        )
         csv_paths = pull_event_window(
             symbol=symbol,
             start_date=start_date,
@@ -176,6 +193,7 @@ def pull_binance_archive(
 # ---------------------------------------------------------------------------
 # Tardis (Coinbase / Kraken historical data)
 # ---------------------------------------------------------------------------
+
 
 def pull_tardis(
     start: datetime,
@@ -204,7 +222,9 @@ def pull_tardis(
             if inst.get("venue_id") == venue
         ]
         if not symbols:
-            logger.warning("No symbols for venue '%s' in instruments.yaml; skipping.", venue)
+            logger.warning(
+                "No symbols for venue '%s' in instruments.yaml; skipping.", venue
+            )
             continue
 
         for symbol in symbols:
@@ -213,12 +233,18 @@ def pull_tardis(
                     if dry_run:
                         logger.info(
                             "[DRY RUN] Would pull Tardis: exchange=%s symbol=%s type=%s date=%s",
-                            tardis_exchange, symbol, data_type, day,
+                            tardis_exchange,
+                            symbol,
+                            data_type,
+                            day,
                         )
                         continue
                     logger.info(
                         "Pulling Tardis: exchange=%s symbol=%s type=%s date=%s",
-                        tardis_exchange, symbol, data_type, day,
+                        tardis_exchange,
+                        symbol,
+                        data_type,
+                        day,
                     )
                     vendor_path = pull_tardis_day(
                         exchange=tardis_exchange,
@@ -241,6 +267,7 @@ def pull_tardis(
 # ---------------------------------------------------------------------------
 # Etherscan (on-chain stablecoin transfers)
 # ---------------------------------------------------------------------------
+
 
 def pull_etherscan(
     start: datetime,
@@ -269,7 +296,9 @@ def pull_etherscan(
                 continue
             logger.info(
                 "[DRY RUN] Would pull Etherscan: token=%s, %s → %s",
-                token_symbol, start.date(), end.date(),
+                token_symbol,
+                start.date(),
+                end.date(),
             )
         return
 
@@ -281,13 +310,17 @@ def pull_etherscan(
         logger.error(
             "Could not resolve block numbers for range %s → %s. "
             "Check ETHERSCAN_API_KEY.",
-            start.date(), end.date(),
+            start.date(),
+            end.date(),
         )
         return
 
     logger.info(
         "Etherscan block range: %d → %d (%s → %s)",
-        start_block, end_block, start.date(), end.date(),
+        start_block,
+        end_block,
+        start.date(),
+        end.date(),
     )
 
     for token_symbol, chain_map in tokens.items():
@@ -307,13 +340,16 @@ def pull_etherscan(
 
         # Partition by date and save to Bronze
         from collections import defaultdict
+
         by_date: dict[str, list] = defaultdict(list)
         for tx in transfers:
             # Etherscan timeStamp is Unix seconds
             try:
-                tx_date = datetime.fromtimestamp(
-                    int(tx.get("timeStamp", 0)), tz=timezone.utc
-                ).date().isoformat()
+                tx_date = (
+                    datetime.fromtimestamp(int(tx.get("timeStamp", 0)), tz=timezone.utc)
+                    .date()
+                    .isoformat()
+                )
             except (ValueError, TypeError):
                 tx_date = dates[0]  # fallback to start date
             by_date[tx_date].append(tx)
@@ -331,20 +367,24 @@ def pull_etherscan(
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     args = parse_args()
     cfg = load_config()
 
     all_venues = list(cfg.get("instruments", [{}]))
     # Deduplicate venue_ids from instruments list
-    all_venues = list(dict.fromkeys(
-        inst.get("venue_id", "") for inst in cfg.get("instruments", [])
-    ))
+    all_venues = list(
+        dict.fromkeys(inst.get("venue_id", "") for inst in cfg.get("instruments", []))
+    )
     venues = args.venues or all_venues
 
     logger.info(
         "Pulling data: mode=%s, venues=%s, start=%s, end=%s",
-        args.mode, venues, args.start.date(), args.end.date(),
+        args.mode,
+        venues,
+        args.start.date(),
+        args.end.date(),
     )
 
     if args.mode == "archive":
@@ -356,7 +396,9 @@ def main() -> None:
                 "(requires TARDIS_API_KEY in environment)."
             )
             tardis_venues = [v for v in venues if v in ("coinbase", "kraken")]
-            pull_tardis(args.start, args.end, tardis_venues, args.output_dir, args.dry_run)
+            pull_tardis(
+                args.start, args.end, tardis_venues, args.output_dir, args.dry_run
+            )
 
     elif args.mode == "tardis":
         pull_tardis(args.start, args.end, venues, args.output_dir, args.dry_run)

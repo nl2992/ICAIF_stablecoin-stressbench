@@ -59,7 +59,10 @@ def compute_settlement_features_1m(
         if "amount" in transfers_df.columns:
             transfer_volume = float(transfers_df["amount"].cast(pl.Float64).sum())
             large_transfer_count = int(
-                (transfers_df["amount"].cast(pl.Float64) >= large_transfer_threshold_usd).sum()
+                (
+                    transfers_df["amount"].cast(pl.Float64)
+                    >= large_transfer_threshold_usd
+                ).sum()
             )
 
         if "gas_price" in transfers_df.columns:
@@ -72,7 +75,9 @@ def compute_settlement_features_1m(
         # Mint detection: ERC-20 transfers FROM the zero address
         if "from_address" in transfers_df.columns:
             try:
-                mint_mask = transfers_df["from_address"].str.to_lowercase() == _ZERO_ADDRESS
+                mint_mask = (
+                    transfers_df["from_address"].str.to_lowercase() == _ZERO_ADDRESS
+                )
                 mint_count_1h = int(mint_mask.sum())
             except Exception:
                 pass
@@ -80,27 +85,35 @@ def compute_settlement_features_1m(
         # Burn detection: ERC-20 transfers TO the zero address
         if "to_address" in transfers_df.columns:
             try:
-                burn_mask = transfers_df["to_address"].str.to_lowercase() == _ZERO_ADDRESS
+                burn_mask = (
+                    transfers_df["to_address"].str.to_lowercase() == _ZERO_ADDRESS
+                )
                 burn_count_1h = int(burn_mask.sum())
             except Exception:
                 pass
 
         # Block lag proxy: ratio of max inter-block gap to expected block time
-        if "block_number" in transfers_df.columns and "ts_unix_seconds" in transfers_df.columns:
+        if (
+            "block_number" in transfers_df.columns
+            and "ts_unix_seconds" in transfers_df.columns
+        ):
             try:
                 block_times = (
-                    transfers_df
-                    .select([
-                        pl.col("block_number").cast(pl.Int64),
-                        pl.col("ts_unix_seconds").cast(pl.Float64),
-                    ])
+                    transfers_df.select(
+                        [
+                            pl.col("block_number").cast(pl.Int64),
+                            pl.col("ts_unix_seconds").cast(pl.Float64),
+                        ]
+                    )
                     .unique("block_number")
                     .sort("block_number")
                 )
                 if len(block_times) > 1:
                     diffs = block_times["ts_unix_seconds"].diff().drop_nulls()
                     max_gap = float(diffs.max())
-                    block_lag_proxy = max(0.0, (max_gap - _EXPECTED_BLOCK_TIME_S) / _EXPECTED_BLOCK_TIME_S)
+                    block_lag_proxy = max(
+                        0.0, (max_gap - _EXPECTED_BLOCK_TIME_S) / _EXPECTED_BLOCK_TIME_S
+                    )
             except Exception:
                 pass
 

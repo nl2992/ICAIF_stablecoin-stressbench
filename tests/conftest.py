@@ -66,6 +66,7 @@ def sample_depth_df_binance(sample_depth_payload_binance) -> pl.DataFrame:
 @pytest.fixture()
 def simple_order_book():
     from stressbench.book.order_book import OrderBook
+
     book = OrderBook()
     book.apply_snapshot(
         bids=[("1.0001", "50000"), ("1.0000", "100000"), ("0.9999", "200000")],

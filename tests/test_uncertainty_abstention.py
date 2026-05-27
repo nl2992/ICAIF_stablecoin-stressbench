@@ -24,6 +24,7 @@ def small_data():
 
 def _logistic_factory():
     from sklearn.linear_model import LogisticRegression
+
     return LogisticRegression(max_iter=200, random_state=0)
 
 
@@ -100,7 +101,9 @@ def test_abstention_sweep_monotone_trade_count(small_data):
     rng = np.random.default_rng(5)
     mean_preds = rng.uniform(0.3, 0.7, size=len(X))
     std_preds = rng.uniform(0.0, 0.2, size=len(X))
-    rows = abstention_sweep(mean_preds, std_preds, y, k_values=(0.0, 0.5, 1.0, 1.5, 2.0))
+    rows = abstention_sweep(
+        mean_preds, std_preds, y, k_values=(0.0, 0.5, 1.0, 1.5, 2.0)
+    )
     counts = [r["n_trades"] for r in rows]
     for i in range(len(counts) - 1):
         assert counts[i + 1] <= counts[i]
@@ -112,6 +115,12 @@ def test_abstention_sweep_output_schema(small_data):
     mean_preds = np.full(n, 0.6)
     std_preds = np.full(n, 0.1)
     rows = abstention_sweep(mean_preds, std_preds, y)
-    required = {"k", "n_trades", "net_bps_captured", "hit_rate_above_cost", "total_pnl_bps"}
+    required = {
+        "k",
+        "n_trades",
+        "net_bps_captured",
+        "hit_rate_above_cost",
+        "total_pnl_bps",
+    }
     for row in rows:
         assert required.issubset(set(row.keys()))

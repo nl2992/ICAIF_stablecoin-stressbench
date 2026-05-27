@@ -24,6 +24,7 @@ def kraken_checksum(book: OrderBook, depth: int = 10) -> int:
     Returns:
         32-bit unsigned integer CRC32 checksum.
     """
+
     def fmt(val: float) -> str:
         return f"{val:.5f}".replace(".", "").lstrip("0") or "0"
 

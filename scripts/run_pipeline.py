@@ -58,12 +58,18 @@ def main() -> None:
     if "pull" not in args.skip:
         run_stage(
             [
-                py, "scripts/pull_data.py",
-                "--start", args.start,
-                "--end", args.end,
-                "--mode", args.mode,
-                "--output-dir", f"{args.data_dir}/bronze",
-            ] + (["--dry-run"] if args.dry_run else []),
+                py,
+                "scripts/pull_data.py",
+                "--start",
+                args.start,
+                "--end",
+                args.end,
+                "--mode",
+                args.mode,
+                "--output-dir",
+                f"{args.data_dir}/bronze",
+            ]
+            + (["--dry-run"] if args.dry_run else []),
             stage="pull_data",
             dry_run=False,  # Already handled inside pull_data.py
         )
@@ -71,13 +77,20 @@ def main() -> None:
     if "build" not in args.skip:
         run_stage(
             [
-                py, "scripts/build_features.py",
-                "--start", args.start,
-                "--end", args.end,
-                "--bronze-dir", f"{args.data_dir}/bronze",
-                "--silver-dir", f"{args.data_dir}/silver",
-                "--gold-dir", f"{args.data_dir}/gold",
-            ] + (["--dry-run"] if args.dry_run else []),
+                py,
+                "scripts/build_features.py",
+                "--start",
+                args.start,
+                "--end",
+                args.end,
+                "--bronze-dir",
+                f"{args.data_dir}/bronze",
+                "--silver-dir",
+                f"{args.data_dir}/silver",
+                "--gold-dir",
+                f"{args.data_dir}/gold",
+            ]
+            + (["--dry-run"] if args.dry_run else []),
             stage="build_features",
             dry_run=False,
         )
@@ -85,9 +98,12 @@ def main() -> None:
     if "train" not in args.skip:
         run_stage(
             [
-                py, "scripts/train_models.py",
-                "--data-dir", f"{args.data_dir}/gold",
-                "--model-dir", args.model_dir,
+                py,
+                "scripts/train_models.py",
+                "--data-dir",
+                f"{args.data_dir}/gold",
+                "--model-dir",
+                args.model_dir,
             ],
             stage="train_models",
             dry_run=args.dry_run,
@@ -96,10 +112,14 @@ def main() -> None:
     if "evaluate" not in args.skip:
         run_stage(
             [
-                py, "scripts/evaluate_models.py",
-                "--data-dir", f"{args.data_dir}/gold",
-                "--model-dir", args.model_dir,
-                "--output", args.output,
+                py,
+                "scripts/evaluate_models.py",
+                "--data-dir",
+                f"{args.data_dir}/gold",
+                "--model-dir",
+                args.model_dir,
+                "--output",
+                args.output,
             ],
             stage="evaluate_models",
             dry_run=args.dry_run,

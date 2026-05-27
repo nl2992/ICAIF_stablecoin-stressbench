@@ -13,10 +13,10 @@ import pytest
 
 from stressbench.experiments.robustness import _forward_max, compute_robustness_grid
 
-
 # -----------------------------------------------------------------------
 # Unit tests for _forward_max
 # -----------------------------------------------------------------------
+
 
 def test_forward_max_1step_equals_input():
     arr = np.array([1.0, -2.0, 3.0, np.nan, 0.5])
@@ -60,6 +60,7 @@ def test_forward_max_larger_window_geq_smaller():
 # Integration tests: cost sensitivity must actually matter
 # -----------------------------------------------------------------------
 
+
 @pytest.fixture()
 def cost_sensitive_dataset(tmp_path):
     """Dataset where fee/settlement changes clearly affect executability."""
@@ -68,15 +69,17 @@ def cost_sensitive_dataset(tmp_path):
     # Net profits uniformly distributed around +5 bps → many positives
     # After -10 bps settlement, almost none positive
     net = rng.uniform(-5, 15, size=n)  # ~75% positive before adjustment
-    df = pl.DataFrame({
-        "ts_1m_ns": np.arange(n, dtype=np.int64) * 60_000_000_000,
-        "split": ["test"] * n,
-        "cross_quote_basis_usdc_bps": rng.standard_normal(n) * 15,
-        "net_profit_bps_q10000": net,
-        "net_profit_bps_q50000": net - 3.0,
-        "net_profit_bps_q100000": net - 5.0,
-        "net_profit_bps_q500000": net - 8.0,
-    })
+    df = pl.DataFrame(
+        {
+            "ts_1m_ns": np.arange(n, dtype=np.int64) * 60_000_000_000,
+            "split": ["test"] * n,
+            "cross_quote_basis_usdc_bps": rng.standard_normal(n) * 15,
+            "net_profit_bps_q10000": net,
+            "net_profit_bps_q50000": net - 3.0,
+            "net_profit_bps_q100000": net - 5.0,
+            "net_profit_bps_q500000": net - 8.0,
+        }
+    )
     path = tmp_path / "dataset.parquet"
     df.write_parquet(str(path))
     return path
@@ -84,11 +87,13 @@ def cost_sensitive_dataset(tmp_path):
 
 def _get(rows, notional, threshold, settlement, fee, horizon):
     for r in rows:
-        if (r["notional"] == notional
-                and r["basis_threshold_bps"] == threshold
-                and r["settlement_penalty_bps"] == settlement
-                and r["fee_regime"] == fee
-                and r["horizon"] == horizon):
+        if (
+            r["notional"] == notional
+            and r["basis_threshold_bps"] == threshold
+            and r["settlement_penalty_bps"] == settlement
+            and r["fee_regime"] == fee
+            and r["horizon"] == horizon
+        ):
             return r
     return None
 
@@ -101,7 +106,9 @@ def test_high_fee_executable_leq_base_fee(cost_sensitive_dataset):
             base = _get(rows, 10_000, threshold, 0, "base_fee", horizon)
             high = _get(rows, 10_000, threshold, 0, "high_fee", horizon)
             assert base is not None and high is not None
-            assert high["executable_signal_pct"] <= base["executable_signal_pct"] + 1e-9, (
+            assert (
+                high["executable_signal_pct"] <= base["executable_signal_pct"] + 1e-9
+            ), (
                 f"high_fee exec ({high['executable_signal_pct']:.3f}) > "
                 f"base_fee exec ({base['executable_signal_pct']:.3f}) "
                 f"at threshold={threshold}, horizon={horizon}"
@@ -125,9 +132,12 @@ def test_higher_settlement_reduces_executable(cost_sensitive_dataset):
     for threshold in [0, 10]:
         for horizon in ["1m", "5m"]:
             zero_pen = _get(rows, 10_000, threshold, 0, "base_fee", horizon)
-            ten_pen  = _get(rows, 10_000, threshold, 10, "base_fee", horizon)
+            ten_pen = _get(rows, 10_000, threshold, 10, "base_fee", horizon)
             assert zero_pen is not None and ten_pen is not None
-            assert ten_pen["executable_signal_pct"] <= zero_pen["executable_signal_pct"] + 1e-9, (
+            assert (
+                ten_pen["executable_signal_pct"]
+                <= zero_pen["executable_signal_pct"] + 1e-9
+            ), (
                 f"10bps penalty exec ({ten_pen['executable_signal_pct']:.3f}) > "
                 f"0bps penalty exec ({zero_pen['executable_signal_pct']:.3f}) "
                 f"at threshold={threshold}, horizon={horizon}"

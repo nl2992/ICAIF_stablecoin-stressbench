@@ -33,9 +33,9 @@ def test_label_1m_equals_next_row_basis() -> None:
     for i in range(len(labeled) - 1):
         expected = labeled["cross_quote_basis_primary_bps"][i + 1]
         actual = labeled["label_basis_1m"][i]
-        assert actual == pytest.approx(expected, abs=1e-9), (
-            f"Row {i}: label_basis_1m={actual} but basis[{i+1}]={expected}"
-        )
+        assert actual == pytest.approx(
+            expected, abs=1e-9
+        ), f"Row {i}: label_basis_1m={actual} but basis[{i+1}]={expected}"
 
 
 def test_label_5m_equals_row_5_steps_ahead() -> None:
@@ -46,9 +46,9 @@ def test_label_5m_equals_row_5_steps_ahead() -> None:
     for i in range(len(labeled) - 5):
         expected = labeled["cross_quote_basis_primary_bps"][i + 5]
         actual = labeled["label_basis_5m"][i]
-        assert actual == pytest.approx(expected, abs=1e-9), (
-            f"Row {i}: label_basis_5m={actual} but basis[{i+5}]={expected}"
-        )
+        assert actual == pytest.approx(
+            expected, abs=1e-9
+        ), f"Row {i}: label_basis_5m={actual} but basis[{i+5}]={expected}"
 
 
 def test_label_does_not_equal_current_row() -> None:
@@ -105,9 +105,9 @@ def test_label_prefix_no_lookahead() -> None:
         expected = labeled["cross_quote_basis_usdc_bps"][i + 1]
         actual = labeled["label_basis_usdc_1m"][i]
         if actual is not None:
-            assert actual == pytest.approx(expected, abs=1e-9), (
-                f"Row {i}: label_basis_usdc_1m={actual} but usdc_basis[{i+1}]={expected}"
-            )
+            assert actual == pytest.approx(
+                expected, abs=1e-9
+            ), f"Row {i}: label_basis_usdc_1m={actual} but usdc_basis[{i+1}]={expected}"
 
 
 def test_binary_label_consistent_with_regression_label() -> None:

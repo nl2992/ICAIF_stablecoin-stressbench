@@ -29,7 +29,9 @@ _FLUSH_INTERVAL_SECONDS = 30
 _BOOK_DEPTH = 100
 
 
-def _subscribe_message(channel: str, pairs: Sequence[str], depth: int = _BOOK_DEPTH) -> str:
+def _subscribe_message(
+    channel: str, pairs: Sequence[str], depth: int = _BOOK_DEPTH
+) -> str:
     params: dict = {"channel": channel, "symbol": list(pairs)}
     if channel == "book":
         params["depth"] = depth
@@ -94,7 +96,9 @@ async def run_collector(
                                 if computed != checksum:
                                     logger.warning(
                                         "Checksum mismatch for %s: expected %s, computed %s",
-                                        symbol, checksum, computed,
+                                        symbol,
+                                        checksum,
+                                        computed,
                                     )
                                     msg["_checksum_failed"] = True
 
@@ -155,6 +159,7 @@ def _compute_kraken_checksum(book_entry: dict) -> int | None:
         parts.append(fmt(level.get("qty", 0)))
 
     import binascii
+
     raw = "".join(parts).encode("ascii")
     return binascii.crc32(raw) & 0xFFFFFFFF
 

@@ -58,6 +58,7 @@ class MetaLabelingFilter:
             from lightgbm import LGBMClassifier  # type: ignore
         except ImportError:
             from sklearn.ensemble import GradientBoostingClassifier
+
             return GradientBoostingClassifier(n_estimators=100, random_state=42)
         return LGBMClassifier(
             n_estimators=100,
@@ -143,7 +144,9 @@ class MetaLabelingFilter:
             return result
 
         if getattr(self, "_degenerate", False):
-            meta_pred = np.full(primary_mask.sum(), self._degenerate_class, dtype=np.int8)
+            meta_pred = np.full(
+                primary_mask.sum(), self._degenerate_class, dtype=np.int8
+            )
         else:
             meta_pred = self._meta_clf.predict(X[primary_mask]).astype(np.int8)
 

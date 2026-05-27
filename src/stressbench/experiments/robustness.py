@@ -40,9 +40,9 @@ BASIS_THRESHOLDS_BPS = [0, 5, 10, 25, 50]
 SETTLEMENT_PENALTIES_BPS = [0, 2, 5, 10]
 
 FEE_REGIMES: dict[str, float] = {
-    "base_fee": 0.0,            # no adjustment
-    "low_fee": +2.0,            # lower fees → add 2 bps to net profit
-    "high_fee": -2.0,           # higher fees → subtract 2 bps
+    "base_fee": 0.0,  # no adjustment
+    "low_fee": +2.0,  # lower fees → add 2 bps to net profit
+    "high_fee": -2.0,  # higher fees → subtract 2 bps
     "institutional_fee": +3.0,  # institutional cap ~2 bps total vs typical 5 bps
 }
 
@@ -121,7 +121,11 @@ def compute_robustness_grid(
             logger.warning("No rows for split=%s", split)
             continue
 
-        basis_vals = sdf[_BASIS_COL].to_numpy().astype(float) if _BASIS_COL in sdf.columns else None
+        basis_vals = (
+            sdf[_BASIS_COL].to_numpy().astype(float)
+            if _BASIS_COL in sdf.columns
+            else None
+        )
 
         for notional in NOTIONALS:
             net_col = _NOTIONAL_TO_COL[notional]
@@ -134,7 +138,9 @@ def compute_robustness_grid(
             # Oracle: mean net profit on unadjusted profitable windows
             # (oracle is a fixed baseline reference; we don't adjust it for fee scenarios)
             valid = net_vals[~np.isnan(net_vals)]
-            oracle_net = float(np.mean(valid[valid > 0])) if (valid > 0).any() else float("nan")
+            oracle_net = (
+                float(np.mean(valid[valid > 0])) if (valid > 0).any() else float("nan")
+            )
             oracle_n = int((valid > 0).sum())
 
             for threshold_bps in BASIS_THRESHOLDS_BPS:
@@ -158,7 +164,8 @@ def compute_robustness_grid(
                             valid_fwd = ~np.isnan(fwd_max)
                             exec_pct = (
                                 float((fwd_max[valid_fwd] > 0).sum()) / n * 100
-                                if valid_fwd.any() else float("nan")
+                                if valid_fwd.any()
+                                else float("nan")
                             )
 
                             ratio = (
@@ -167,19 +174,27 @@ def compute_robustness_grid(
                                 else float("nan")
                             )
 
-                            rows.append({
-                                "split": split,
-                                "notional": notional,
-                                "basis_threshold_bps": threshold_bps,
-                                "settlement_penalty_bps": settlement_bps,
-                                "fee_regime": fee_regime,
-                                "horizon": horizon,
-                                "n_minutes": n,
-                                "price_signal_pct": round(price_pct, 3),
-                                "executable_signal_pct": round(exec_pct, 3),
-                                "price_to_execution_ratio": round(ratio, 2) if ratio == ratio else "",
-                                "oracle_net_bps": round(oracle_net, 2) if oracle_net == oracle_net else "",
-                                "oracle_n_trades": oracle_n,
-                            })
+                            rows.append(
+                                {
+                                    "split": split,
+                                    "notional": notional,
+                                    "basis_threshold_bps": threshold_bps,
+                                    "settlement_penalty_bps": settlement_bps,
+                                    "fee_regime": fee_regime,
+                                    "horizon": horizon,
+                                    "n_minutes": n,
+                                    "price_signal_pct": round(price_pct, 3),
+                                    "executable_signal_pct": round(exec_pct, 3),
+                                    "price_to_execution_ratio": (
+                                        round(ratio, 2) if ratio == ratio else ""
+                                    ),
+                                    "oracle_net_bps": (
+                                        round(oracle_net, 2)
+                                        if oracle_net == oracle_net
+                                        else ""
+                                    ),
+                                    "oracle_n_trades": oracle_n,
+                                }
+                            )
 
     return rows

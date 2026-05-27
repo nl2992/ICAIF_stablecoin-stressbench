@@ -25,13 +25,14 @@ from stressbench.normalization.normalize_tardis import (
     normalize_tardis_trades,
 )
 
-_TS_NS = 1_704_067_200_000_000_000   # 2024-01-01 00:00:00 UTC
+_TS_NS = 1_704_067_200_000_000_000  # 2024-01-01 00:00:00 UTC
 _TS_ISO = "2024-01-01T00:00:00.000000Z"
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def tardis_trades_df() -> pl.DataFrame:
@@ -45,17 +46,19 @@ def tardis_trades_df() -> pl.DataFrame:
         "price": 42_500.75,
         "amount": 0.25,
     }
-    return pl.DataFrame({
-        "source": ["coinbase"],
-        "channel": ["tardis_trades"],
-        "symbol": ["BTC-USD"],
-        "ts_exchange": [_TS_ISO],
-        "ts_receive_ns": [_TS_NS],
-        "payload": [json.dumps(payload)],
-        "payload_hash": [""],
-        "schema_version": ["raw.v1"],
-        "ingest_batch_id": ["tardis_archive"],
-    })
+    return pl.DataFrame(
+        {
+            "source": ["coinbase"],
+            "channel": ["tardis_trades"],
+            "symbol": ["BTC-USD"],
+            "ts_exchange": [_TS_ISO],
+            "ts_receive_ns": [_TS_NS],
+            "payload": [json.dumps(payload)],
+            "payload_hash": [""],
+            "schema_version": ["raw.v1"],
+            "ingest_batch_id": ["tardis_archive"],
+        }
+    )
 
 
 @pytest.fixture()
@@ -72,17 +75,19 @@ def tardis_book_snapshot_df() -> pl.DataFrame:
         payload[f"bids[{i}].amount"] = 1.0 + i * 0.1
         payload[f"asks[{i}].price"] = 42_510.0 + i * 5
         payload[f"asks[{i}].amount"] = 0.8 + i * 0.1
-    return pl.DataFrame({
-        "source": ["coinbase"],
-        "channel": ["tardis_book_snapshot_1s"],
-        "symbol": ["BTC-USD"],
-        "ts_exchange": [_TS_ISO],
-        "ts_receive_ns": [_TS_NS],
-        "payload": [json.dumps(payload)],
-        "payload_hash": [""],
-        "schema_version": ["raw.v1"],
-        "ingest_batch_id": ["tardis_archive"],
-    })
+    return pl.DataFrame(
+        {
+            "source": ["coinbase"],
+            "channel": ["tardis_book_snapshot_1s"],
+            "symbol": ["BTC-USD"],
+            "ts_exchange": [_TS_ISO],
+            "ts_receive_ns": [_TS_NS],
+            "payload": [json.dumps(payload)],
+            "payload_hash": [""],
+            "schema_version": ["raw.v1"],
+            "ingest_batch_id": ["tardis_archive"],
+        }
+    )
 
 
 @pytest.fixture()
@@ -103,23 +108,26 @@ def tardis_incremental_l2_df() -> pl.DataFrame:
             "price": price,
             "amount": amount,
         }
-        rows.append({
-            "source": "kraken",
-            "channel": "tardis_incremental_book_l2",
-            "symbol": "BTC/USD",
-            "ts_exchange": _TS_ISO,
-            "ts_receive_ns": _TS_NS,
-            "payload": json.dumps(payload),
-            "payload_hash": "",
-            "schema_version": "raw.v1",
-            "ingest_batch_id": "tardis_archive",
-        })
+        rows.append(
+            {
+                "source": "kraken",
+                "channel": "tardis_incremental_book_l2",
+                "symbol": "BTC/USD",
+                "ts_exchange": _TS_ISO,
+                "ts_receive_ns": _TS_NS,
+                "payload": json.dumps(payload),
+                "payload_hash": "",
+                "schema_version": "raw.v1",
+                "ingest_batch_id": "tardis_archive",
+            }
+        )
     return pl.DataFrame(rows)
 
 
 # ---------------------------------------------------------------------------
 # normalize_tardis_trades
 # ---------------------------------------------------------------------------
+
 
 def test_normalize_tardis_trades_non_empty(tardis_trades_df):
     result = normalize_tardis_trades(tardis_trades_df)
@@ -155,14 +163,16 @@ def test_normalize_tardis_trades_side(tardis_trades_df):
 
 
 def test_normalize_tardis_trades_empty_df():
-    empty = pl.DataFrame({
-        "source": pl.Series([], dtype=pl.Utf8),
-        "symbol": pl.Series([], dtype=pl.Utf8),
-        "ts_receive_ns": pl.Series([], dtype=pl.Int64),
-        "payload": pl.Series([], dtype=pl.Utf8),
-        "payload_hash": pl.Series([], dtype=pl.Utf8),
-        "ingest_batch_id": pl.Series([], dtype=pl.Utf8),
-    })
+    empty = pl.DataFrame(
+        {
+            "source": pl.Series([], dtype=pl.Utf8),
+            "symbol": pl.Series([], dtype=pl.Utf8),
+            "ts_receive_ns": pl.Series([], dtype=pl.Int64),
+            "payload": pl.Series([], dtype=pl.Utf8),
+            "payload_hash": pl.Series([], dtype=pl.Utf8),
+            "ingest_batch_id": pl.Series([], dtype=pl.Utf8),
+        }
+    )
     result = normalize_tardis_trades(empty)
     assert result.is_empty()
 
@@ -170,6 +180,7 @@ def test_normalize_tardis_trades_empty_df():
 # ---------------------------------------------------------------------------
 # normalize_tardis_book_snapshot_1s
 # ---------------------------------------------------------------------------
+
 
 def test_normalize_tardis_book_snapshot_1s_non_empty(tardis_book_snapshot_df):
     result = normalize_tardis_book_snapshot_1s(tardis_book_snapshot_df)
@@ -208,6 +219,7 @@ def test_normalize_tardis_book_snapshot_1s_row_count(tardis_book_snapshot_df):
 # ---------------------------------------------------------------------------
 # normalize_tardis_incremental_book_l2
 # ---------------------------------------------------------------------------
+
 
 def test_normalize_tardis_incremental_book_l2_non_empty(tardis_incremental_l2_df):
     result = normalize_tardis_incremental_book_l2(tardis_incremental_l2_df)

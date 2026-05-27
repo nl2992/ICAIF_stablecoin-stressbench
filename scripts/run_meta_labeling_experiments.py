@@ -78,10 +78,14 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def _resolve_feature_cols(df: pl.DataFrame, feat_set: str, exclude: set[str]) -> list[str]:
+def _resolve_feature_cols(
+    df: pl.DataFrame, feat_set: str, exclude: set[str]
+) -> list[str]:
     cols = FEATURE_SETS.get(feat_set)
     if cols is None:
-        cols = [c for c in df.columns if c not in exclude and not c.startswith("label_")]
+        cols = [
+            c for c in df.columns if c not in exclude and not c.startswith("label_")
+        ]
     else:
         cols = [c for c in cols if c in df.columns]
     return cols
@@ -183,7 +187,9 @@ def _economic_metrics(
         "test_net_bps_captured": round(net_bps, 4),
         "test_hit_rate": round(hit_rate, 4),
         "test_final_pnl_usd": round(final_pnl, 2),
-        "test_oracle_capture_pct": round(oracle_capture, 4) if not math.isnan(oracle_capture) else float("nan"),
+        "test_oracle_capture_pct": (
+            round(oracle_capture, 4) if not math.isnan(oracle_capture) else float("nan")
+        ),
     }
 
 
@@ -193,7 +199,14 @@ def run_meta_labeling(
     task_cfg: dict,
     feat_set: str,
 ) -> dict:
-    exclude = {"split", "ts_1m_ns", "basis_primary_asset", "buy_venue", "sell_venue", "depth_source"}
+    exclude = {
+        "split",
+        "ts_1m_ns",
+        "basis_primary_asset",
+        "buy_venue",
+        "sell_venue",
+        "depth_source",
+    }
     feature_cols = _resolve_feature_cols(df, feat_set, exclude)
 
     # Find index of basis column in feature_cols
@@ -202,19 +215,31 @@ def run_meta_labeling(
         basis_idx = feature_cols.index(_BASIS_COL)
 
     X_train, y_primary_train, y_meta_train, y_net_train, _ = _extract_split(
-        df, "train", feature_cols,
-        task_cfg["label_col"], task_cfg["meta_label_col"],
-        task_cfg["net_profit_col"], _BASIS_COL,
+        df,
+        "train",
+        feature_cols,
+        task_cfg["label_col"],
+        task_cfg["meta_label_col"],
+        task_cfg["net_profit_col"],
+        _BASIS_COL,
     )
     X_val, y_primary_val, y_meta_val, y_net_val, _ = _extract_split(
-        df, "validation", feature_cols,
-        task_cfg["label_col"], task_cfg["meta_label_col"],
-        task_cfg["net_profit_col"], _BASIS_COL,
+        df,
+        "validation",
+        feature_cols,
+        task_cfg["label_col"],
+        task_cfg["meta_label_col"],
+        task_cfg["net_profit_col"],
+        _BASIS_COL,
     )
     X_test, y_primary_test, y_meta_test, y_net_test, _ = _extract_split(
-        df, "test", feature_cols,
-        task_cfg["label_col"], task_cfg["meta_label_col"],
-        task_cfg["net_profit_col"], _BASIS_COL,
+        df,
+        "test",
+        feature_cols,
+        task_cfg["label_col"],
+        task_cfg["meta_label_col"],
+        task_cfg["net_profit_col"],
+        _BASIS_COL,
     )
 
     model = MetaLabelingFilter(
@@ -228,7 +253,10 @@ def run_meta_labeling(
 
     logger.info(
         "Task=%s feat=%s: primary_fires_train=%d meta_pos_train=%d",
-        task_name, feat_set, n_primary_fires_train, n_meta_positive_train,
+        task_name,
+        feat_set,
+        n_primary_fires_train,
+        n_meta_positive_train,
     )
 
     # Calibrate on validation
@@ -243,7 +271,9 @@ def run_meta_labeling(
     test_signal = (y_test_proba > val_threshold).astype(np.int8)
 
     oracle_net_bps = _ORACLE_NET_BPS.get(task_name, 161.0)
-    econ = _economic_metrics(test_signal, y_net_test, task_cfg["notional_usd"], oracle_net_bps)
+    econ = _economic_metrics(
+        test_signal, y_net_test, task_cfg["notional_usd"], oracle_net_bps
+    )
 
     return {
         "task": task_name,
@@ -269,20 +299,38 @@ def main() -> None:
     rows = []
     for task_name, task_cfg in _TASKS.items():
         if task_cfg["label_col"] not in df.columns:
-            logger.warning("Label column %s not found, skipping task %s", task_cfg["label_col"], task_name)
+            logger.warning(
+                "Label column %s not found, skipping task %s",
+                task_cfg["label_col"],
+                task_name,
+            )
             continue
         if task_cfg["meta_label_col"] not in df.columns:
-            logger.warning("Meta-label column %s not found, skipping task %s", task_cfg["meta_label_col"], task_name)
+            logger.warning(
+                "Meta-label column %s not found, skipping task %s",
+                task_cfg["meta_label_col"],
+                task_name,
+            )
             continue
         for feat_set in _FEATURE_SETS:
             logger.info("Running: task=%s feat=%s", task_name, feat_set)
             try:
                 row = run_meta_labeling(df, task_name, task_cfg, feat_set)
                 rows.append(row)
-                logger.info("  -> n_trades=%s net_bps=%s oracle_pct=%s",
-                            row["test_n_trades"], row["test_net_bps_captured"], row["test_oracle_capture_pct"])
+                logger.info(
+                    "  -> n_trades=%s net_bps=%s oracle_pct=%s",
+                    row["test_n_trades"],
+                    row["test_net_bps_captured"],
+                    row["test_oracle_capture_pct"],
+                )
             except Exception as exc:
-                logger.error("FAILED task=%s feat=%s: %s", task_name, feat_set, exc, exc_info=True)
+                logger.error(
+                    "FAILED task=%s feat=%s: %s",
+                    task_name,
+                    feat_set,
+                    exc,
+                    exc_info=True,
+                )
 
     out_path = out_dir / "meta_labeling_results.csv"
     with open(out_path, "w", newline="") as fh:

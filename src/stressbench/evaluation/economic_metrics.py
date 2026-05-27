@@ -177,6 +177,7 @@ def economic_summary(
         "sharpe_ratio": sharpe_ratio(y_true_net_profit, y_pred_signal),
         "profit_per_unit_turnover_bps": (
             float(cum_pnl[-1]) / total_turnover * 10_000
-            if total_turnover > 0 else float("nan")
+            if total_turnover > 0
+            else float("nan")
         ),
     }

@@ -112,9 +112,9 @@ def compute_fragmentation_features(
     min_mid = min(mids)
 
     dispersion_bps = (
-        (sum((m - mean_mid) ** 2 for m in mids) / len(mids)) ** 0.5
-        / mean_mid * 10_000
-        if mean_mid > 0 else None
+        (sum((m - mean_mid) ** 2 for m in mids) / len(mids)) ** 0.5 / mean_mid * 10_000
+        if mean_mid > 0
+        else None
     )
     max_minus_min_bps = (
         (max_mid - min_mid) / mean_mid * 10_000 if mean_mid > 0 else None
@@ -128,18 +128,19 @@ def compute_fragmentation_features(
         total_depth = sum(valid_depths.values())
         if total_depth > 0:
             weights = {v: d / total_depth for v, d in valid_depths.items()}
-            depth_weighted_mean = sum(
-                weights[v] * valid_mids[v] for v in valid_mids
-            )
+            depth_weighted_mean = sum(weights[v] * valid_mids[v] for v in valid_mids)
             depth_weighted_dispersion_bps = (
                 sum(
                     weights[v] * (valid_mids[v] - depth_weighted_mean) ** 2
                     for v in valid_mids
-                ) ** 0.5
-                / depth_weighted_mean * 10_000
-                if depth_weighted_mean > 0 else None
+                )
+                ** 0.5
+                / depth_weighted_mean
+                * 10_000
+                if depth_weighted_mean > 0
+                else None
             )
-            depth_share_hhi = sum(w ** 2 for w in weights.values())
+            depth_share_hhi = sum(w**2 for w in weights.values())
 
     return {
         "num_active_venues": len(valid_mids),

@@ -80,9 +80,7 @@ def add_basis_labels(
         for threshold in _THRESHOLDS_BPS:
             col_name = f"label_{label_prefix}_{horizon_name}_gt{int(threshold)}bps"
             df = df.with_columns(
-                (
-                    pl.col(reg_col).abs() > threshold
-                ).cast(pl.Int8).alias(col_name)
+                (pl.col(reg_col).abs() > threshold).cast(pl.Int8).alias(col_name)
             )
 
     return df

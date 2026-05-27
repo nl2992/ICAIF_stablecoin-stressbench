@@ -108,6 +108,7 @@ def calibration_metrics(
         Dict with ``fraction_of_positives`` and ``mean_predicted_value`` arrays.
     """
     from typing import Any
+
     fraction_of_positives, mean_predicted_value = calibration_curve(
         y_true, y_pred_proba, n_bins=n_bins, strategy="uniform"
     )

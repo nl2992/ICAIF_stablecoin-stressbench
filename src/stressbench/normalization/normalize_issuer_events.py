@@ -42,7 +42,9 @@ def normalize_issuer_events(events: list[dict]) -> pl.DataFrame:
             logger.warning("Unknown event_type '%s'; skipping.", event_type)
             continue
         if severity not in _VALID_SEVERITIES:
-            logger.warning("Unknown event_severity '%s'; defaulting to 'medium'.", severity)
+            logger.warning(
+                "Unknown event_severity '%s'; defaulting to 'medium'.", severity
+            )
             event = dict(event)
             event["event_severity"] = "medium"
 

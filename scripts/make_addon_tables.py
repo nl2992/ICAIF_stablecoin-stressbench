@@ -32,8 +32,8 @@ import csv
 import math
 from pathlib import Path
 
-import polars as pl
 import numpy as np
+import polars as pl
 
 from stressbench.common.logging import get_logger
 
@@ -65,6 +65,7 @@ def _write_csv(rows: list[dict], path: Path) -> None:
 # Table 8: Robustness summary (pivot of robustness grid)
 # ---------------------------------------------------------------------------
 
+
 def make_table_8_robustness_summary(addon_dir: Path, output_path: Path) -> None:
     """Selected rows from the robustness grid at key parameter combinations."""
     grid_path = addon_dir / "robustness_price_execution_gap.csv"
@@ -77,7 +78,8 @@ def make_table_8_robustness_summary(addon_dir: Path, output_path: Path) -> None:
 
     # Summary: base_fee, settlement=0, threshold=10bps, across notionals and horizons
     summary = [
-        r for r in all_rows
+        r
+        for r in all_rows
         if r["fee_regime"] == "base_fee"
         and r["settlement_penalty_bps"] == "0"
         and r["basis_threshold_bps"] == "10"
@@ -89,7 +91,10 @@ def make_table_8_robustness_summary(addon_dir: Path, output_path: Path) -> None:
 # Table 9: Threshold ablation — compare rules on baseline best model
 # ---------------------------------------------------------------------------
 
-def make_table_9_threshold_ablation(baseline_dir: Path, dataset_path: Path, output_path: Path) -> None:
+
+def make_table_9_threshold_ablation(
+    baseline_dir: Path, dataset_path: Path, output_path: Path
+) -> None:
     """Show that negative test result is robust across threshold-selection rules."""
     baseline_path = baseline_dir / "table_3_model_ablation.csv"
     if not baseline_path.exists():
@@ -110,17 +115,19 @@ def make_table_9_threshold_ablation(baseline_dir: Path, dataset_path: Path, outp
     out_rows: list[dict] = []
     for r in task_rows:
         # Each row already has validation_threshold from the total_pnl rule
-        out_rows.append({
-            "task": r["task"],
-            "feature_set": r["feature_set"],
-            "model": r["model"],
-            "threshold_rule": "validation_total_pnl_min25trades",
-            "threshold_value": r.get("validation_threshold", ""),
-            "val_n_trades": r.get("validation_n_trades", ""),
-            "test_n_trades": r.get("n_trades", ""),
-            "test_net_bps": r.get("net_bps_captured", ""),
-            "test_final_pnl_usd": r.get("final_pnl_usd", ""),
-        })
+        out_rows.append(
+            {
+                "task": r["task"],
+                "feature_set": r["feature_set"],
+                "model": r["model"],
+                "threshold_rule": "validation_total_pnl_min25trades",
+                "threshold_value": r.get("validation_threshold", ""),
+                "val_n_trades": r.get("validation_n_trades", ""),
+                "test_n_trades": r.get("n_trades", ""),
+                "test_net_bps": r.get("net_bps_captured", ""),
+                "test_final_pnl_usd": r.get("final_pnl_usd", ""),
+            }
+        )
 
     _write_csv(out_rows, output_path)
 
@@ -128,6 +135,7 @@ def make_table_9_threshold_ablation(baseline_dir: Path, dataset_path: Path, outp
 # ---------------------------------------------------------------------------
 # Table 10: ExpectedNetProfitRegressor vs baseline
 # ---------------------------------------------------------------------------
+
 
 def make_table_10_expected_net_profit(
     addon_dir: Path,
@@ -145,35 +153,43 @@ def make_table_10_expected_net_profit(
         with open(baseline_path) as fh:
             for r in csv.DictReader(fh):
                 if r["task"] in ("executable_arb_q10000_5m", "basis_usdc_1m_gt10bps"):
-                    rows.append({
-                        "source": "baseline",
-                        "model": r["best_model"],
-                        "feature_set": "—",
-                        "task": r["task"],
-                        "calibrated_threshold_bps": "—",
-                        "test_n_trades": "—",
-                        "test_net_bps_captured": r.get("best_model_net_bps", ""),
-                        "oracle_net_bps": r.get("oracle_net_bps", ""),
-                        "oracle_capture_pct": r.get("capture_pct", ""),
-                    })
+                    rows.append(
+                        {
+                            "source": "baseline",
+                            "model": r["best_model"],
+                            "feature_set": "—",
+                            "task": r["task"],
+                            "calibrated_threshold_bps": "—",
+                            "test_n_trades": "—",
+                            "test_net_bps_captured": r.get("best_model_net_bps", ""),
+                            "oracle_net_bps": r.get("oracle_net_bps", ""),
+                            "oracle_capture_pct": r.get("capture_pct", ""),
+                        }
+                    )
 
     # Add-on results
     if addon_path.exists():
         with open(addon_path) as fh:
             for r in csv.DictReader(fh):
-                rows.append({
-                    "source": "addon",
-                    "model": r["model"],
-                    "feature_set": r["feature_set"],
-                    "task": f"net_profit_regressor/{r['target_col']}",
-                    "calibrated_threshold_bps": r.get("calibrated_threshold_bps", ""),
-                    "test_n_trades": r.get("test_n_trades", ""),
-                    "test_net_bps_captured": r.get("test_net_bps_captured", ""),
-                    "oracle_net_bps": "—",
-                    "oracle_capture_pct": r.get("test_oracle_capture_pct", ""),
-                })
+                rows.append(
+                    {
+                        "source": "addon",
+                        "model": r["model"],
+                        "feature_set": r["feature_set"],
+                        "task": f"net_profit_regressor/{r['target_col']}",
+                        "calibrated_threshold_bps": r.get(
+                            "calibrated_threshold_bps", ""
+                        ),
+                        "test_n_trades": r.get("test_n_trades", ""),
+                        "test_net_bps_captured": r.get("test_net_bps_captured", ""),
+                        "oracle_net_bps": "—",
+                        "oracle_capture_pct": r.get("test_oracle_capture_pct", ""),
+                    }
+                )
     else:
-        logger.warning("expected_net_profit_results.csv not found — run run_addon_experiments.py first.")
+        logger.warning(
+            "expected_net_profit_results.csv not found — run run_addon_experiments.py first."
+        )
 
     _write_csv(rows, output_path)
 
@@ -181,6 +197,7 @@ def make_table_10_expected_net_profit(
 # ---------------------------------------------------------------------------
 # Model failure summary (paper-ready compact table)
 # ---------------------------------------------------------------------------
+
 
 def make_model_failure_summary(
     baseline_dir: Path,
@@ -210,7 +227,11 @@ def make_model_failure_summary(
             net = float(net_bps_str) if net_bps_str not in ("", "nan") else float("nan")
         except ValueError:
             net = float("nan")
-        gap = round(net - oracle_net, 1) if (net == net and oracle_net == oracle_net) else ""
+        gap = (
+            round(net - oracle_net, 1)
+            if (net == net and oracle_net == oracle_net)
+            else ""
+        )
         return {
             "model_family": family,
             "best_configuration": config,
@@ -222,65 +243,92 @@ def make_model_failure_summary(
         }
 
     # Oracle anchor
-    rows.append(_row(
-        "Oracle (hindsight)", "trades all profitable windows",
-        str(round(oracle_net, 1)) if oracle_net == oracle_net else "—",
-        "100%", "351",
-        "Theoretical ceiling; not deployable",
-    ))
+    rows.append(
+        _row(
+            "Oracle (hindsight)",
+            "trades all profitable windows",
+            str(round(oracle_net, 1)) if oracle_net == oracle_net else "—",
+            "100%",
+            "351",
+            "Theoretical ceiling; not deployable",
+        )
+    )
 
     # Pull baseline results for basis_usdc_1m_gt10bps
     if all_results_path.exists():
         with open(all_results_path) as fh:
-            bl = [r for r in csv.DictReader(fh) if r["task"] == "basis_usdc_1m_gt10bps" and r["model"] != "oracle"]
+            bl = [
+                r
+                for r in csv.DictReader(fh)
+                if r["task"] == "basis_usdc_1m_gt10bps" and r["model"] != "oracle"
+            ]
 
         # Price threshold rules
-        rules = [r for r in bl if r["model"] in ("price_threshold_10bps", "price_threshold_25bps", "gross_arb_threshold")]
+        rules = [
+            r
+            for r in bl
+            if r["model"]
+            in ("price_threshold_10bps", "price_threshold_25bps", "gross_arb_threshold")
+        ]
         if rules:
             best = max(rules, key=lambda r: float(r.get("net_bps_captured") or "-999"))
-            rows.append(_row(
-                "Price threshold rules",
-                f"{best['model']}@{best['feature_set']}",
-                best.get("net_bps_captured", ""),
-                best.get("hit_rate_above_cost", ""),
-                best.get("n_trades", ""),
-                "Price-only signal overtrades; ignores execution depth",
-            ))
+            rows.append(
+                _row(
+                    "Price threshold rules",
+                    f"{best['model']}@{best['feature_set']}",
+                    best.get("net_bps_captured", ""),
+                    best.get("hit_rate_above_cost", ""),
+                    best.get("n_trades", ""),
+                    "Price-only signal overtrades; ignores execution depth",
+                )
+            )
 
         # ML classifiers
         ml = [r for r in bl if r["model"] in ("logistic", "lasso", "lgbm", "xgb", "rf")]
         if ml:
             best = max(ml, key=lambda r: float(r.get("net_bps_captured") or "-999"))
-            rows.append(_row(
-                "ML classifiers (logistic/tree)",
-                f"{best['model']}@{best['feature_set']}",
-                best.get("net_bps_captured", ""),
-                best.get("hit_rate_above_cost", ""),
-                best.get("n_trades", ""),
-                "Statistical signal; threshold calibration does not close gap",
-            ))
+            rows.append(
+                _row(
+                    "ML classifiers (logistic/tree)",
+                    f"{best['model']}@{best['feature_set']}",
+                    best.get("net_bps_captured", ""),
+                    best.get("hit_rate_above_cost", ""),
+                    best.get("n_trades", ""),
+                    "Statistical signal; threshold calibration does not close gap",
+                )
+            )
 
     # Expected net-profit regressor
     if addon_path.exists():
         with open(addon_path) as fh:
             addon_rows = list(csv.DictReader(fh))
         if addon_rows:
-            best_addon = max(addon_rows, key=lambda r: float(r.get("test_net_bps_captured") or "-999"))
-            rows.append(_row(
-                "ExpectedNetProfitRegressor",
-                f"{best_addon['model']}@{best_addon['feature_set']}",
-                best_addon.get("test_net_bps_captured", ""),
-                best_addon.get("test_hit_rate_above_cost", ""),
-                best_addon.get("test_n_trades", ""),
-                "Direct profit prediction; gap persists even with economic training target",
-            ))
+            best_addon = max(
+                addon_rows,
+                key=lambda r: float(r.get("test_net_bps_captured") or "-999"),
+            )
+            rows.append(
+                _row(
+                    "ExpectedNetProfitRegressor",
+                    f"{best_addon['model']}@{best_addon['feature_set']}",
+                    best_addon.get("test_net_bps_captured", ""),
+                    best_addon.get("test_hit_rate_above_cost", ""),
+                    best_addon.get("test_n_trades", ""),
+                    "Direct profit prediction; gap persists even with economic training target",
+                )
+            )
 
     # No-trade anchor
-    rows.append(_row(
-        "No-trade baseline", "never trades",
-        "0.0", "—", "0",
-        "Economic floor; negative-net-bps models worse than abstaining",
-    ))
+    rows.append(
+        _row(
+            "No-trade baseline",
+            "never trades",
+            "0.0",
+            "—",
+            "0",
+            "Economic floor; negative-net-bps models worse than abstaining",
+        )
+    )
 
     _write_csv(rows, output_path)
 
@@ -288,6 +336,7 @@ def make_model_failure_summary(
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     args = parse_args()

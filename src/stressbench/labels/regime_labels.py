@@ -59,30 +59,31 @@ def add_regime_labels(
         return df
 
     # Compute percentile thresholds for liquidity vacuum detection
-    spread_95th = (
-        df[spread_col].quantile(0.95) if spread_col in df.columns else None
-    )
-    depth_5th = (
-        df[depth_col].quantile(0.05) if depth_col in df.columns else None
-    )
+    spread_95th = df[spread_col].quantile(0.95) if spread_col in df.columns else None
+    depth_5th = df[depth_col].quantile(0.05) if depth_col in df.columns else None
 
     conditions = []
 
     # Peg pressure
     if deviation_col in df.columns:
         conditions.append(
-            (pl.col(deviation_col).abs() > _PEG_PRESSURE_THRESHOLD_BPS)
-            .alias("_is_peg_pressure")
+            (pl.col(deviation_col).abs() > _PEG_PRESSURE_THRESHOLD_BPS).alias(
+                "_is_peg_pressure"
+            )
         )
     else:
         conditions.append(pl.lit(False).alias("_is_peg_pressure"))
 
     # Liquidity vacuum
-    if spread_col in df.columns and depth_col in df.columns and spread_95th and depth_5th:
+    if (
+        spread_col in df.columns
+        and depth_col in df.columns
+        and spread_95th
+        and depth_5th
+    ):
         conditions.append(
             (
-                (pl.col(spread_col) > spread_95th)
-                & (pl.col(depth_col) < depth_5th)
+                (pl.col(spread_col) > spread_95th) & (pl.col(depth_col) < depth_5th)
             ).alias("_is_liquidity_vacuum")
         )
     else:
@@ -99,8 +100,9 @@ def add_regime_labels(
     # Settlement congestion
     if transfer_count_col in df.columns:
         conditions.append(
-            (pl.col(transfer_count_col) > _SETTLEMENT_CONGESTION_TRANSFER_THRESHOLD)
-            .alias("_is_settlement_congestion")
+            (
+                pl.col(transfer_count_col) > _SETTLEMENT_CONGESTION_TRANSFER_THRESHOLD
+            ).alias("_is_settlement_congestion")
         )
     else:
         conditions.append(pl.lit(False).alias("_is_settlement_congestion"))
@@ -125,6 +127,11 @@ def add_regime_labels(
 
     # Drop intermediate columns
     df = df.drop(
-        ["_is_peg_pressure", "_is_liquidity_vacuum", "_is_issuer_event", "_is_settlement_congestion"]
+        [
+            "_is_peg_pressure",
+            "_is_liquidity_vacuum",
+            "_is_issuer_event",
+            "_is_settlement_congestion",
+        ]
     )
     return df

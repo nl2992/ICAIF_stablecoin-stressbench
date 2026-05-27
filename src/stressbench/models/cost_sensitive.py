@@ -49,7 +49,9 @@ class ExpectedNetProfitRegressor:
     # Fit / predict
     # ------------------------------------------------------------------
 
-    def fit(self, X: np.ndarray, y_net_profit: np.ndarray) -> "ExpectedNetProfitRegressor":
+    def fit(
+        self, X: np.ndarray, y_net_profit: np.ndarray
+    ) -> "ExpectedNetProfitRegressor":
         """Fit on training data.
 
         NaN values in y_net_profit (missing depth data) are replaced with
@@ -58,6 +60,7 @@ class ExpectedNetProfitRegressor:
         """
         if self.base_model == "lgbm":
             import lightgbm as lgb
+
             self._model = lgb.LGBMRegressor(
                 n_estimators=self.kwargs.get("n_estimators", 300),
                 learning_rate=self.kwargs.get("learning_rate", 0.03),
@@ -70,6 +73,7 @@ class ExpectedNetProfitRegressor:
             )
         elif self.base_model == "xgb":
             import xgboost as xgb
+
             self._model = xgb.XGBRegressor(
                 n_estimators=self.kwargs.get("n_estimators", 300),
                 learning_rate=self.kwargs.get("learning_rate", 0.03),
@@ -81,7 +85,9 @@ class ExpectedNetProfitRegressor:
                 verbosity=0,
             )
         else:
-            raise ValueError(f"Unknown base_model: {self.base_model!r}. Use 'lgbm' or 'xgb'.")
+            raise ValueError(
+                f"Unknown base_model: {self.base_model!r}. Use 'lgbm' or 'xgb'."
+            )
 
         y_clean = np.nan_to_num(y_net_profit, nan=-999.0)
         self._model.fit(X, y_clean)

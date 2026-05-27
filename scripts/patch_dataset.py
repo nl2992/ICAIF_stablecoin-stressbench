@@ -34,7 +34,9 @@ _TS_COL = "ts_1m_ns"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Patch dataset.parquet with derived columns.")
+    parser = argparse.ArgumentParser(
+        description="Patch dataset.parquet with derived columns."
+    )
     parser.add_argument("--data-dir", default="data/gold")
     return parser.parse_args()
 
@@ -53,7 +55,10 @@ def patch(dataset_path: Path) -> None:
     }
     missing_feat = needed_feat - set(df.columns)
 
-    if "cross_quote_basis_usdc_bps" not in df.columns or "cross_quote_basis_usdt_bps" not in df.columns:
+    if (
+        "cross_quote_basis_usdc_bps" not in df.columns
+        or "cross_quote_basis_usdt_bps" not in df.columns
+    ):
         raise RuntimeError(
             "Dataset is missing cross_quote_basis_usdc_bps or cross_quote_basis_usdt_bps; "
             "rebuild from source."

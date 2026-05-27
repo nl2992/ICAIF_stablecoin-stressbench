@@ -33,17 +33,17 @@ from stressbench.common.logging import get_logger
 logger = get_logger(__name__)
 
 _COLORS = {
-    "price":       "#2166ac",
-    "exec_10k":    "#d73027",
-    "exec_50k":    "#fc8d59",
-    "exec_100k":   "#fdae61",
-    "exec_500k":   "#fee090",
-    "oracle":      "#4d4d4d",
-    "no_trade":    "#bababa",
-    "tp":          "#1a9641",
-    "fp":          "#d73027",
-    "fn":          "#fc8d59",
-    "tn":          "#a6d96a",
+    "price": "#2166ac",
+    "exec_10k": "#d73027",
+    "exec_50k": "#fc8d59",
+    "exec_100k": "#fdae61",
+    "exec_500k": "#fee090",
+    "oracle": "#4d4d4d",
+    "no_trade": "#bababa",
+    "tp": "#1a9641",
+    "fp": "#d73027",
+    "fn": "#fc8d59",
+    "tn": "#a6d96a",
 }
 
 
@@ -57,6 +57,7 @@ def _savefig(fig, path: Path, fmt: str = "png") -> None:
 # ---------------------------------------------------------------------------
 # Figure 8: Robustness by notional
 # ---------------------------------------------------------------------------
+
 
 def figure_8_robustness_notional(addon_dir: Path, output_dir: Path, fmt: str) -> None:
     import matplotlib.pyplot as plt
@@ -72,7 +73,8 @@ def figure_8_robustness_notional(addon_dir: Path, output_dir: Path, fmt: str) ->
 
     # Filter: base_fee, no settlement, threshold=10, horizon=5m
     rows = [
-        r for r in all_rows
+        r
+        for r in all_rows
         if r["fee_regime"] == "base_fee"
         and r["settlement_penalty_bps"] == "0"
         and r["basis_threshold_bps"] == "10"
@@ -95,9 +97,20 @@ def figure_8_robustness_notional(addon_dir: Path, output_dir: Path, fmt: str) ->
 
     fig, ax = plt.subplots(figsize=(7, 4))
     x = np.arange(len(notionals))
-    bars = ax.bar(x, exec_pcts, color=_COLORS["exec_10k"], alpha=0.85, label="Executable (net > 0 in 5m)")
-    ax.axhline(price_pct, ls="--", lw=1.2, color=_COLORS["price"],
-               label=f"Price signal |basis|>10bps ({price_pct:.1f}%)")
+    bars = ax.bar(
+        x,
+        exec_pcts,
+        color=_COLORS["exec_10k"],
+        alpha=0.85,
+        label="Executable (net > 0 in 5m)",
+    )
+    ax.axhline(
+        price_pct,
+        ls="--",
+        lw=1.2,
+        color=_COLORS["price"],
+        label=f"Price signal |basis|>10bps ({price_pct:.1f}%)",
+    )
 
     for xi, pct in zip(x, exec_pcts):
         if pct == pct:
@@ -121,6 +134,7 @@ def figure_8_robustness_notional(addon_dir: Path, output_dir: Path, fmt: str) ->
 # Figure 9: Robustness by cost regime
 # ---------------------------------------------------------------------------
 
+
 def figure_9_robustness_costs(addon_dir: Path, output_dir: Path, fmt: str) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
@@ -135,7 +149,8 @@ def figure_9_robustness_costs(addon_dir: Path, output_dir: Path, fmt: str) -> No
 
     # notional=10k, threshold=10, horizon=5m, vary settlement and fee regime
     rows = [
-        r for r in all_rows
+        r
+        for r in all_rows
         if r["notional"] == "10000"
         and r["basis_threshold_bps"] == "10"
         and r["horizon"] == "5m"
@@ -148,22 +163,33 @@ def figure_9_robustness_costs(addon_dir: Path, output_dir: Path, fmt: str) -> No
     penalties = sorted({int(r["settlement_penalty_bps"]) for r in rows})
 
     fig, ax = plt.subplots(figsize=(7, 4))
-    colors_list = [_COLORS["exec_10k"], _COLORS["exec_50k"], _COLORS["exec_100k"], "#2166ac"]
+    colors_list = [
+        _COLORS["exec_10k"],
+        _COLORS["exec_50k"],
+        _COLORS["exec_100k"],
+        "#2166ac",
+    ]
 
     for i, regime in enumerate(fee_regimes):
         exec_pcts = []
         for pen in penalties:
             subset = [
-                r for r in rows
+                r
+                for r in rows
                 if r["fee_regime"] == regime and int(r["settlement_penalty_bps"]) == pen
             ]
             if subset:
                 exec_pcts.append(float(subset[0]["executable_signal_pct"]))
             else:
                 exec_pcts.append(float("nan"))
-        ax.plot(penalties, exec_pcts, marker="o", lw=1.5,
-                color=colors_list[i % len(colors_list)],
-                label=regime.replace("_", " "))
+        ax.plot(
+            penalties,
+            exec_pcts,
+            marker="o",
+            lw=1.5,
+            color=colors_list[i % len(colors_list)],
+            label=regime.replace("_", " "),
+        )
 
     ax.set_xlabel("Settlement penalty (bps)")
     ax.set_ylabel("Executable % of test minutes")
@@ -179,15 +205,16 @@ def figure_9_robustness_costs(addon_dir: Path, output_dir: Path, fmt: str) -> No
 # Figure 11: Signal waterfall
 # ---------------------------------------------------------------------------
 
+
 def figure_11_signal_waterfall(
     dataset_path: Path,
     baseline_results: Path,
     output_dir: Path,
     fmt: str,
 ) -> None:
-    import polars as pl
     import matplotlib.pyplot as plt
     import numpy as np
+    import polars as pl
 
     if not dataset_path.exists():
         logger.warning("dataset.parquet not found — skipping Figure 11.")
@@ -201,8 +228,14 @@ def figure_11_signal_waterfall(
     net_col = "net_profit_bps_q10000"
     label_col = "label_arb_q10000_5m_gt0bps"
 
-    n_price = int(test.filter(pl.col(basis_col).abs() > 10).height) if basis_col in test.columns else 0
-    n_exec = int(test.filter(pl.col(net_col) > 0).height) if net_col in test.columns else 0
+    n_price = (
+        int(test.filter(pl.col(basis_col).abs() > 10).height)
+        if basis_col in test.columns
+        else 0
+    )
+    n_exec = (
+        int(test.filter(pl.col(net_col) > 0).height) if net_col in test.columns else 0
+    )
 
     # Best non-oracle model trades from baseline
     n_model_trades = 0
@@ -213,17 +246,21 @@ def figure_11_signal_waterfall(
             rows = list(csv.DictReader(fh))
         # Best non-oracle model: highest net_bps_captured that is not NaN
         non_oracle = [
-            r for r in rows
-            if r["model"] != "oracle"
-            and r.get("n_trades", "") not in ("", "0", "nan")
+            r
+            for r in rows
+            if r["model"] != "oracle" and r.get("n_trades", "") not in ("", "0", "nan")
         ]
         if non_oracle:
+
             def _safe_float(x: str) -> float:
                 try:
                     return float(x)
                 except (ValueError, TypeError):
                     return float("-inf")
-            best = max(non_oracle, key=lambda r: _safe_float(r.get("net_bps_captured", "")))
+
+            best = max(
+                non_oracle, key=lambda r: _safe_float(r.get("net_bps_captured", ""))
+            )
             n_model_trades = int(best.get("n_trades", 0) or 0)
             hit_rate = _safe_float(best.get("hit_rate_above_cost", "0"))
             n_model_hits = int(n_model_trades * hit_rate) if hit_rate == hit_rate else 0
@@ -243,8 +280,12 @@ def figure_11_signal_waterfall(
     values = [n_total, n_price, n_exec, n_model_trades, n_model_hits, n_oracle]
 
     colors = [
-        "#4393c3", _COLORS["price"], _COLORS["exec_10k"],
-        "#762a83", "#9970ab", _COLORS["oracle"],
+        "#4393c3",
+        _COLORS["price"],
+        _COLORS["exec_10k"],
+        "#762a83",
+        "#9970ab",
+        _COLORS["oracle"],
     ]
 
     fig, ax = plt.subplots(figsize=(9, 4))
@@ -268,13 +309,18 @@ def figure_11_signal_waterfall(
 # Figure 12: False-positive feature profile
 # ---------------------------------------------------------------------------
 
-def figure_12_false_positive_profile(paper_addon_dir: Path, output_dir: Path, fmt: str) -> None:
+
+def figure_12_false_positive_profile(
+    paper_addon_dir: Path, output_dir: Path, fmt: str
+) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
     fp_table = paper_addon_dir / "table_5_false_positive_diagnosis.csv"
     if not fp_table.exists():
-        logger.warning("table_5 not found — run analyze_false_positives.py first. Skipping Figure 12.")
+        logger.warning(
+            "table_5 not found — run analyze_false_positives.py first. Skipping Figure 12."
+        )
         return
 
     with open(fp_table) as fh:
@@ -314,7 +360,9 @@ def figure_12_false_positive_profile(paper_addon_dir: Path, output_dir: Path, fm
         ax.bar(x + (i - 0.5) * width, vals, width, label=group, color=color, alpha=0.85)
 
     ax.set_xticks(x)
-    ax.set_xticklabels([feature_labels[f] for f in feats], rotation=20, ha="right", fontsize=9)
+    ax.set_xticklabels(
+        [feature_labels[f] for f in feats], rotation=20, ha="right", fontsize=9
+    )
     ax.set_ylabel("Average value (test split)")
     ax.set_title("Figure 12 — Feature Profile: True Positives vs False Positives")
     ax.legend(fontsize=9)
@@ -328,6 +376,7 @@ def figure_12_false_positive_profile(paper_addon_dir: Path, output_dir: Path, fm
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Generate add-on paper figures.")
@@ -349,6 +398,7 @@ def main() -> None:
 
     try:
         import matplotlib
+
         matplotlib.use("Agg")
     except ImportError:
         logger.error("matplotlib not installed — pip install matplotlib")
@@ -357,7 +407,12 @@ def main() -> None:
     logger.info("Generating add-on figures → %s", output_dir)
     figure_8_robustness_notional(addon_dir, output_dir, fmt)
     figure_9_robustness_costs(addon_dir, output_dir, fmt)
-    figure_11_signal_waterfall(dataset_path, Path(args.addon_results_dir).parent / "experiments" / "all_results.csv", output_dir, fmt)
+    figure_11_signal_waterfall(
+        dataset_path,
+        Path(args.addon_results_dir).parent / "experiments" / "all_results.csv",
+        output_dir,
+        fmt,
+    )
     figure_12_false_positive_profile(paper_addon_dir, output_dir, fmt)
     logger.info("Add-on figures complete.")
 

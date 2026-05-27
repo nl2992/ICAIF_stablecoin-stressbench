@@ -46,9 +46,7 @@ class DataAvailabilityProfile:
             )
         # Execution-grade requires L2 data
         if self.execution_grade_available and not self.l2_data:
-            raise ValueError(
-                "execution_grade_available=True requires l2_data=True"
-            )
+            raise ValueError("execution_grade_available=True requires l2_data=True")
 
 
 def coverage_score(

@@ -109,6 +109,7 @@ def _detection_delay(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def _auroc(y_true: np.ndarray, y_score: np.ndarray) -> float:
     """Compute AUROC using trapezoidal rule."""
     from sklearn.metrics import roc_auc_score  # type: ignore
+
     try:
         if len(np.unique(y_true)) < 2:
             return float("nan")
@@ -136,10 +137,18 @@ def _compute_metrics(
     precision = tp / (tp + fp) if (tp + fp) > 0 else float("nan")
     recall = tp / (tp + fn) if (tp + fn) > 0 else float("nan")
     specificity = tn / (tn + fp) if (tn + fp) > 0 else float("nan")
-    balanced_acc = (recall + specificity) / 2 if not (math.isnan(recall) or math.isnan(specificity)) else float("nan")
-    f1 = (2 * precision * recall / (precision + recall)
-          if not (math.isnan(precision) or math.isnan(recall) or (precision + recall) == 0)
-          else float("nan"))
+    balanced_acc = (
+        (recall + specificity) / 2
+        if not (math.isnan(recall) or math.isnan(specificity))
+        else float("nan")
+    )
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if not (
+            math.isnan(precision) or math.isnan(recall) or (precision + recall) == 0
+        )
+        else float("nan")
+    )
     false_alarm_rate = fp / (fp + tn) if (fp + tn) > 0 else float("nan")
     p_stress_given_stress = recall  # same as recall
 
@@ -176,7 +185,10 @@ def main() -> None:
     if _SIGNAL_COL not in df.columns:
         raise ValueError(f"Signal column '{_SIGNAL_COL}' not found in dataset")
     if _LABEL_COL not in df.columns:
-        logger.warning("Label column '%s' not found; using label_basis_1m_gt10bps fallback", _LABEL_COL)
+        logger.warning(
+            "Label column '%s' not found; using label_basis_1m_gt10bps fallback",
+            _LABEL_COL,
+        )
         _label = "label_basis_1m_gt10bps"
     else:
         _label = _LABEL_COL
@@ -227,8 +239,10 @@ def main() -> None:
             rows.append(metrics)
             logger.info(
                 "  accuracy=%.3f  recall=%.3f  FAR=%.3f  delay=%.1f min  AUROC=%.3f",
-                metrics["accuracy"], metrics["recall"],
-                metrics["false_alarm_rate"], metrics["mean_detection_delay_minutes"],
+                metrics["accuracy"],
+                metrics["recall"],
+                metrics["false_alarm_rate"],
+                metrics["mean_detection_delay_minutes"],
                 metrics["auroc"],
             )
         except Exception as exc:

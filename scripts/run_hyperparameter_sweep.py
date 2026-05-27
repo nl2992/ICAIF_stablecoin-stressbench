@@ -93,10 +93,14 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def _resolve_feature_cols(df: pl.DataFrame, feat_set: str, exclude: set[str]) -> list[str]:
+def _resolve_feature_cols(
+    df: pl.DataFrame, feat_set: str, exclude: set[str]
+) -> list[str]:
     cols = FEATURE_SETS.get(feat_set)
     if cols is None:
-        cols = [c for c in df.columns if c not in exclude and not c.startswith("label_")]
+        cols = [
+            c for c in df.columns if c not in exclude and not c.startswith("label_")
+        ]
     else:
         cols = [c for c in cols if c in df.columns]
     return cols
@@ -153,6 +157,7 @@ def _calibrate_threshold(
 
 def _auprc(y_true: np.ndarray, y_score: np.ndarray) -> float:
     from sklearn.metrics import average_precision_score
+
     try:
         if len(np.unique(y_true)) < 2:
             return float("nan")
@@ -163,6 +168,7 @@ def _auprc(y_true: np.ndarray, y_score: np.ndarray) -> float:
 
 def _auroc(y_true: np.ndarray, y_score: np.ndarray) -> float:
     from sklearn.metrics import roc_auc_score
+
     try:
         if len(np.unique(y_true)) < 2:
             return float("nan")
@@ -203,7 +209,9 @@ def run_config(
 
     # Validation metrics
     y_val_proba = model.predict_proba(X_val)[:, 1]
-    val_threshold, val_total_pnl, val_n_trades = _calibrate_threshold(y_val_proba, y_net_val)
+    val_threshold, val_total_pnl, val_n_trades = _calibrate_threshold(
+        y_val_proba, y_net_val
+    )
     val_auprc = _auprc(y_val, y_val_proba)
 
     # Test metrics
@@ -255,29 +263,58 @@ def main() -> None:
     # Build all parameter combinations
     param_names = list(_PARAM_GRID.keys())
     param_values = list(_PARAM_GRID.values())
-    all_params = [
-        dict(zip(param_names, combo))
-        for combo in product(*param_values)
-    ]
+    all_params = [dict(zip(param_names, combo)) for combo in product(*param_values)]
     total_configs = len(all_params) * len(_TASKS) * len(_FEATURE_SETS)
-    logger.info("Total configurations: %d (%d params x %d tasks x %d feat_sets)",
-                total_configs, len(all_params), len(_TASKS), len(_FEATURE_SETS))
+    logger.info(
+        "Total configurations: %d (%d params x %d tasks x %d feat_sets)",
+        total_configs,
+        len(all_params),
+        len(_TASKS),
+        len(_FEATURE_SETS),
+    )
 
-    exclude = {"split", "ts_1m_ns", "basis_primary_asset", "buy_venue", "sell_venue", "depth_source"}
+    exclude = {
+        "split",
+        "ts_1m_ns",
+        "basis_primary_asset",
+        "buy_venue",
+        "sell_venue",
+        "depth_source",
+    }
 
     all_rows: dict[tuple[str, str], list[dict]] = {}
 
     for task_name, task_cfg in _TASKS.items():
         if task_cfg["label_col"] not in df.columns:
-            logger.warning("Label '%s' not found, skipping %s", task_cfg["label_col"], task_name)
+            logger.warning(
+                "Label '%s' not found, skipping %s", task_cfg["label_col"], task_name
+            )
             continue
 
         for feat_set in _FEATURE_SETS:
             key = (task_name, feat_set)
             feature_cols = _resolve_feature_cols(df, feat_set, exclude)
-            X_train, y_train, _ = _extract_split(df, "train", feature_cols, task_cfg["label_col"], task_cfg["net_profit_col"])
-            X_val, y_val, y_net_val = _extract_split(df, "validation", feature_cols, task_cfg["label_col"], task_cfg["net_profit_col"])
-            X_test, y_test, y_net_test = _extract_split(df, "test", feature_cols, task_cfg["label_col"], task_cfg["net_profit_col"])
+            X_train, y_train, _ = _extract_split(
+                df,
+                "train",
+                feature_cols,
+                task_cfg["label_col"],
+                task_cfg["net_profit_col"],
+            )
+            X_val, y_val, y_net_val = _extract_split(
+                df,
+                "validation",
+                feature_cols,
+                task_cfg["label_col"],
+                task_cfg["net_profit_col"],
+            )
+            X_test, y_test, y_net_test = _extract_split(
+                df,
+                "test",
+                feature_cols,
+                task_cfg["label_col"],
+                task_cfg["net_profit_col"],
+            )
 
             oracle_bps = _ORACLE_NET_BPS.get(task_name, 161.0)
             rows_for_key = []
@@ -285,33 +322,61 @@ def main() -> None:
             for i, params in enumerate(all_params):
                 logger.info(
                     "[%d/%d] task=%s feat=%s params=%s",
-                    i + 1, len(all_params), task_name, feat_set, params,
+                    i + 1,
+                    len(all_params),
+                    task_name,
+                    feat_set,
+                    params,
                 )
                 try:
                     row = run_config(
-                        X_train, y_train, X_val, y_val, y_net_val,
-                        X_test, y_test, y_net_test,
-                        params, task_cfg["notional_usd"], oracle_bps,
+                        X_train,
+                        y_train,
+                        X_val,
+                        y_val,
+                        y_net_val,
+                        X_test,
+                        y_test,
+                        y_net_test,
+                        params,
+                        task_cfg["notional_usd"],
+                        oracle_bps,
                     )
                     row["task"] = task_name
                     row["feature_set"] = feat_set
                     rows_for_key.append(row)
                 except Exception as exc:
-                    logger.error("FAILED %s %s %s: %s", task_name, feat_set, params, exc, exc_info=True)
+                    logger.error(
+                        "FAILED %s %s %s: %s",
+                        task_name,
+                        feat_set,
+                        params,
+                        exc,
+                        exc_info=True,
+                    )
 
             # Mark best by primary criterion: val_total_pnl_bps (secondary: val_auprc)
             if rows_for_key:
                 best_idx = max(
                     range(len(rows_for_key)),
                     key=lambda i: (
-                        rows_for_key[i]["val_total_pnl_bps"] if not math.isnan(rows_for_key[i]["val_total_pnl_bps"]) else -1e9,
-                        rows_for_key[i]["val_auprc"] if not math.isnan(rows_for_key[i]["val_auprc"]) else -1e9,
+                        (
+                            rows_for_key[i]["val_total_pnl_bps"]
+                            if not math.isnan(rows_for_key[i]["val_total_pnl_bps"])
+                            else -1e9
+                        ),
+                        (
+                            rows_for_key[i]["val_auprc"]
+                            if not math.isnan(rows_for_key[i]["val_auprc"])
+                            else -1e9
+                        ),
                     ),
                 )
                 rows_for_key[best_idx]["selected_best"] = True
                 logger.info(
                     "Best config for task=%s feat=%s: %s (val_pnl=%.2f, val_auprc=%.4f)",
-                    task_name, feat_set,
+                    task_name,
+                    feat_set,
                     {k: rows_for_key[best_idx][k] for k in param_names},
                     rows_for_key[best_idx]["val_total_pnl_bps"],
                     rows_for_key[best_idx]["val_auprc"],

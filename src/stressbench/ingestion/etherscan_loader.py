@@ -192,22 +192,22 @@ def save_transfers_to_bronze(
                 ts_ns = ts_s * 1_000_000_000
             except (ValueError, TypeError):
                 ts_ns = 0
-            bronze_rows.append({
-                "source": "etherscan",
-                "channel": "transfer",
-                "symbol": token_symbol,
-                "ts_exchange": tx.get("timeStamp", ""),
-                "ts_receive_ns": ts_ns,
-                "payload": json.dumps(tx, sort_keys=True),
-                "payload_hash": "",
-                "schema_version": "raw.v1",
-                "ingest_batch_id": "etherscan_api",
-            })
+            bronze_rows.append(
+                {
+                    "source": "etherscan",
+                    "channel": "transfer",
+                    "symbol": token_symbol,
+                    "ts_exchange": tx.get("timeStamp", ""),
+                    "ts_receive_ns": ts_ns,
+                    "payload": json.dumps(tx, sort_keys=True),
+                    "payload_hash": "",
+                    "schema_version": "raw.v1",
+                    "ingest_batch_id": "etherscan_api",
+                }
+            )
 
         pl.DataFrame(bronze_rows).write_parquet(out_file)
         written_paths.append(out_file)
-        logger.info(
-            "Saved %d transfers to %s", len(hour_transfers), out_file
-        )
+        logger.info("Saved %d transfers to %s", len(hour_transfers), out_file)
 
     return written_paths

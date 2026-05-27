@@ -90,9 +90,7 @@ def build_table14(events: dict) -> list[dict]:
     rows = []
     for event_id, ev in events.items():
         coins = ev.get("stablecoins", [])
-        stablecoins_str = (
-            ", ".join(coins) if isinstance(coins, list) else str(coins)
-        )
+        stablecoins_str = ", ".join(coins) if isinstance(coins, list) else str(coins)
         rows.append(
             {
                 "event_id": event_id,

@@ -66,8 +66,6 @@ def add_is_profitable_label(
         return df
 
     df = df.with_columns(
-        (pl.col(net_profit_col) > threshold_bps)
-        .cast(pl.Int8)
-        .alias(label_col)
+        (pl.col(net_profit_col) > threshold_bps).cast(pl.Int8).alias(label_col)
     )
     return df

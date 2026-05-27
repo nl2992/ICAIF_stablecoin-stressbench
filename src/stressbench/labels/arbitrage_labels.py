@@ -102,11 +102,11 @@ def add_arbitrage_labels(
                 label_col = f"label_arb_q{q}_{horizon_name}_gt{int(threshold)}bps"
                 df_rev = df_rev.with_columns(
                     pl.when(pl.col(rolling_max_col).is_null())
-                      .then(pl.lit(None).cast(pl.Int8))
-                      .when(pl.col(rolling_max_col) > threshold)
-                      .then(pl.lit(1).cast(pl.Int8))
-                      .otherwise(pl.lit(0).cast(pl.Int8))
-                      .alias(label_col)
+                    .then(pl.lit(None).cast(pl.Int8))
+                    .when(pl.col(rolling_max_col) > threshold)
+                    .then(pl.lit(1).cast(pl.Int8))
+                    .otherwise(pl.lit(0).cast(pl.Int8))
+                    .alias(label_col)
                 )
             df_rev = df_rev.drop(rolling_max_col)
 

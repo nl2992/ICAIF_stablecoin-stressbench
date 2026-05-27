@@ -97,8 +97,10 @@ def main() -> None:
             benchmark_role = "Taxonomy / mechanism diversity only"
 
         depeg_range = (
-            f"−{depeg_max}" if depeg_min == 0 else f"−{depeg_min} to −{depeg_max}"
-        ) if depeg_max > 0 else "0 (operational event)"
+            (f"−{depeg_max}" if depeg_min == 0 else f"−{depeg_min} to −{depeg_max}")
+            if depeg_max > 0
+            else "0 (operational event)"
+        )
         # Special case: DAI Black Thursday is +150 bps
         if mc == "collateral_liquidation_oracle":
             depeg_range = "+150 (above peg)"
@@ -125,7 +127,9 @@ def main() -> None:
         writer.writerows(rows)
 
     total_events = sum(r["n_events"] for r in rows)
-    print(f"Wrote {len(rows)} mechanism classes, {total_events} total events → {OUT_FILE}")
+    print(
+        f"Wrote {len(rows)} mechanism classes, {total_events} total events → {OUT_FILE}"
+    )
 
 
 if __name__ == "__main__":

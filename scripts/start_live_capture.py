@@ -93,34 +93,42 @@ async def _run_all(args: argparse.Namespace) -> None:
         from stressbench.ingestion.binance_ws import run_collector as binance_run
 
         logger.info("Starting Binance collector for: %s", args.binance_symbols)
-        tasks.append(asyncio.create_task(
-            binance_run(symbols=args.binance_symbols),
-            name="binance",
-        ))
+        tasks.append(
+            asyncio.create_task(
+                binance_run(symbols=args.binance_symbols),
+                name="binance",
+            )
+        )
 
     if "coinbase" in venues and args.coinbase_symbols:
         from stressbench.ingestion.coinbase_ws import run_collector as coinbase_run
 
         logger.info("Starting Coinbase collector for: %s", args.coinbase_symbols)
-        tasks.append(asyncio.create_task(
-            coinbase_run(product_ids=args.coinbase_symbols),
-            name="coinbase",
-        ))
+        tasks.append(
+            asyncio.create_task(
+                coinbase_run(product_ids=args.coinbase_symbols),
+                name="coinbase",
+            )
+        )
 
     if "kraken" in venues and args.kraken_pairs:
         from stressbench.ingestion.kraken_ws import run_collector as kraken_run
 
         logger.info("Starting Kraken collector for: %s", args.kraken_pairs)
-        tasks.append(asyncio.create_task(
-            kraken_run(pairs=args.kraken_pairs),
-            name="kraken",
-        ))
+        tasks.append(
+            asyncio.create_task(
+                kraken_run(pairs=args.kraken_pairs),
+                name="kraken",
+            )
+        )
 
     if not tasks:
         logger.error("No collectors started — check --venues and symbol arguments.")
         return
 
-    logger.info("Live capture running (%d collector(s)). Press Ctrl-C to stop.", len(tasks))
+    logger.info(
+        "Live capture running (%d collector(s)). Press Ctrl-C to stop.", len(tasks)
+    )
 
     try:
         await asyncio.gather(*tasks)

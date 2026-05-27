@@ -19,7 +19,17 @@ from stressbench.common.logging import get_logger
 
 logger = get_logger(__name__)
 
-_ALL_MODELS = ["last_value", "rolling_mean", "ar1", "logistic", "ridge", "lasso", "lgbm", "xgb", "rf"]
+_ALL_MODELS = [
+    "last_value",
+    "rolling_mean",
+    "ar1",
+    "logistic",
+    "ridge",
+    "lasso",
+    "lgbm",
+    "xgb",
+    "rf",
+]
 
 
 _SEQ_MODELS = ["temporal_cnn", "transformer"]
@@ -69,7 +79,7 @@ def parse_args() -> argparse.Namespace:
         "--allow-synthetic",
         action="store_true",
         help="Generate synthetic demo data if dataset.parquet is missing. "
-             "For CI/demo only — never use for paper results.",
+        "For CI/demo only — never use for paper results.",
     )
     return parser.parse_args()
 
@@ -101,7 +111,10 @@ def load_train_data(
                 "Run scripts/build_features.py first to produce dataset.parquet, "
                 "or pass --allow-synthetic for demo/CI mode."
             )
-        logger.warning("No data found in %s; generating synthetic demo data (--allow-synthetic).", data_dir)
+        logger.warning(
+            "No data found in %s; generating synthetic demo data (--allow-synthetic).",
+            data_dir,
+        )
         rng = np.random.default_rng(42)
         n = 10_000
         X = rng.standard_normal((n, 20)).astype(np.float32)
@@ -121,8 +134,7 @@ def load_train_data(
     # Exclude the time index and split key — not useful as float32 features
     _EXCLUDE = {"split", "ts_1m_ns"}
     feature_cols = [
-        c for c in df.columns
-        if not c.startswith("label_") and c not in _EXCLUDE
+        c for c in df.columns if not c.startswith("label_") and c not in _EXCLUDE
     ]
     X_raw = label_df.select(feature_cols).to_numpy().astype(np.float32)
     y = label_df[label_col].to_numpy()
@@ -136,7 +148,9 @@ def load_train_data(
             col_medians = np.nanmedian(X_raw, axis=0)
         col_medians = np.nan_to_num(col_medians, nan=0.0)  # all-NaN cols → 0
         nan_cols = int(nan_mask.any(axis=0).sum())
-        logger.info("Imputing NaN in %d feature columns (median or 0 for all-NaN).", nan_cols)
+        logger.info(
+            "Imputing NaN in %d feature columns (median or 0 for all-NaN).", nan_cols
+        )
         X = np.where(nan_mask, col_medians[None, :], X_raw)
     else:
         X = X_raw
@@ -163,44 +177,57 @@ def make_sequence_windows(
     n, f = X.shape
     if n < seq_len:
         logger.warning(
-            "Fewer samples (%d) than seq_len (%d); no sequence windows created.", n, seq_len
+            "Fewer samples (%d) than seq_len (%d); no sequence windows created.",
+            n,
+            seq_len,
         )
         return np.empty((0, seq_len, f), dtype=X.dtype), np.empty(0, dtype=y.dtype)
     n_windows = n - seq_len + 1
     # Vectorised index construction — avoids an explicit Python loop
-    idx = np.arange(seq_len)[None, :] + np.arange(n_windows)[:, None]  # (n_windows, seq_len)
-    X_seq = X[idx]                 # (n_windows, seq_len, n_features)
-    y_seq = y[idx[:, -1]]          # label at the end of each window
+    idx = (
+        np.arange(seq_len)[None, :] + np.arange(n_windows)[:, None]
+    )  # (n_windows, seq_len)
+    X_seq = X[idx]  # (n_windows, seq_len, n_features)
+    y_seq = y[idx[:, -1]]  # label at the end of each window
     return X_seq, y_seq
 
 
 def get_model(name: str, task: str):
     if name == "last_value":
         from stressbench.models.baselines import LastValueBaseline
+
         return LastValueBaseline()
     elif name == "rolling_mean":
         from stressbench.models.baselines import RollingMeanBaseline
+
         return RollingMeanBaseline()
     elif name == "ar1":
         from stressbench.models.baselines import AR1Baseline
+
         return AR1Baseline()
     elif name == "logistic":
         from stressbench.models.baselines import LogisticBaseline
+
         return LogisticBaseline()
     elif name == "ridge":
         from stressbench.models.baselines import RidgeBaseline
+
         return RidgeBaseline()
     elif name == "lasso":
         from stressbench.models.baselines import LassoBaseline
+
         return LassoBaseline()
     elif name == "lgbm":
         from stressbench.models.tree_models import LGBMWrapper
+
         return LGBMWrapper(task=task)
     elif name == "xgb":
         from stressbench.models.tree_models import XGBWrapper
+
         return XGBWrapper(task=task)
     elif name == "rf":
         from stressbench.models.tree_models import RandomForestWrapper
+
         return RandomForestWrapper(task=task)
     else:
         raise ValueError(f"Unknown model: {name}")
@@ -237,12 +264,15 @@ def main() -> None:
 
         logger.info(
             "Building sequence windows (seq_len=%d) for: %s",
-            args.seq_len, seq_models_to_train,
+            args.seq_len,
+            seq_models_to_train,
         )
         # Reload time-sorted so windows are chronological
         X_sorted, y_sorted, _ = load_train_data(
-            args.data_dir, args.label,
-            sort_by_time=True, allow_synthetic=args.allow_synthetic,
+            args.data_dir,
+            args.label,
+            sort_by_time=True,
+            allow_synthetic=args.allow_synthetic,
         )
         X_seq, y_seq = make_sequence_windows(X_sorted, y_sorted, args.seq_len)
         logger.info("Sequence windows: X_seq=%s  y_seq=%s", X_seq.shape, y_seq.shape)
@@ -260,7 +290,9 @@ def main() -> None:
                     elif model_name == "transformer":
                         model = TransformerEncoder(input_dim=n_features, task=args.task)
                     else:
-                        logger.warning("Unknown sequence model %s; skipping.", model_name)
+                        logger.warning(
+                            "Unknown sequence model %s; skipping.", model_name
+                        )
                         continue
                     model.fit(X_seq, y_seq_f)
                     model_path = model_dir / f"{model_name}_{args.label}.pkl"
@@ -268,7 +300,9 @@ def main() -> None:
                         pickle.dump(model, f)
                     logger.info("Saved sequence model to %s", model_path)
                 except Exception as exc:
-                    logger.error("Failed to train sequence model %s: %s", model_name, exc)
+                    logger.error(
+                        "Failed to train sequence model %s: %s", model_name, exc
+                    )
 
     # Save feature column metadata
     meta = {

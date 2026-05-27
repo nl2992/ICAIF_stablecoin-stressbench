@@ -76,7 +76,7 @@ class RollingMeanBaseline:
         self._mean: float = 0.0
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "RollingMeanBaseline":
-        self._mean = float(np.mean(y[-self.window:]))
+        self._mean = float(np.mean(y[-self.window :]))
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:

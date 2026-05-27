@@ -32,7 +32,9 @@ _THRESHOLDS_BPS = [0, 5, 10, 25]
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate paper tables from benchmark outputs.")
+    parser = argparse.ArgumentParser(
+        description="Generate paper tables from benchmark outputs."
+    )
     parser.add_argument("--data-dir", default="data/gold")
     parser.add_argument("--smoke-dir", default="results/smoke")
     parser.add_argument("--experiments-dir", default="results/experiments")
@@ -67,18 +69,22 @@ def make_table_1_data_coverage(
         df = pl.read_parquet(str(dataset_path))
         split_counts = df["split"].value_counts().sort("split")
         for row in split_counts.iter_rows(named=True):
-            rows.append({
-                "split": row["split"],
-                "rows": row["count"],
+            rows.append(
+                {
+                    "split": row["split"],
+                    "rows": row["count"],
+                    "source": "dataset.parquet",
+                    "notes": "",
+                }
+            )
+        rows.append(
+            {
+                "split": "total",
+                "rows": len(df),
                 "source": "dataset.parquet",
-                "notes": "",
-            })
-        rows.append({
-            "split": "total",
-            "rows": len(df),
-            "source": "dataset.parquet",
-            "notes": f"{len(df.columns)} columns ({sum(1 for c in df.columns if c.startswith('label_'))} label cols)",
-        })
+                "notes": f"{len(df.columns)} columns ({sum(1 for c in df.columns if c.startswith('label_'))} label cols)",
+            }
+        )
     else:
         logger.warning("dataset.parquet not found at %s", dataset_path)
 
@@ -87,12 +93,14 @@ def make_table_1_data_coverage(
     if smoke_counts.exists():
         with open(smoke_counts) as fh:
             for line in csv.DictReader(fh):
-                rows.append({
-                    "split": f"{line['stage']}.{line['table']}",
-                    "rows": line["rows"],
-                    "source": "pipeline_row_counts.csv",
-                    "notes": line.get("notes", ""),
-                })
+                rows.append(
+                    {
+                        "split": f"{line['stage']}.{line['table']}",
+                        "rows": line["rows"],
+                        "source": "pipeline_row_counts.csv",
+                        "notes": line.get("notes", ""),
+                    }
+                )
 
     _write_csv(rows, output_path)
 
@@ -118,7 +126,8 @@ def make_table_2_price_execution_gap(
 
     # Choose basis columns to report (use all available)
     basis_cols = [
-        c for c in [
+        c
+        for c in [
             "cross_quote_basis_bps",
             "cross_quote_basis_usdc_bps",
             "cross_quote_basis_usdt_bps",
@@ -145,9 +154,15 @@ def make_table_2_price_execution_gap(
             for q in _NOTIONALS:
                 col = f"net_profit_bps_q{q}"
                 if col in sdf.columns:
-                    valid = sdf.filter(pl.col(col).is_not_null() & ~pl.col(col).is_nan())
+                    valid = sdf.filter(
+                        pl.col(col).is_not_null() & ~pl.col(col).is_nan()
+                    )
                     n_valid = len(valid)
-                    pct = valid.filter(pl.col(col) > thr).height / n * 100 if n_valid > 0 else float("nan")
+                    pct = (
+                        valid.filter(pl.col(col) > thr).height / n * 100
+                        if n_valid > 0
+                        else float("nan")
+                    )
                     row[f"exec_pct_q{q}"] = round(pct, 2)
 
             rows.append(row)
@@ -179,12 +194,23 @@ def make_table_3_model_ablation(
         all_rows = [r for r in all_rows if r.get("task") in task_filter]
 
     _PAPER_COLS = [
-        "task", "feature_set", "model",
-        "n_train", "n_val", "n_test",
-        "validation_threshold", "validation_n_trades",
-        "auroc", "auprc", "balanced_accuracy", "brier_score",
-        "net_bps_captured", "hit_rate_above_cost",
-        "n_trades", "final_pnl_usd", "sharpe_ratio",
+        "task",
+        "feature_set",
+        "model",
+        "n_train",
+        "n_val",
+        "n_test",
+        "validation_threshold",
+        "validation_n_trades",
+        "auroc",
+        "auprc",
+        "balanced_accuracy",
+        "brier_score",
+        "net_bps_captured",
+        "hit_rate_above_cost",
+        "n_trades",
+        "final_pnl_usd",
+        "sharpe_ratio",
     ]
 
     out_rows = []
@@ -239,22 +265,34 @@ def make_table_4_oracle_gap(
 
         oracle_net = max((_net(r) for r in oracle_rows), default=float("nan"))
         # Find best ML model by net_bps, treating NaN as -inf (model made no trades)
-        non_oracle_valid = [(r, _net(r)) for r in non_oracle if not (_n := _net(r)) != _n or True]
+        non_oracle_valid = [
+            (r, _net(r)) for r in non_oracle if not (_n := _net(r)) != _n or True
+        ]
         non_oracle_valid = [(r, v) for r, v in non_oracle_valid if v == v]  # drop NaN
         if non_oracle_valid:
             best_r, best_net = max(non_oracle_valid, key=lambda x: x[1])
             best_model = f"{best_r['model']}@{best_r['feature_set']}"
         else:
             best_net, best_model = float("nan"), "—"
-        capture = (best_net / oracle_net * 100) if oracle_net > 0 and best_net == best_net else float("nan")
+        capture = (
+            (best_net / oracle_net * 100)
+            if oracle_net > 0 and best_net == best_net
+            else float("nan")
+        )
 
-        rows.append({
-            "task": task,
-            "oracle_net_bps": round(oracle_net, 2) if oracle_net == oracle_net else "",
-            "best_model": best_model,
-            "best_model_net_bps": round(best_net, 2) if best_net == best_net else "",
-            "capture_pct": round(capture, 1) if capture == capture else "",
-        })
+        rows.append(
+            {
+                "task": task,
+                "oracle_net_bps": (
+                    round(oracle_net, 2) if oracle_net == oracle_net else ""
+                ),
+                "best_model": best_model,
+                "best_model_net_bps": (
+                    round(best_net, 2) if best_net == best_net else ""
+                ),
+                "capture_pct": round(capture, 1) if capture == capture else "",
+            }
+        )
 
     _write_csv(rows, output_path)
 

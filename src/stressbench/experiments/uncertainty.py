@@ -15,8 +15,9 @@ Results write to results/experiments_addon/. Baseline files are not modified.
 
 from __future__ import annotations
 
-import numpy as np
 from typing import Any
+
+import numpy as np
 
 from stressbench.common.logging import get_logger
 
@@ -109,6 +110,7 @@ class QuantileNetProfitModel:
         for q in self.quantiles:
             if self.base_model == "lgbm":
                 import lightgbm as lgb
+
                 m = lgb.LGBMRegressor(
                     objective="quantile",
                     alpha=q,
@@ -120,6 +122,7 @@ class QuantileNetProfitModel:
                 )
             else:
                 from sklearn.ensemble import GradientBoostingRegressor
+
                 m = GradientBoostingRegressor(
                     loss="quantile",
                     alpha=q,
@@ -146,7 +149,9 @@ class QuantileNetProfitModel:
             means trade only when the 10th-percentile prediction is positive.
         """
         if trade_quantile not in self._models:
-            raise ValueError(f"trade_quantile {trade_quantile} not fitted. Available: {list(self._models)}")
+            raise ValueError(
+                f"trade_quantile {trade_quantile} not fitted. Available: {list(self._models)}"
+            )
         lower = self._models[trade_quantile].predict(X)
         return (lower > 0.0).astype(np.int8)
 
@@ -190,11 +195,17 @@ def abstention_sweep(
             traded_net = y_clean[signal]
             net_bps = float(np.mean(traded_net))
             hit_rate = float((traded_net > 0).mean())
-        rows.append({
-            "k": k,
-            "n_trades": n_trades,
-            "net_bps_captured": round(net_bps, 3) if net_bps == net_bps else "",
-            "hit_rate_above_cost": round(hit_rate, 4) if hit_rate == hit_rate else "",
-            "total_pnl_bps": round(float(np.sum(y_clean[signal])), 2) if n_trades > 0 else 0.0,
-        })
+        rows.append(
+            {
+                "k": k,
+                "n_trades": n_trades,
+                "net_bps_captured": round(net_bps, 3) if net_bps == net_bps else "",
+                "hit_rate_above_cost": (
+                    round(hit_rate, 4) if hit_rate == hit_rate else ""
+                ),
+                "total_pnl_bps": (
+                    round(float(np.sum(y_clean[signal])), 2) if n_trades > 0 else 0.0
+                ),
+            }
+        )
     return rows

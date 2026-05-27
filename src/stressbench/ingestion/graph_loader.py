@@ -20,9 +20,7 @@ from stressbench.common.logging import get_logger
 
 logger = get_logger(__name__)
 
-_UNISWAP_V3_SUBGRAPH = (
-    "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3"
-)
+_UNISWAP_V3_SUBGRAPH = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3"
 
 # Known Uniswap v3 pool addresses for stablecoin pairs (Ethereum mainnet)
 # Source: Uniswap v3 factory / Etherscan; verify before use

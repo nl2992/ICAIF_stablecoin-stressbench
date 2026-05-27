@@ -19,8 +19,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import csv
 import copy
+import csv
 import math
 from pathlib import Path
 from typing import Any
@@ -76,19 +76,26 @@ def parse_args() -> argparse.Namespace:
 
 def _build_models() -> dict[str, tuple[Any, str]]:
     """Build (model, class_balance_method) dict."""
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.pipeline import Pipeline
     from sklearn.ensemble import RandomForestClassifier
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
 
     models: dict[str, tuple[Any, str]] = {}
 
     # Logistic balanced
     models["logistic_balanced"] = (
-        Pipeline([
-            ("scaler", StandardScaler()),
-            ("clf", LogisticRegression(class_weight="balanced", max_iter=1000, random_state=42)),
-        ]),
+        Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                (
+                    "clf",
+                    LogisticRegression(
+                        class_weight="balanced", max_iter=1000, random_state=42
+                    ),
+                ),
+            ]
+        ),
         "class_weight_balanced",
     )
 
@@ -106,6 +113,7 @@ def _build_models() -> dict[str, tuple[Any, str]]:
     # XGBoost weighted
     try:
         from xgboost import XGBClassifier  # type: ignore
+
         models["xgb_weighted"] = (
             XGBClassifier(
                 n_estimators=200,
@@ -124,6 +132,7 @@ def _build_models() -> dict[str, tuple[Any, str]]:
     # LightGBM weighted
     try:
         from lightgbm import LGBMClassifier  # type: ignore
+
         models["lgbm_weighted"] = (
             LGBMClassifier(
                 n_estimators=200,
@@ -141,10 +150,14 @@ def _build_models() -> dict[str, tuple[Any, str]]:
     return models
 
 
-def _resolve_feature_cols(df: pl.DataFrame, feat_set: str, exclude: set[str]) -> list[str]:
+def _resolve_feature_cols(
+    df: pl.DataFrame, feat_set: str, exclude: set[str]
+) -> list[str]:
     cols = FEATURE_SETS.get(feat_set)
     if cols is None:
-        cols = [c for c in df.columns if c not in exclude and not c.startswith("label_")]
+        cols = [
+            c for c in df.columns if c not in exclude and not c.startswith("label_")
+        ]
     else:
         cols = [c for c in cols if c in df.columns]
     return cols
@@ -200,6 +213,7 @@ def _calibrate_threshold(
 
 def _auroc(y_true: np.ndarray, y_score: np.ndarray) -> float:
     from sklearn.metrics import roc_auc_score
+
     try:
         if len(np.unique(y_true)) < 2:
             return float("nan")
@@ -217,22 +231,49 @@ def run_one(
     model: Any,
     balance_method: str,
 ) -> dict:
-    exclude = {"split", "ts_1m_ns", "basis_primary_asset", "buy_venue", "sell_venue", "depth_source"}
+    exclude = {
+        "split",
+        "ts_1m_ns",
+        "basis_primary_asset",
+        "buy_venue",
+        "sell_venue",
+        "depth_source",
+    }
     feature_cols = _resolve_feature_cols(df, feat_set, exclude)
 
-    X_train, y_train, _ = _extract_split(df, "train", feature_cols, task_cfg["label_col"], task_cfg["net_profit_col"])
-    X_val, y_val, y_net_val = _extract_split(df, "validation", feature_cols, task_cfg["label_col"], task_cfg["net_profit_col"])
-    X_test, y_test, y_net_test = _extract_split(df, "test", feature_cols, task_cfg["label_col"], task_cfg["net_profit_col"])
+    X_train, y_train, _ = _extract_split(
+        df, "train", feature_cols, task_cfg["label_col"], task_cfg["net_profit_col"]
+    )
+    X_val, y_val, y_net_val = _extract_split(
+        df,
+        "validation",
+        feature_cols,
+        task_cfg["label_col"],
+        task_cfg["net_profit_col"],
+    )
+    X_test, y_test, y_net_test = _extract_split(
+        df, "test", feature_cols, task_cfg["label_col"], task_cfg["net_profit_col"]
+    )
 
     # Check class diversity
     if len(np.unique(y_train)) < 2:
-        logger.warning("Only one class in training data for task=%s feat=%s model=%s; skipping", task_name, feat_set, model_name)
+        logger.warning(
+            "Only one class in training data for task=%s feat=%s model=%s; skipping",
+            task_name,
+            feat_set,
+            model_name,
+        )
         return {
-            "task": task_name, "feature_set": feat_set, "model": model_name,
+            "task": task_name,
+            "feature_set": feat_set,
+            "model": model_name,
             "class_balance_method": balance_method,
-            "test_net_bps_captured": float("nan"), "test_n_trades": 0,
-            "test_hit_rate": float("nan"), "test_final_pnl_usd": 0.0,
-            "auroc": float("nan"), "oracle_capture_pct": float("nan"),
+            "test_net_bps_captured": float("nan"),
+            "test_n_trades": 0,
+            "test_hit_rate": float("nan"),
+            "test_final_pnl_usd": 0.0,
+            "auroc": float("nan"),
+            "oracle_capture_pct": float("nan"),
         }
 
     model.fit(X_train, y_train)
@@ -304,25 +345,54 @@ def main() -> None:
 
     for task_name, task_cfg in _TASKS.items():
         if task_cfg["label_col"] not in df.columns:
-            logger.warning("Label '%s' not found, skipping task %s", task_cfg["label_col"], task_name)
+            logger.warning(
+                "Label '%s' not found, skipping task %s",
+                task_cfg["label_col"],
+                task_name,
+            )
             continue
         for feat_set in _FEATURE_SETS:
             for model_name, (model_obj, balance_method) in model_registry.items():
-                logger.info("Running: task=%s feat=%s model=%s", task_name, feat_set, model_name)
+                logger.info(
+                    "Running: task=%s feat=%s model=%s", task_name, feat_set, model_name
+                )
                 try:
                     # Clone model for each run (sklearn models are stateful after fit)
                     model_copy = copy.deepcopy(model_obj)
-                    row = run_one(df, task_name, task_cfg, feat_set, model_name, model_copy, balance_method)
+                    row = run_one(
+                        df,
+                        task_name,
+                        task_cfg,
+                        feat_set,
+                        model_name,
+                        model_copy,
+                        balance_method,
+                    )
                     rows.append(row)
                     logger.info(
                         "  -> n_trades=%d net_bps=%.4f auroc=%.4f oracle_pct=%.4f",
                         row["test_n_trades"],
-                        row["test_net_bps_captured"] if not math.isnan(row["test_net_bps_captured"]) else float("nan"),
+                        (
+                            row["test_net_bps_captured"]
+                            if not math.isnan(row["test_net_bps_captured"])
+                            else float("nan")
+                        ),
                         row["auroc"] if not math.isnan(row["auroc"]) else float("nan"),
-                        row["oracle_capture_pct"] if not math.isnan(row["oracle_capture_pct"]) else float("nan"),
+                        (
+                            row["oracle_capture_pct"]
+                            if not math.isnan(row["oracle_capture_pct"])
+                            else float("nan")
+                        ),
                     )
                 except Exception as exc:
-                    logger.error("FAILED task=%s feat=%s model=%s: %s", task_name, feat_set, model_name, exc, exc_info=True)
+                    logger.error(
+                        "FAILED task=%s feat=%s model=%s: %s",
+                        task_name,
+                        feat_set,
+                        model_name,
+                        exc,
+                        exc_info=True,
+                    )
 
     out_path = out_dir / "imbalance_model_results.csv"
     with open(out_path, "w", newline="") as fh:

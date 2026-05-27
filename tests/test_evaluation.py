@@ -95,8 +95,13 @@ def test_economic_summary_keys():
     signal = (rng.uniform(0, 1, 100) > 0.5).astype(int)
     summary = economic_summary(y_net, signal)
     required_keys = [
-        "net_bps_captured", "hit_rate_above_cost", "false_positive_cost",
-        "n_trades", "final_pnl_usd", "max_drawdown_usd", "sharpe_ratio",
+        "net_bps_captured",
+        "hit_rate_above_cost",
+        "false_positive_cost",
+        "n_trades",
+        "final_pnl_usd",
+        "max_drawdown_usd",
+        "sharpe_ratio",
     ]
     for key in required_keys:
         assert key in summary

@@ -27,21 +27,22 @@ from stressbench.common.logging import get_logger
 logger = get_logger(__name__)
 
 _STRESS_START_NS = 1_678_406_400_000_000_000  # 2023-03-10T00:00:00Z
-_STRESS_END_NS   = 1_678_838_400_000_000_000  # 2023-03-15T00:00:00Z
+_STRESS_END_NS = 1_678_838_400_000_000_000  # 2023-03-15T00:00:00Z
 
 _COLORS = {
-    "price":    "#2166ac",
+    "price": "#2166ac",
     "exec_10k": "#d73027",
     "exec_50k": "#fc8d59",
-    "spread":   "#1a9641",
-    "depth":    "#a6d96a",
-    "oracle":   "#4d4d4d",
+    "spread": "#1a9641",
+    "depth": "#a6d96a",
+    "oracle": "#4d4d4d",
     "no_trade": "#bababa",
 }
 
 
 def _ns_to_dt(ns_series):
     import pandas as pd
+
     return pd.to_datetime(ns_series, unit="ns", utc=True)
 
 
@@ -56,11 +57,12 @@ def _savefig(fig, path: Path, fmt: str) -> None:
 # Figure 1: USDC basis during SVB crisis
 # ---------------------------------------------------------------------------
 
+
 def figure_1_usdc_basis(dataset_path: Path, output_dir: Path, fmt: str) -> None:
     """Time-series of USDC cross-quote basis during the SVB stress window."""
-    import polars as pl
-    import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+    import polars as pl
 
     if not dataset_path.exists():
         logger.warning("dataset.parquet not found — skipping Figure 1.")
@@ -68,12 +70,13 @@ def figure_1_usdc_basis(dataset_path: Path, output_dir: Path, fmt: str) -> None:
 
     df = pl.read_parquet(str(dataset_path))
     stress = df.filter(
-        (pl.col("ts_1m_ns") >= _STRESS_START_NS) &
-        (pl.col("ts_1m_ns") <= _STRESS_END_NS)
+        (pl.col("ts_1m_ns") >= _STRESS_START_NS)
+        & (pl.col("ts_1m_ns") <= _STRESS_END_NS)
     ).sort("ts_1m_ns")
 
     basis_col = (
-        "cross_quote_basis_usdc_bps" if "cross_quote_basis_usdc_bps" in stress.columns
+        "cross_quote_basis_usdc_bps"
+        if "cross_quote_basis_usdc_bps" in stress.columns
         else "cross_quote_basis_bps"
     )
     if stress.is_empty() or basis_col not in stress.columns:
@@ -81,6 +84,7 @@ def figure_1_usdc_basis(dataset_path: Path, output_dir: Path, fmt: str) -> None:
         return
 
     import pandas as pd
+
     dt = _ns_to_dt(stress["ts_1m_ns"].to_list())
     basis = stress[basis_col].to_list()
 
@@ -89,10 +93,23 @@ def figure_1_usdc_basis(dataset_path: Path, output_dir: Path, fmt: str) -> None:
     ax.axhline(10, ls="--", lw=0.8, color="gray", alpha=0.7, label="10 bps threshold")
     ax.axhline(-10, ls="--", lw=0.8, color="gray", alpha=0.7)
     basis_clean = [b if b is not None else 0.0 for b in basis]
-    ax.fill_between(dt, basis_clean, 10, where=[b > 10 for b in basis_clean],
-                    alpha=0.25, color=_COLORS["price"], label="|basis| > 10 bps")
-    ax.fill_between(dt, basis_clean, -10, where=[b < -10 for b in basis_clean],
-                    alpha=0.25, color=_COLORS["price"])
+    ax.fill_between(
+        dt,
+        basis_clean,
+        10,
+        where=[b > 10 for b in basis_clean],
+        alpha=0.25,
+        color=_COLORS["price"],
+        label="|basis| > 10 bps",
+    )
+    ax.fill_between(
+        dt,
+        basis_clean,
+        -10,
+        where=[b < -10 for b in basis_clean],
+        alpha=0.25,
+        color=_COLORS["price"],
+    )
     ax.set_xlabel("UTC time")
     ax.set_ylabel("Basis (bps)")
     ax.set_title("Figure 1 — USDC Cross-Quote Basis During SVB Crisis (Mar 10–14 2023)")
@@ -108,34 +125,61 @@ def figure_1_usdc_basis(dataset_path: Path, output_dir: Path, fmt: str) -> None:
 # Figure 2: Price-only vs executable opportunity count
 # ---------------------------------------------------------------------------
 
+
 def figure_2_price_vs_exec(paper_dir: Path, output_dir: Path, fmt: str) -> None:
     """Bar chart comparing price-signal and executable-profit window counts."""
     import csv
+
     import matplotlib.pyplot as plt
     import numpy as np
 
     table_path = paper_dir / "table_2_price_execution_gap.csv"
     if not table_path.exists():
-        logger.warning("table_2 not found — run make_paper_tables.py first. Skipping Figure 2.")
+        logger.warning(
+            "table_2 not found — run make_paper_tables.py first. Skipping Figure 2."
+        )
         return
 
     with open(table_path) as fh:
         rows = [r for r in csv.DictReader(fh) if r["split"] == "test"]
 
     thresholds = [int(r["threshold_bps"]) for r in rows]
-    price_pct = [float(r.get("price_pct_bps") or r.get("price_pct_usdc") or 0) for r in rows]
-    exec_pct  = [float(r.get("exec_pct_q10000") or 0) for r in rows]
+    price_pct = [
+        float(r.get("price_pct_bps") or r.get("price_pct_usdc") or 0) for r in rows
+    ]
+    exec_pct = [float(r.get("exec_pct_q10000") or 0) for r in rows]
 
     x = np.arange(len(thresholds))
     width = 0.35
     fig, ax = plt.subplots(figsize=(7, 4))
-    ax.bar(x - width/2, price_pct, width, label="Price signal (|basis| > thr)", color=_COLORS["price"], alpha=0.85)
-    ax.bar(x + width/2, exec_pct,  width, label="Executable at $10K (net > thr)", color=_COLORS["exec_10k"], alpha=0.85)
+    ax.bar(
+        x - width / 2,
+        price_pct,
+        width,
+        label="Price signal (|basis| > thr)",
+        color=_COLORS["price"],
+        alpha=0.85,
+    )
+    ax.bar(
+        x + width / 2,
+        exec_pct,
+        width,
+        label="Executable at $10K (net > thr)",
+        color=_COLORS["exec_10k"],
+        alpha=0.85,
+    )
 
     for i, (p, e) in enumerate(zip(price_pct, exec_pct)):
         if p > 0:
             ratio = p / e if e > 0 else float("inf")
-            ax.text(i, p + 0.5, f"{ratio:.0f}×", ha="center", fontsize=8, color=_COLORS["price"])
+            ax.text(
+                i,
+                p + 0.5,
+                f"{ratio:.0f}×",
+                ha="center",
+                fontsize=8,
+                color=_COLORS["price"],
+            )
 
     ax.set_xticks(x)
     ax.set_xticklabels([f">{t} bps" for t in thresholds])
@@ -152,11 +196,12 @@ def figure_2_price_vs_exec(paper_dir: Path, output_dir: Path, fmt: str) -> None:
 # Figure 3: Spread and depth deterioration
 # ---------------------------------------------------------------------------
 
+
 def figure_3_spread_depth(dataset_path: Path, output_dir: Path, fmt: str) -> None:
     """Twin-axis: bid-ask spread and book depth during the stress window."""
-    import polars as pl
-    import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
+    import matplotlib.pyplot as plt
+    import polars as pl
 
     if not dataset_path.exists():
         logger.warning("dataset.parquet not found — skipping Figure 3.")
@@ -164,8 +209,8 @@ def figure_3_spread_depth(dataset_path: Path, output_dir: Path, fmt: str) -> Non
 
     df = pl.read_parquet(str(dataset_path))
     stress = df.filter(
-        (pl.col("ts_1m_ns") >= _STRESS_START_NS) &
-        (pl.col("ts_1m_ns") <= _STRESS_END_NS)
+        (pl.col("ts_1m_ns") >= _STRESS_START_NS)
+        & (pl.col("ts_1m_ns") <= _STRESS_END_NS)
     ).sort("ts_1m_ns")
 
     if stress.is_empty():
@@ -178,13 +223,24 @@ def figure_3_spread_depth(dataset_path: Path, output_dir: Path, fmt: str) -> Non
     ax2 = ax1.twinx()
 
     if "spread_bps_mean" in stress.columns:
-        ax1.plot(dt, stress["spread_bps_mean"].to_list(), lw=0.8,
-                 color=_COLORS["spread"], label="Bid-ask spread (bps)")
+        ax1.plot(
+            dt,
+            stress["spread_bps_mean"].to_list(),
+            lw=0.8,
+            color=_COLORS["spread"],
+            label="Bid-ask spread (bps)",
+        )
         ax1.set_ylabel("Spread (bps)", color=_COLORS["spread"])
 
     if "depth_bid_10bp_mean" in stress.columns:
-        ax2.plot(dt, stress["depth_bid_10bp_mean"].to_list(), lw=0.8,
-                 color=_COLORS["depth"], alpha=0.7, label="Bid depth within 10 bps (BTC)")
+        ax2.plot(
+            dt,
+            stress["depth_bid_10bp_mean"].to_list(),
+            lw=0.8,
+            color=_COLORS["depth"],
+            alpha=0.7,
+            label="Bid depth within 10 bps (BTC)",
+        )
         ax2.set_ylabel("Depth (BTC)", color=_COLORS["depth"])
 
     ax1.set_xlabel("UTC time")
@@ -203,9 +259,13 @@ def figure_3_spread_depth(dataset_path: Path, output_dir: Path, fmt: str) -> Non
 # Figure 4: Feature-set ablation AUROC heatmap
 # ---------------------------------------------------------------------------
 
-def figure_4_ablation_heatmap(experiments_dir: Path, output_dir: Path, fmt: str) -> None:
+
+def figure_4_ablation_heatmap(
+    experiments_dir: Path, output_dir: Path, fmt: str
+) -> None:
     """Heatmap of AUROC across (model × feature_set) for the primary task."""
     import csv
+
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -219,7 +279,9 @@ def figure_4_ablation_heatmap(experiments_dir: Path, output_dir: Path, fmt: str)
 
     # Prefer USDC-specific primary task; fall back to generic for backward compat
     for primary_task in ("basis_usdc_1m_gt10bps", "basis_1m_gt10bps"):
-        rows = [r for r in all_rows if r["task"] == primary_task and r["model"] != "oracle"]
+        rows = [
+            r for r in all_rows if r["task"] == primary_task and r["model"] != "oracle"
+        ]
         if rows:
             break
 
@@ -252,8 +314,15 @@ def figure_4_ablation_heatmap(experiments_dir: Path, output_dir: Path, fmt: str)
         for j in range(len(feat_sets)):
             v = data[i, j]
             if v == v:
-                ax.text(j, i, f"{v:.3f}", ha="center", va="center", fontsize=7,
-                        color="white" if v < 0.55 or v > 0.75 else "black")
+                ax.text(
+                    j,
+                    i,
+                    f"{v:.3f}",
+                    ha="center",
+                    va="center",
+                    fontsize=7,
+                    color="white" if v < 0.55 or v > 0.75 else "black",
+                )
     fig.tight_layout()
     _savefig(fig, output_dir / "figure_4_ablation_heatmap", fmt)
     plt.close(fig)
@@ -263,9 +332,11 @@ def figure_4_ablation_heatmap(experiments_dir: Path, output_dir: Path, fmt: str)
 # Figure 5: Oracle gap grouped bars
 # ---------------------------------------------------------------------------
 
+
 def figure_5_oracle_gap(experiments_dir: Path, output_dir: Path, fmt: str) -> None:
     """Grouped bars: oracle ceiling vs best ML model net bps per task."""
     import csv
+
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -279,13 +350,30 @@ def figure_5_oracle_gap(experiments_dir: Path, output_dir: Path, fmt: str) -> No
 
     tasks = [r["task"].replace("_", "\n") for r in rows]
     oracle = [float(r["oracle_net_bps"]) for r in rows]
-    best   = [float(r["best_model_net_bps"]) if r["best_model_net_bps"] else float("nan") for r in rows]
+    best = [
+        float(r["best_model_net_bps"]) if r["best_model_net_bps"] else float("nan")
+        for r in rows
+    ]
 
     x = np.arange(len(tasks))
     width = 0.35
     fig, ax = plt.subplots(figsize=(8, 4))
-    ax.bar(x - width/2, oracle, width, label="Oracle upper bound", color=_COLORS["oracle"], alpha=0.85)
-    ax.bar(x + width/2, best,   width, label="Best ML model", color=_COLORS["price"], alpha=0.85)
+    ax.bar(
+        x - width / 2,
+        oracle,
+        width,
+        label="Oracle upper bound",
+        color=_COLORS["oracle"],
+        alpha=0.85,
+    )
+    ax.bar(
+        x + width / 2,
+        best,
+        width,
+        label="Best ML model",
+        color=_COLORS["price"],
+        alpha=0.85,
+    )
     ax.axhline(0, color="black", lw=0.8)
     ax.set_xticks(x)
     ax.set_xticklabels(tasks, fontsize=8)
@@ -301,6 +389,7 @@ def figure_5_oracle_gap(experiments_dir: Path, output_dir: Path, fmt: str) -> No
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate paper figures.")
@@ -324,6 +413,7 @@ def main() -> None:
 
     try:
         import matplotlib
+
         matplotlib.use("Agg")
     except ImportError:
         logger.error("matplotlib not installed — pip install matplotlib")

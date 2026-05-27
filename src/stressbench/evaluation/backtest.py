@@ -11,9 +11,9 @@ from typing import Any
 import numpy as np
 import polars as pl
 
+from stressbench.common.logging import get_logger
 from stressbench.evaluation.economic_metrics import economic_summary
 from stressbench.evaluation.ml_metrics import classification_metrics, regression_metrics
-from stressbench.common.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -59,7 +59,10 @@ def run_backtest(
 
         # Apply calibrated threshold from validation split (default 0.5)
         unique_vals = np.unique(y_pred[~np.isnan(y_pred)])
-        if len(unique_vals) > 2 or (len(unique_vals) > 0 and not set(unique_vals.tolist()).issubset({0, 1, 0.0, 1.0})):
+        if len(unique_vals) > 2 or (
+            len(unique_vals) > 0
+            and not set(unique_vals.tolist()).issubset({0, 1, 0.0, 1.0})
+        ):
             y_pred_binary = (y_proba > threshold).astype(np.int8)
         else:
             y_pred_binary = y_pred.astype(np.int8)

@@ -52,9 +52,7 @@ def compute_book_snapshot_features(
 
     depths_bid = {bps: book.depth_within_bps("bid", bps) for bps in _BPS_WINDOWS}
     depths_ask = {bps: book.depth_within_bps("ask", bps) for bps in _BPS_WINDOWS}
-    imbalances = {
-        bps: book.imbalance(bps) for bps in _BPS_WINDOWS
-    }
+    imbalances = {bps: book.imbalance(bps) for bps in _BPS_WINDOWS}
 
     # Data quality score: 1.0 = perfect, 0.0 = unusable
     dq_score = 1.0

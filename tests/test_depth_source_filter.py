@@ -21,6 +21,7 @@ _ALL_SOURCES = _REAL_L2_SOURCES | _SYNTHETIC_SOURCES
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_book_rows(depth_source: str, n: int = 3) -> list[dict]:
     """Return minimal book-level records tagged with the given depth_source."""
     base_price = 30_000.0
@@ -62,6 +63,7 @@ def _mixed_books() -> pl.DataFrame:
 # Tests: Silver normalizer tagging
 # ---------------------------------------------------------------------------
 
+
 def test_real_l2_snapshot_tag() -> None:
     """Rows tagged real_l2_snapshot must have that value in depth_source."""
     df = pl.DataFrame(_make_book_rows("real_l2_snapshot", n=5))
@@ -83,14 +85,15 @@ def test_real_l2_incremental_tag() -> None:
 # Tests: paper-grade filter excludes synthetic rows
 # ---------------------------------------------------------------------------
 
+
 def test_real_l2_filter_excludes_synthetic() -> None:
     """Filtering to real L2 sources must remove all synthetic_kline rows."""
     df = _mixed_books()
     real_only = df.filter(pl.col("depth_source").is_in(list(_REAL_L2_SOURCES)))
     sources_in_result = set(real_only["depth_source"].unique().to_list())
-    assert "synthetic_kline" not in sources_in_result, (
-        f"synthetic_kline rows leaked into the real-L2-only DataFrame: {sources_in_result}"
-    )
+    assert (
+        "synthetic_kline" not in sources_in_result
+    ), f"synthetic_kline rows leaked into the real-L2-only DataFrame: {sources_in_result}"
 
 
 def test_real_l2_filter_preserves_both_real_subtypes() -> None:
@@ -113,21 +116,21 @@ def test_synthetic_only_produces_no_paper_grade_rows() -> None:
     """When all rows are synthetic, the real-L2 filter must return an empty frame."""
     df = pl.DataFrame(_make_book_rows("synthetic_kline", n=5))
     real_only = df.filter(pl.col("depth_source").is_in(list(_REAL_L2_SOURCES)))
-    assert real_only.is_empty(), (
-        "Expected empty paper-grade frame when all input depth is synthetic_kline"
-    )
+    assert (
+        real_only.is_empty()
+    ), "Expected empty paper-grade frame when all input depth is synthetic_kline"
 
 
 # ---------------------------------------------------------------------------
 # Tests: depth_source vocabulary is well-defined
 # ---------------------------------------------------------------------------
 
+
 def test_depth_source_values_are_in_allowed_vocabulary() -> None:
     """Any depth_source value in a mixed book must be in the known vocabulary."""
     df = _mixed_books()
     unknown = [
-        v for v in df["depth_source"].unique().to_list()
-        if v not in _ALL_SOURCES
+        v for v in df["depth_source"].unique().to_list() if v not in _ALL_SOURCES
     ]
     assert not unknown, f"Unknown depth_source values: {unknown}"
 

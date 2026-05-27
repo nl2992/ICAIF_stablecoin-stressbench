@@ -20,9 +20,12 @@ sys.path.insert(0, str(ROOT / "src"))
 import numpy as np
 import pytest
 
-from stressbench.features.lags import LAG_COLUMN_PREFERENCE, TASK_LAG_COLUMNS, get_lag_col_idx
+from stressbench.features.lags import (
+    LAG_COLUMN_PREFERENCE,
+    TASK_LAG_COLUMNS,
+    get_lag_col_idx,
+)
 from stressbench.models.baselines import AR1Baseline, LastValueBaseline
-
 
 # ── Test 1: explicit lag_col_idx is respected ─────────────────────────────
 
@@ -66,9 +69,9 @@ def test_last_value_auto_detects_best_col() -> None:
 
     model = LastValueBaseline()  # lag_col_idx=None
     model.fit(X, y)
-    assert model._lag_col_idx == 3, (
-        f"Expected auto-detected lag_col_idx=3, got {model._lag_col_idx}"
-    )
+    assert (
+        model._lag_col_idx == 3
+    ), f"Expected auto-detected lag_col_idx=3, got {model._lag_col_idx}"
 
 
 def test_ar1_auto_detects_best_col() -> None:
@@ -79,9 +82,9 @@ def test_ar1_auto_detects_best_col() -> None:
 
     model = AR1Baseline()
     model.fit(X, y)
-    assert model._lag_col_idx == 0, (
-        f"Expected auto-detected lag_col_idx=0, got {model._lag_col_idx}"
-    )
+    assert (
+        model._lag_col_idx == 0
+    ), f"Expected auto-detected lag_col_idx=0, got {model._lag_col_idx}"
 
 
 # ── Test 3: predict before fit raises RuntimeError ───────────────────────

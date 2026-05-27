@@ -22,8 +22,8 @@ import argparse
 from pathlib import Path
 
 from stressbench.common.logging import get_logger
-from stressbench.history.event_catalog import EVENT_CATALOG, load_event_windows_yaml
 from stressbench.history.data_availability import PREDEFINED_COVERAGE
+from stressbench.history.event_catalog import EVENT_CATALOG, load_event_windows_yaml
 
 logger = get_logger(__name__)
 
@@ -60,10 +60,12 @@ def _savefig(fig, path: Path) -> None:
 def figure_23_timeline(events: dict, out_dir: Path) -> None:
     """Figure 23: Horizontal timeline of historical depeg events with tier colors."""
     import matplotlib
+
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    import matplotlib.patches as mpatches
     from datetime import datetime
+
+    import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(14, 5))
     fig.patch.set_facecolor(_WHITE)
@@ -77,10 +79,13 @@ def figure_23_timeline(events: dict, out_dir: Path) -> None:
 
     # Axis: time range
     all_starts = [_start_dt(ev) for _, ev in sorted_events]
-    all_ends = [datetime.fromisoformat(ev["end"].replace("Z", "+00:00")) for _, ev in sorted_events]
+    all_ends = [
+        datetime.fromisoformat(ev["end"].replace("Z", "+00:00"))
+        for _, ev in sorted_events
+    ]
 
-    from matplotlib.dates import date2num, DateFormatter
     import matplotlib.dates as mdates
+    from matplotlib.dates import DateFormatter, date2num
 
     t_min = min(all_starts)
     t_max = max(all_ends)
@@ -179,6 +184,7 @@ def figure_23_timeline(events: dict, out_dir: Path) -> None:
 def figure_24_coverage_matrix(events: dict, out_dir: Path) -> None:
     """Figure 24: Event x data source coverage heatmap."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
@@ -224,6 +230,7 @@ def figure_24_coverage_matrix(events: dict, out_dir: Path) -> None:
 
     # Custom colormap: navy for available, light gray for not available
     from matplotlib.colors import ListedColormap
+
     cmap = ListedColormap([_GRAY + "55", _NAVY])
 
     fig, ax = plt.subplots(figsize=(9, 5))
@@ -253,7 +260,16 @@ def figure_24_coverage_matrix(events: dict, out_dir: Path) -> None:
             val = matrix[i, j]
             text = "✓" if val > 0 else "✗"
             color = _WHITE if val > 0 else _NAVY
-            ax.text(j, i, text, ha="center", va="center", fontsize=10, color=color, fontweight="bold")
+            ax.text(
+                j,
+                i,
+                text,
+                ha="center",
+                va="center",
+                fontsize=10,
+                color=color,
+                fontweight="bold",
+            )
 
     # Add coverage score annotation on the right
     ax.set_xlim(-0.5, n_sources - 0.5)

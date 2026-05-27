@@ -41,12 +41,8 @@ class OrderBook:
             bids: Iterable of ``(price, size)`` pairs for the bid side.
             asks: Iterable of ``(price, size)`` pairs for the ask side.
         """
-        self.bids = {
-            float(p): float(q) for p, q in bids if float(q) > 0
-        }
-        self.asks = {
-            float(p): float(q) for p, q in asks if float(q) > 0
-        }
+        self.bids = {float(p): float(q) for p, q in bids if float(q) > 0}
+        self.asks = {float(p): float(q) for p, q in asks if float(q) > 0}
 
     def apply_update(self, side: str, price: float | str, size: float | str) -> None:
         """Apply an incremental update to one side of the book.

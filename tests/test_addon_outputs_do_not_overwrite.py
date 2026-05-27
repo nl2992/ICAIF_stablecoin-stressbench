@@ -52,9 +52,9 @@ def test_addon_script_does_not_reference_baseline_write_path(script):
             rf'open\s*\([^)]*{re.escape(baseline_file.split("/")[-1])}[^)]*,\s*["\']w["\']',
             re.DOTALL,
         )
-        assert not write_pattern.search(source), (
-            f"{script} appears to open {baseline_file} for writing"
-        )
+        assert not write_pattern.search(
+            source
+        ), f"{script} appears to open {baseline_file} for writing"
 
 
 def test_baseline_experiment_files_unchanged():

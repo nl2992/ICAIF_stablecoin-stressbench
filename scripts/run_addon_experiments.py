@@ -29,8 +29,8 @@ import numpy as np
 import polars as pl
 
 from stressbench.common.logging import get_logger
-from stressbench.models.cost_sensitive import ExpectedNetProfitRegressor
 from stressbench.experiments.feature_sets import FEATURE_SETS
+from stressbench.models.cost_sensitive import ExpectedNetProfitRegressor
 
 logger = get_logger(__name__)
 
@@ -40,18 +40,28 @@ _LABEL_COL = "label_arb_q10000_5m_gt0bps"
 _TS_COL = "ts_1m_ns"
 
 _MODELS = {
-    "expected_net_lgbm": lambda: ExpectedNetProfitRegressor(base_model="lgbm", n_estimators=300),
-    "expected_net_xgb":  lambda: ExpectedNetProfitRegressor(base_model="xgb",  n_estimators=300),
+    "expected_net_lgbm": lambda: ExpectedNetProfitRegressor(
+        base_model="lgbm", n_estimators=300
+    ),
+    "expected_net_xgb": lambda: ExpectedNetProfitRegressor(
+        base_model="xgb", n_estimators=300
+    ),
 }
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Add-on: ExpectedNetProfitRegressor experiments.")
+    p = argparse.ArgumentParser(
+        description="Add-on: ExpectedNetProfitRegressor experiments."
+    )
     p.add_argument("--data-dir", default="data/gold")
     p.add_argument("--baseline-results", default="results/experiments/all_results.csv")
     p.add_argument("--output-dir", default="results/experiments_addon")
     p.add_argument("--models", nargs="+", default=list(_MODELS))
-    p.add_argument("--feature-sets", nargs="+", default=["price_only", "price_plus_book", "price_book_frag"])
+    p.add_argument(
+        "--feature-sets",
+        nargs="+",
+        default=["price_only", "price_plus_book", "price_book_frag"],
+    )
     p.add_argument("--target", default="net_profit_q10000_5m")
     return p.parse_args()
 
@@ -61,7 +71,11 @@ def _resolve_feature_cols(feat_set: str, df: pl.DataFrame) -> list[str]:
     if cols is None:
         meta = {"split", _TS_COL}
         label_prefix = {"label_", "split"}
-        cols = [c for c in df.columns if not any(c.startswith(p) for p in label_prefix) and c not in meta]
+        cols = [
+            c
+            for c in df.columns
+            if not any(c.startswith(p) for p in label_prefix) and c not in meta
+        ]
     else:
         cols = [c for c in cols if c in df.columns]
         if not cols:
@@ -99,7 +113,11 @@ def _economic_metrics(
     # Oracle net bps for capture pct
     valid = y_net_clean[y_net_clean > -900]
     oracle_net = float(np.mean(valid[valid > 0])) if (valid > 0).any() else float("nan")
-    capture = (net_bps / oracle_net * 100) if oracle_net > 0 and oracle_net == oracle_net else float("nan")
+    capture = (
+        (net_bps / oracle_net * 100)
+        if oracle_net > 0 and oracle_net == oracle_net
+        else float("nan")
+    )
 
     return {
         "n_trades": n_trades,
@@ -132,7 +150,11 @@ def run_one(
 
     X_test = df_test.select(feature_cols).to_numpy().astype(float)
     y_test = df_test[target_col].to_numpy().astype(float)
-    y_label_test = df_test[_LABEL_COL].to_numpy().astype(float) if _LABEL_COL in df_test.columns else np.zeros(len(df_test))
+    y_label_test = (
+        df_test[_LABEL_COL].to_numpy().astype(float)
+        if _LABEL_COL in df_test.columns
+        else np.zeros(len(df_test))
+    )
 
     model = _MODELS[model_name]()
     logger.info("  Fitting %s / %s …", model_name, feat_set)
@@ -174,8 +196,8 @@ def main() -> None:
 
     df = pl.read_parquet(str(dataset_path))
     df_train = df.filter(pl.col("split") == "train")
-    df_val   = df.filter(pl.col("split") == "validation")
-    df_test  = df.filter(pl.col("split") == "test")
+    df_val = df.filter(pl.col("split") == "validation")
+    df_test = df.filter(pl.col("split") == "test")
 
     target_col = _NET_COL  # always net_profit_bps_q10000 for primary add-on task
     if target_col not in df.columns:
@@ -187,12 +209,15 @@ def main() -> None:
             logger.warning("Unknown model %s — skipping", model_name)
             continue
         for feat_set in args.feature_sets:
-            result = run_one(model_name, feat_set, df_train, df_val, df_test, target_col)
+            result = run_one(
+                model_name, feat_set, df_train, df_val, df_test, target_col
+            )
             if result:
                 rows.append(result)
                 logger.info(
                     "    %s/%s: test_n_trades=%s  test_net_bps=%s",
-                    model_name, feat_set,
+                    model_name,
+                    feat_set,
                     result.get("test_n_trades", "—"),
                     result.get("test_net_bps_captured", "—"),
                 )

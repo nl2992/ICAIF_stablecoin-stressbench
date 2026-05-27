@@ -23,10 +23,10 @@ from typing import Any
 
 import numpy as np
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _extract_signal(X: np.ndarray, signal_col: int) -> np.ndarray:
     """Extract 1-D signal from feature matrix column or use directly if 1-D."""
@@ -38,6 +38,7 @@ def _extract_signal(X: np.ndarray, signal_col: int) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # EWMA Z-Score Detector
 # ---------------------------------------------------------------------------
+
 
 class EWMAZScoreDetector:
     """EWMA-based stress regime detector.
@@ -90,7 +91,7 @@ class EWMAZScoreDetector:
         z_scores = np.zeros(n, dtype=np.float64)
 
         ewma_mean = self._baseline_mean
-        ewma_var = self._baseline_std ** 2
+        ewma_var = self._baseline_std**2
 
         for i, x in enumerate(signal):
             ewma_mean = alpha * x + (1 - alpha) * ewma_mean
@@ -135,6 +136,7 @@ class EWMAZScoreDetector:
 # ---------------------------------------------------------------------------
 # CUSUM Detector
 # ---------------------------------------------------------------------------
+
 
 class CUSUMDetector:
     """CUSUM-based structural shift detector.
@@ -209,6 +211,7 @@ class CUSUMDetector:
 # ---------------------------------------------------------------------------
 # BOCPD Detector
 # ---------------------------------------------------------------------------
+
 
 class BOCPDDetector:
     """Bayesian Online Changepoint Detection (BOCPD).
@@ -286,7 +289,7 @@ class BOCPDDetector:
             gammaln((nu + 1) / 2)
             - gammaln(nu / 2)
             - 0.5 * np.log(nu * np.pi * scale2)
-            - (nu + 1) / 2 * np.log(1 + t_stat ** 2 / nu)
+            - (nu + 1) / 2 * np.log(1 + t_stat**2 / nu)
         )
         return log_p
 
@@ -335,16 +338,20 @@ class BOCPDDetector:
 
             # 6. Update sufficient statistics for run-length > 0
             # For run-length 0 (changepoint), use prior
-            mu_new = np.concatenate([
-                [self.prior_mean],
-                (kappa * mu + x) / (kappa + 1),
-            ])
+            mu_new = np.concatenate(
+                [
+                    [self.prior_mean],
+                    (kappa * mu + x) / (kappa + 1),
+                ]
+            )
             kappa_new = np.concatenate([[self.prior_kappa], kappa + 1])
             alpha_new = np.concatenate([[self.prior_alpha], alpha + 0.5])
-            beta_new = np.concatenate([
-                [self.prior_beta],
-                beta + kappa * (x - mu) ** 2 / (2 * (kappa + 1)),
-            ])
+            beta_new = np.concatenate(
+                [
+                    [self.prior_beta],
+                    beta + kappa * (x - mu) ** 2 / (2 * (kappa + 1)),
+                ]
+            )
 
             log_R = new_log_R
             mu = mu_new

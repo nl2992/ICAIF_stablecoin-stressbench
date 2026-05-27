@@ -92,7 +92,9 @@ async def run_collector(
 
                     msg_type = msg.get("type", "unknown")
                     channel_name = msg.get("channel", msg_type)
-                    product_id = msg.get("product_id", msg.get("product_ids", ["UNKNOWN"]))
+                    product_id = msg.get(
+                        "product_id", msg.get("product_ids", ["UNKNOWN"])
+                    )
                     if isinstance(product_id, list):
                         product_id = product_id[0] if product_id else "UNKNOWN"
 

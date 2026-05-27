@@ -31,7 +31,9 @@ def test_fit_predict_shape(synthetic_data):
 
 def test_predict_signal_is_binary(synthetic_data):
     X, y = synthetic_data
-    model = ExpectedNetProfitRegressor(base_model="lgbm", n_estimators=10, threshold_bps=0.0)
+    model = ExpectedNetProfitRegressor(
+        base_model="lgbm", n_estimators=10, threshold_bps=0.0
+    )
     model.fit(X, y)
     signal = model.predict_signal(X)
     assert set(np.unique(signal)).issubset({0, 1})
@@ -39,8 +41,12 @@ def test_predict_signal_is_binary(synthetic_data):
 
 def test_higher_threshold_reduces_or_preserves_trade_count(synthetic_data):
     X, y = synthetic_data
-    model_low = ExpectedNetProfitRegressor(base_model="lgbm", n_estimators=10, threshold_bps=0.0)
-    model_high = ExpectedNetProfitRegressor(base_model="lgbm", n_estimators=10, threshold_bps=10.0)
+    model_low = ExpectedNetProfitRegressor(
+        base_model="lgbm", n_estimators=10, threshold_bps=0.0
+    )
+    model_high = ExpectedNetProfitRegressor(
+        base_model="lgbm", n_estimators=10, threshold_bps=10.0
+    )
     model_low.fit(X, y)
     model_high.fit(X, y)
     n_low = int(model_low.predict_signal(X).sum())

@@ -18,7 +18,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 _VALID_SPLITS = {"train", "validation", "test"}
 
 
@@ -61,9 +60,9 @@ def test_start_before_end(events: dict) -> None:
             continue
         start = _parse_ts(ev["start"])
         end = _parse_ts(ev["end"])
-        assert start < end, (
-            f"Event '{name}': start={ev['start']} is not before end={ev['end']}"
-        )
+        assert (
+            start < end
+        ), f"Event '{name}': start={ev['start']} is not before end={ev['end']}"
 
 
 def test_no_cross_split_overlap(events: dict) -> None:
@@ -104,8 +103,8 @@ def test_test_and_validation_non_overlapping(events: dict) -> None:
         if ev.get("split") == "validation" and "start" in ev
     ]
 
-    for (ts, te, tn) in test_windows:
-        for (vs, ve, vn) in val_windows:
+    for ts, te, tn in test_windows:
+        for vs, ve, vn in val_windows:
             overlap = ts < ve and vs < te
             assert not overlap, (
                 f"Test event '{tn}' ({ts} → {te}) overlaps "

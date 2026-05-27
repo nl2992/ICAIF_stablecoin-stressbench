@@ -6,12 +6,13 @@ import polars as pl
 import pytest
 
 from stressbench.labels.basis_labels import add_basis_labels
-from stressbench.labels.regime_labels import add_regime_labels
 from stressbench.labels.recovery_labels import compute_recovery_halflife
+from stressbench.labels.regime_labels import add_regime_labels
 
 
 def _make_basis_df(n: int = 100) -> pl.DataFrame:
     import numpy as np
+
     rng = np.random.default_rng(42)
     ts = [i * 60_000_000_000 for i in range(n)]
     basis = rng.normal(0, 10, n).tolist()
@@ -44,12 +45,15 @@ def test_add_basis_labels_label_prefix():
 
 def test_add_basis_labels_explicit_col():
     import numpy as np
+
     rng = np.random.default_rng(7)
     ts = [i * 60_000_000_000 for i in range(100)]
-    df = pl.DataFrame({
-        "ts_ns": ts,
-        "cross_quote_basis_maxabs_bps": rng.normal(0, 15, 100).tolist(),
-    })
+    df = pl.DataFrame(
+        {
+            "ts_ns": ts,
+            "cross_quote_basis_maxabs_bps": rng.normal(0, 15, 100).tolist(),
+        }
+    )
     result = add_basis_labels(
         df,
         basis_col="cross_quote_basis_maxabs_bps",
@@ -112,10 +116,31 @@ def test_add_regime_labels_issuer_event_priority():
 
 def test_compute_recovery_halflife_basic():
     import polars as pl
+
     ts = [i * 60_000_000_000 for i in range(20)]
     # Deviation peaks at t=5 then decays
-    deviation = [0.0, 5.0, 10.0, 20.0, 30.0, 50.0, 40.0, 30.0, 20.0, 10.0,
-                 5.0, 2.0, 1.0, 0.5, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0]
+    deviation = [
+        0.0,
+        5.0,
+        10.0,
+        20.0,
+        30.0,
+        50.0,
+        40.0,
+        30.0,
+        20.0,
+        10.0,
+        5.0,
+        2.0,
+        1.0,
+        0.5,
+        0.2,
+        0.1,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+    ]
     df = pl.DataFrame({"ts_ns": ts, "deviation_from_1_usd_bps": deviation})
     halflife = compute_recovery_halflife(df)
     # Peak at t=5 (300s), half=25bps, first time <=25 is t=8 (480s)

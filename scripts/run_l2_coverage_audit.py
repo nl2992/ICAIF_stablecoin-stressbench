@@ -18,10 +18,11 @@ Outputs:
 
 import os
 import warnings
+from datetime import date, datetime
+
 import pandas as pd
 import pyarrow.parquet as pq
 import yaml
-from datetime import datetime, date
 
 warnings.filterwarnings("ignore")
 
@@ -38,14 +39,16 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 # ── Route definition ─────────────────────────────────────────────────────────
 # Cross-quote USDC/USDT arbitrage route uses these instruments:
-ROUTE_BUY_LEG  = [("binance", "depth", "BTCUSDC"), ("binance", "depth", "USDCUSDT")]
+ROUTE_BUY_LEG = [("binance", "depth", "BTCUSDC"), ("binance", "depth", "USDCUSDT")]
 ROUTE_SELL_LEG = [("binance", "depth", "BTCUSDT"), ("coinbase", "level2", "BTCUSD")]
 ALL_ROUTE_INSTRUMENTS = ROUTE_BUY_LEG + ROUTE_SELL_LEG
 
 
 def _dates_in_silver(venue: str, channel: str, symbol: str) -> set:
     """Return set of date strings available in silver for this venue/channel/symbol."""
-    path = os.path.join(SILVER_ROOT, f"venue={venue}", f"channel={channel}", f"symbol={symbol}")
+    path = os.path.join(
+        SILVER_ROOT, f"venue={venue}", f"channel={channel}", f"symbol={symbol}"
+    )
     if not os.path.exists(path):
         return set()
     return {d.replace("date=", "") for d in os.listdir(path) if d.startswith("date=")}
@@ -54,8 +57,11 @@ def _dates_in_silver(venue: str, channel: str, symbol: str) -> set:
 def _sample_depth_source(venue: str, channel: str, symbol: str, date_str: str) -> str:
     """Read one parquet file and return the depth_source value, or 'none'."""
     date_path = os.path.join(
-        SILVER_ROOT, f"venue={venue}", f"channel={channel}",
-        f"symbol={symbol}", f"date={date_str}"
+        SILVER_ROOT,
+        f"venue={venue}",
+        f"channel={channel}",
+        f"symbol={symbol}",
+        f"date={date_str}",
     )
     if not os.path.exists(date_path):
         return "none"
@@ -78,7 +84,9 @@ def _sample_depth_source(venue: str, channel: str, symbol: str, date_str: str) -
                     if "raw_source" in pf.schema.names:
                         col = pf.column("raw_source")
                         vals = set(str(v) for v in col.to_pylist() if v is not None)
-                        if any("kline" in v.lower() or "candle" in v.lower() for v in vals):
+                        if any(
+                            "kline" in v.lower() or "candle" in v.lower() for v in vals
+                        ):
                             return "synthetic_kline"
                         return "unknown_raw_source"
                     return "no_depth_source_col"
@@ -104,6 +112,7 @@ def _date_range(start: str, end: str) -> list:
     while current <= e:
         days.append(str(current))
         from datetime import timedelta
+
         current += timedelta(days=1)
     return days
 
@@ -136,14 +145,50 @@ def main():
     # ── Define event windows for audit ───────────────────────────────────────
     # Key events with date ranges for coverage check
     event_windows = {
-        "calm_control_jan2022": ("2022-01-10", "2022-01-16", "train", "Calm control Jan 2022", "A"),
-        "terra_ust_2022":      ("2022-05-07", "2022-05-14", "validation", "Terra/UST May 2022", "B/validation"),
-        "celsius_3ac_2022":    ("2022-06-10", "2022-06-20", "none", "Celsius/3AC Jun 2022", "B"),
-        "ftx_collapse_2022":   ("2022-11-06", "2022-11-12", "none", "FTX Nov 2022", "B"),
-        "busd_regulatory_2023":("2023-02-01", "2023-02-07", "none", "BUSD Feb 2023", "B"),
-        "usdc_svb_2023":       ("2023-03-10", "2023-03-20", "test", "USDC/SVB Mar 2023", "A"),
-        "usdt_curve_2023":     ("2023-06-10", "2023-06-15", "none", "USDT/Curve Jun 2023", "B"),
-        "iron_titan_2021":     ("2021-06-16", "2021-06-17", "none", "IRON/TITAN Jun 2021", "C"),
+        "calm_control_jan2022": (
+            "2022-01-10",
+            "2022-01-16",
+            "train",
+            "Calm control Jan 2022",
+            "A",
+        ),
+        "terra_ust_2022": (
+            "2022-05-07",
+            "2022-05-14",
+            "validation",
+            "Terra/UST May 2022",
+            "B/validation",
+        ),
+        "celsius_3ac_2022": (
+            "2022-06-10",
+            "2022-06-20",
+            "none",
+            "Celsius/3AC Jun 2022",
+            "B",
+        ),
+        "ftx_collapse_2022": ("2022-11-06", "2022-11-12", "none", "FTX Nov 2022", "B"),
+        "busd_regulatory_2023": (
+            "2023-02-01",
+            "2023-02-07",
+            "none",
+            "BUSD Feb 2023",
+            "B",
+        ),
+        "usdc_svb_2023": ("2023-03-10", "2023-03-20", "test", "USDC/SVB Mar 2023", "A"),
+        "usdt_curve_2023": (
+            "2023-06-10",
+            "2023-06-15",
+            "none",
+            "USDT/Curve Jun 2023",
+            "B",
+        ),
+        "iron_titan_2021": (
+            "2021-06-16",
+            "2021-06-17",
+            "none",
+            "IRON/TITAN Jun 2021",
+            "C",
+        ),
     }
 
     # ── Build coverage rows ───────────────────────────────────────────────────
@@ -199,7 +244,9 @@ def main():
 
         # Real L2 or synthetic?
         all_src = buy_leg_src + sell_leg_src
-        has_real_l2 = any(s in ("real_l2_snapshot", "real_l2_incremental") for s in all_src)
+        has_real_l2 = any(
+            s in ("real_l2_snapshot", "real_l2_incremental") for s in all_src
+        )
         all_synthetic = all(s == "synthetic_kline" for s in all_src if s != "none")
 
         # Gold net_profit coverage
@@ -228,9 +275,13 @@ def main():
 
         note_parts = []
         if n_gold > 0:
-            note_parts.append(f"feat_net_profit_1m committed for {n_gold}/{n_expected} days")
+            note_parts.append(
+                f"feat_net_profit_1m committed for {n_gold}/{n_expected} days"
+            )
         if all_synthetic:
-            note_parts.append("silver depth uses kline-proxy; paper-grade labels in committed dataset.parquet only")
+            note_parts.append(
+                "silver depth uses kline-proxy; paper-grade labels in committed dataset.parquet only"
+            )
         if not route_complete and (route_buy_leg_ok or route_sell_leg_ok):
             note_parts.append("USDC-route instruments missing (BTCUSDC or USDCUSDT)")
         if not route_buy_leg_ok and not route_sell_leg_ok:

@@ -31,7 +31,6 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-
 _DATE = "2024-01-01"
 _START = datetime(2024, 1, 1, tzinfo=timezone.utc)
 _END = datetime(2024, 1, 2, tzinfo=timezone.utc)
@@ -41,11 +40,20 @@ _END = datetime(2024, 1, 2, tzinfo=timezone.utc)
 # Synthetic data writers
 # ---------------------------------------------------------------------------
 
+
 def _write_tardis_trades(exchange: str, symbol: str, root: Path) -> Path:
     """Write 60 trade rows (one per minute across midnight) to a Tardis CSV."""
     path = root / f"{exchange}_{symbol}_trades.csv"
-    fieldnames = ["exchange", "symbol", "timestamp", "localTimestamp",
-                  "id", "side", "price", "amount"]
+    fieldnames = [
+        "exchange",
+        "symbol",
+        "timestamp",
+        "localTimestamp",
+        "id",
+        "side",
+        "price",
+        "amount",
+    ]
     base_ts_us = 1_704_067_200_000_000  # 2024-01-01T00:00:00 UTC in microseconds
     with open(path, "w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
@@ -53,25 +61,39 @@ def _write_tardis_trades(exchange: str, symbol: str, root: Path) -> Path:
         for i in range(60):
             ts_us = base_ts_us + i * 60_000_000  # one per minute
             ts_iso = f"2024-01-01T00:{i:02d}:00.000000Z"
-            writer.writerow({
-                "exchange": exchange,
-                "symbol": symbol,
-                "timestamp": ts_iso,
-                "localTimestamp": str(ts_us),
-                "id": f"t{i:04d}",
-                "side": "buy" if i % 2 == 0 else "sell",
-                "price": str(42_500.0 + i * 0.5),
-                "amount": "0.10",
-            })
+            writer.writerow(
+                {
+                    "exchange": exchange,
+                    "symbol": symbol,
+                    "timestamp": ts_iso,
+                    "localTimestamp": str(ts_us),
+                    "id": f"t{i:04d}",
+                    "side": "buy" if i % 2 == 0 else "sell",
+                    "price": str(42_500.0 + i * 0.5),
+                    "amount": "0.10",
+                }
+            )
     return path
 
 
 def _write_tardis_book_snapshot(exchange: str, symbol: str, root: Path) -> Path:
     """Write 60 book snapshot rows (one per minute) to a Tardis CSV."""
     path = root / f"{exchange}_{symbol}_book_snapshot_1s.csv"
-    fieldnames = ["exchange", "symbol", "timestamp", "localTimestamp", "isSnapshot",
-                  "bids[0].price", "bids[0].amount", "bids[1].price", "bids[1].amount",
-                  "asks[0].price", "asks[0].amount", "asks[1].price", "asks[1].amount"]
+    fieldnames = [
+        "exchange",
+        "symbol",
+        "timestamp",
+        "localTimestamp",
+        "isSnapshot",
+        "bids[0].price",
+        "bids[0].amount",
+        "bids[1].price",
+        "bids[1].amount",
+        "asks[0].price",
+        "asks[0].amount",
+        "asks[1].price",
+        "asks[1].amount",
+    ]
     base_ts_us = 1_704_067_200_000_000
     with open(path, "w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
@@ -80,27 +102,30 @@ def _write_tardis_book_snapshot(exchange: str, symbol: str, root: Path) -> Path:
             ts_us = base_ts_us + i * 60_000_000
             ts_iso = f"2024-01-01T00:{i:02d}:00.000000Z"
             mid = 42_500.0 + i * 0.5
-            writer.writerow({
-                "exchange": exchange,
-                "symbol": symbol,
-                "timestamp": ts_iso,
-                "localTimestamp": str(ts_us),
-                "isSnapshot": "true",
-                "bids[0].price": str(mid - 1),
-                "bids[0].amount": "1.0",
-                "bids[1].price": str(mid - 2),
-                "bids[1].amount": "2.0",
-                "asks[0].price": str(mid + 1),
-                "asks[0].amount": "0.8",
-                "asks[1].price": str(mid + 2),
-                "asks[1].amount": "1.5",
-            })
+            writer.writerow(
+                {
+                    "exchange": exchange,
+                    "symbol": symbol,
+                    "timestamp": ts_iso,
+                    "localTimestamp": str(ts_us),
+                    "isSnapshot": "true",
+                    "bids[0].price": str(mid - 1),
+                    "bids[0].amount": "1.0",
+                    "bids[1].price": str(mid - 2),
+                    "bids[1].amount": "2.0",
+                    "asks[0].price": str(mid + 1),
+                    "asks[0].amount": "0.8",
+                    "asks[1].price": str(mid + 2),
+                    "asks[1].amount": "1.5",
+                }
+            )
     return path
 
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def pipeline_dirs(tmp_path):
@@ -117,6 +142,7 @@ def pipeline_dirs(tmp_path):
 # ---------------------------------------------------------------------------
 # Full pipeline test
 # ---------------------------------------------------------------------------
+
 
 def test_tardis_pipeline_contract(pipeline_dirs):
     """Tardis CSV → Bronze → Silver → Gold runs without errors and produces rows."""
@@ -140,16 +166,21 @@ def test_tardis_pipeline_contract(pipeline_dirs):
     assert n_books > 0, "tardis_to_bronze wrote 0 book rows"
 
     # Verify Tardis-specific channel names in Bronze layout
-    trade_bronze = list(bronze.glob("venue=coinbase/channel=tardis_trades/**/*.parquet"))
-    book_bronze = list(bronze.glob(
-        "venue=coinbase/channel=tardis_book_snapshot_1s/**/*.parquet"
-    ))
+    trade_bronze = list(
+        bronze.glob("venue=coinbase/channel=tardis_trades/**/*.parquet")
+    )
+    book_bronze = list(
+        bronze.glob("venue=coinbase/channel=tardis_book_snapshot_1s/**/*.parquet")
+    )
     assert trade_bronze, "Bronze trade files not found under channel=tardis_trades"
-    assert book_bronze, "Bronze book files not found under channel=tardis_book_snapshot_1s"
+    assert (
+        book_bronze
+    ), "Bronze book files not found under channel=tardis_book_snapshot_1s"
 
     # 3. Build Silver (import and call build_silver directly)
     import sys
     from pathlib import Path as _P
+
     scripts_dir = str(_P(__file__).parent.parent / "scripts")
     if scripts_dir not in sys.path:
         sys.path.insert(0, scripts_dir)
@@ -158,10 +189,12 @@ def test_tardis_pipeline_contract(pipeline_dirs):
     build_silver(str(bronze), str(silver), _START, _END, dry_run=False)
 
     # 4. Assert Silver rows
-    silver_trades = list(silver.glob("venue=coinbase/channel=tardis_trades/**/*.parquet"))
-    silver_books = list(silver.glob(
-        "venue=coinbase/channel=tardis_book_snapshot_1s/**/*.parquet"
-    ))
+    silver_trades = list(
+        silver.glob("venue=coinbase/channel=tardis_trades/**/*.parquet")
+    )
+    silver_books = list(
+        silver.glob("venue=coinbase/channel=tardis_book_snapshot_1s/**/*.parquet")
+    )
     assert silver_trades, "No Silver trade files written"
     assert silver_books, "No Silver book files written"
 

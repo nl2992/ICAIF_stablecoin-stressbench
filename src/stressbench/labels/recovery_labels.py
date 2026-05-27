@@ -115,9 +115,7 @@ def add_recovery_labels(
         )
         if halflife is not None:
             df = df.with_columns(
-                pl.when(
-                    (pl.col(ts_col) >= start_ns) & (pl.col(ts_col) <= end_ns)
-                )
+                pl.when((pl.col(ts_col) >= start_ns) & (pl.col(ts_col) <= end_ns))
                 .then(pl.lit(halflife))
                 .otherwise(pl.col("label_recovery_halflife_minutes"))
                 .alias("label_recovery_halflife_minutes")

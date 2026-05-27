@@ -22,31 +22,30 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
-
 # ── Feature definitions ───────────────────────────────────────────────────────
 
 
 PRICE_GRADE_FEATURE_GROUPS = {
     "basis": [
-        "cross_quote_basis_bps",       # mid-price basis vs reference venue
-        "cross_quote_basis_maxabs_bps", # max absolute basis over window
-        "basis_sign_change_count",      # number of peg crossings in window
+        "cross_quote_basis_bps",  # mid-price basis vs reference venue
+        "cross_quote_basis_maxabs_bps",  # max absolute basis over window
+        "basis_sign_change_count",  # number of peg crossings in window
     ],
     "volatility": [
-        "price_range_bps",             # (high - low) / mid × 10000
-        "realised_vol_1h",             # rolling 1h price std
-        "autocorr_lag1",               # 1-lag autocorrelation of returns
+        "price_range_bps",  # (high - low) / mid × 10000
+        "realised_vol_1h",  # rolling 1h price std
+        "autocorr_lag1",  # 1-lag autocorrelation of returns
     ],
     "momentum": [
-        "return_1m_bps",               # 1-minute return in bps
-        "return_5m_bps",               # 5-minute return in bps
-        "ewma_basis_span20",           # EWMA smoothed basis
+        "return_1m_bps",  # 1-minute return in bps
+        "return_5m_bps",  # 5-minute return in bps
+        "ewma_basis_span20",  # EWMA smoothed basis
     ],
     "regime": [
-        "zscore_basis_span20",         # Z-score of basis relative to EWMA window
-        "cusum_positive",              # CUSUM statistic (positive deviations)
-        "cusum_negative",              # CUSUM statistic (negative deviations)
-        "is_depeg_episode",            # 1 if |basis| > 10 bps for ≥ 5 consecutive minutes
+        "zscore_basis_span20",  # Z-score of basis relative to EWMA window
+        "cusum_positive",  # CUSUM statistic (positive deviations)
+        "cusum_negative",  # CUSUM statistic (negative deviations)
+        "is_depeg_episode",  # 1 if |basis| > 10 bps for ≥ 5 consecutive minutes
     ],
 }
 

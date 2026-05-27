@@ -33,10 +33,12 @@ def _make_stress_signal(n_calm: int = 100, n_stress: int = 50, seed: int = 42) -
     calm = rng.randn(n_calm) * 2.0  # Low variance: N(0, 2 bps)
     stress = rng.randn(n_stress) * 15.0 + 30.0  # High variance + mean shift
     signal = np.concatenate([calm, stress])
-    y_true = np.concatenate([
-        np.zeros(n_calm, dtype=np.int8),
-        np.ones(n_stress, dtype=np.int8),
-    ])
+    y_true = np.concatenate(
+        [
+            np.zeros(n_calm, dtype=np.int8),
+            np.ones(n_stress, dtype=np.int8),
+        ]
+    )
     X = signal.reshape(-1, 1).astype(np.float32)
     return signal, y_true, X
 
@@ -56,9 +58,9 @@ class TestEWMADetectsSpike:
         stress_preds = preds[100:]  # Only stress period
 
         # At least some detections in stress period
-        assert stress_preds.sum() > 0, (
-            "EWMA should detect at least some stress in the elevated signal period"
-        )
+        assert (
+            stress_preds.sum() > 0
+        ), "EWMA should detect at least some stress in the elevated signal period"
 
 
 class TestEWMAReturnToBaseline:
@@ -79,9 +81,9 @@ class TestEWMAReturnToBaseline:
         stress_rate = stress_alarms / 50
         calm_rate = calm_alarms / 200
 
-        assert stress_rate >= calm_rate, (
-            f"Stress alarm rate ({stress_rate:.2f}) should be >= calm alarm rate ({calm_rate:.2f})"
-        )
+        assert (
+            stress_rate >= calm_rate
+        ), f"Stress alarm rate ({stress_rate:.2f}) should be >= calm alarm rate ({calm_rate:.2f})"
 
 
 class TestCUSUMDetectsShift:
@@ -98,9 +100,9 @@ class TestCUSUMDetectsShift:
         stress_preds = preds[100:]
 
         # CUSUM should detect the mean shift (stress has +30 bps mean)
-        assert stress_preds.sum() > 0, (
-            "CUSUM should detect the mean shift in the stress period"
-        )
+        assert (
+            stress_preds.sum() > 0
+        ), "CUSUM should detect the mean shift in the stress period"
 
         # Test predict_proba shape consistency
         proba = detector.predict_proba(X)
@@ -122,12 +124,17 @@ class TestBOCPDInterface:
 
         # predict
         preds = detector.predict(X)
-        assert preds.shape == (len(X),), f"Expected shape ({len(X)},), got {preds.shape}"
+        assert preds.shape == (
+            len(X),
+        ), f"Expected shape ({len(X)},), got {preds.shape}"
         assert set(np.unique(preds)).issubset({0, 1}), "Predictions must be binary"
 
         # predict_proba
         proba = detector.predict_proba(X)
-        assert proba.shape == (len(X), 2), f"Expected shape ({len(X)}, 2), got {proba.shape}"
+        assert proba.shape == (
+            len(X),
+            2,
+        ), f"Expected shape ({len(X)}, 2), got {proba.shape}"
 
         # run_length_proba
         rl = detector.run_length_proba(X)
@@ -135,7 +142,9 @@ class TestBOCPDInterface:
         # Each run-length distribution should be a valid probability distribution
         for i, rl_i in enumerate(rl):
             total = float(np.sum(rl_i))
-            assert abs(total - 1.0) < 0.01, f"Run length proba at step {i} should sum to ~1, got {total}"
+            assert (
+                abs(total - 1.0) < 0.01
+            ), f"Run length proba at step {i} should sum to ~1, got {total}"
 
 
 class TestAllDetectorsPredictProbaInRange:
@@ -155,15 +164,18 @@ class TestAllDetectorsPredictProbaInRange:
             detector.fit(X_train, y_train)
             proba = detector.predict_proba(X)
 
-            assert proba.shape == (len(X), 2), (
-                f"{detector.name}: Expected shape ({len(X)}, 2), got {proba.shape}"
-            )
+            assert proba.shape == (
+                len(X),
+                2,
+            ), f"{detector.name}: Expected shape ({len(X)}, 2), got {proba.shape}"
             assert np.all(proba >= 0.0), f"{detector.name}: Probabilities must be >= 0"
             assert np.all(proba <= 1.0), f"{detector.name}: Probabilities must be <= 1"
 
             row_sums = proba.sum(axis=1)
             np.testing.assert_allclose(
-                row_sums, np.ones(len(X)), atol=1e-4,
+                row_sums,
+                np.ones(len(X)),
+                atol=1e-4,
                 err_msg=f"{detector.name}: Probability rows must sum to 1",
             )
 
@@ -193,10 +205,12 @@ class TestRegimeDetectionOnConstantSeries:
             # Proba should be valid
             proba = detector.predict_proba(X)
             assert proba.shape == (n, 2), f"{detector.name}: Wrong proba shape"
-            assert np.all(np.isfinite(proba)), f"{detector.name}: Non-finite probabilities on constant series"
+            assert np.all(
+                np.isfinite(proba)
+            ), f"{detector.name}: Non-finite probabilities on constant series"
 
             # On a constant series, no dramatic alarms expected
             n_alarms = int(preds.sum())
-            assert n_alarms <= n // 2, (
-                f"{detector.name}: Too many alarms ({n_alarms}/{n}) on constant series"
-            )
+            assert (
+                n_alarms <= n // 2
+            ), f"{detector.name}: Too many alarms ({n_alarms}/{n}) on constant series"

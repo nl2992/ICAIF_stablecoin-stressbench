@@ -92,7 +92,13 @@ def pull_tardis_day(
     )
     headers = {"Authorization": f"Bearer {api_key}"}
 
-    logger.info("Downloading Tardis: exchange=%s symbol=%s type=%s date=%s", exchange, symbol, data_type, date)
+    logger.info(
+        "Downloading Tardis: exchange=%s symbol=%s type=%s date=%s",
+        exchange,
+        symbol,
+        data_type,
+        date,
+    )
     try:
         resp = requests.get(url, headers=headers, stream=True, timeout=120)
         resp.raise_for_status()

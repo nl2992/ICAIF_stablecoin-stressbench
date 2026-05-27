@@ -33,9 +33,9 @@ from pathlib import Path
 from typing import Any
 
 from stressbench.common.logging import get_logger
+from stressbench.experiments.experiment_runner import run_experiment
 from stressbench.experiments.feature_sets import FEATURE_SETS
 from stressbench.experiments.tasks import TASKS
-from stressbench.experiments.experiment_runner import run_experiment
 
 logger = get_logger(__name__)
 
@@ -104,10 +104,10 @@ def make_model(name: str, feature_cols: list[str]) -> Any:
     feature_cols are resolved *before* this function is called.
     """
     from stressbench.models.rule_baselines import (
-        NoTradeBaseline,
-        PriceBasisThresholdBaseline,
         GrossArbThresholdBaseline,
         NetProfitOracleUpperBound,
+        NoTradeBaseline,
+        PriceBasisThresholdBaseline,
     )
 
     if name == "no_trade":
@@ -149,30 +149,39 @@ def make_model(name: str, feature_cols: list[str]) -> Any:
 
     if name == "last_value":
         from stressbench.models.baselines import LastValueBaseline
+
         return LastValueBaseline()
     if name == "rolling_mean":
         from stressbench.models.baselines import RollingMeanBaseline
+
         return RollingMeanBaseline()
     if name == "ar1":
         from stressbench.models.baselines import AR1Baseline
+
         return AR1Baseline()
     if name == "logistic":
         from stressbench.models.baselines import LogisticBaseline
+
         return LogisticBaseline()
     if name == "ridge":
         from stressbench.models.baselines import RidgeBaseline
+
         return RidgeBaseline()
     if name == "lasso":
         from stressbench.models.baselines import LassoBaseline
+
         return LassoBaseline()
     if name == "lgbm":
         from stressbench.models.tree_models import LGBMWrapper
+
         return LGBMWrapper(task="classification")
     if name == "xgb":
         from stressbench.models.tree_models import XGBWrapper
+
         return XGBWrapper(task="classification")
     if name == "rf":
         from stressbench.models.tree_models import RandomForestWrapper
+
         return RandomForestWrapper(task="classification")
     raise ValueError(f"Unknown model: {name!r}")
 
@@ -273,7 +282,10 @@ def main() -> None:
                 except Exception as exc:
                     logger.error(
                         "  FAILED: %s / %s / %s — %s",
-                        task_name, fs_name, model_name, exc,
+                        task_name,
+                        fs_name,
+                        model_name,
+                        exc,
                     )
 
         if task_rows:

@@ -13,10 +13,10 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_aggtrades_csv(tmp_path: Path, symbol: str, date: str) -> Path:
     """Write a minimal Binance aggTrades archive CSV (no header)."""
@@ -35,10 +35,34 @@ def _make_klines_csv(tmp_path: Path, symbol: str, date: str) -> Path:
     """Write a minimal Binance 1-minute klines archive CSV (no header)."""
     rows = [
         # open_time, open, high, low, close, volume, close_time, quote_vol, trades, taker_base, taker_quote, ignore
-        [1704067200000, "42500", "42600", "42400", "42550", "10.0",
-         1704067259999, "425500", 120, "5.0", "212750", "0"],
-        [1704067260000, "42550", "42700", "42450", "42620", "12.0",
-         1704067319999, "510240", 140, "6.0", "255120", "0"],
+        [
+            1704067200000,
+            "42500",
+            "42600",
+            "42400",
+            "42550",
+            "10.0",
+            1704067259999,
+            "425500",
+            120,
+            "5.0",
+            "212750",
+            "0",
+        ],
+        [
+            1704067260000,
+            "42550",
+            "42700",
+            "42450",
+            "42620",
+            "12.0",
+            1704067319999,
+            "510240",
+            140,
+            "6.0",
+            "255120",
+            "0",
+        ],
     ]
     path = tmp_path / f"{symbol}-1m-{date}.csv"
     with open(path, "w", newline="") as fh:
@@ -107,6 +131,7 @@ def _make_tardis_book_snapshot_csv(tmp_path: Path, exchange: str, symbol: str) -
 # Tests — Binance aggTrades
 # ---------------------------------------------------------------------------
 
+
 def test_aggtrades_writes_canonical_channel(tmp_path):
     from stressbench.ingestion.archive_to_bronze import binance_aggtrades_to_bronze
 
@@ -126,9 +151,11 @@ def test_aggtrades_hive_layout(tmp_path):
     csv_path = _make_aggtrades_csv(tmp_path, symbol, date)
     binance_aggtrades_to_bronze(csv_path, symbol, date, bronze_root=tmp_path)
 
-    parquets = list(tmp_path.glob(
-        f"venue=binance/channel=aggTrades/symbol={symbol}/date={date}/hour=*/part-0.parquet"
-    ))
+    parquets = list(
+        tmp_path.glob(
+            f"venue=binance/channel=aggTrades/symbol={symbol}/date={date}/hour=*/part-0.parquet"
+        )
+    )
     assert parquets
 
 
@@ -142,9 +169,9 @@ def test_aggtrades_payload_is_json(tmp_path):
     p = next(tmp_path.glob("venue=binance/channel=aggTrades/**/*.parquet"))
     df = pl.read_parquet(p)
     payload = json.loads(df["payload"][0])
-    assert "p" in payload   # price field in WS aggTrade format
-    assert "q" in payload   # qty
-    assert "T" in payload   # transaction time
+    assert "p" in payload  # price field in WS aggTrade format
+    assert "q" in payload  # qty
+    assert "T" in payload  # transaction time
 
 
 def test_aggtrades_ingest_batch_id(tmp_path):
@@ -162,6 +189,7 @@ def test_aggtrades_ingest_batch_id(tmp_path):
 # ---------------------------------------------------------------------------
 # Tests — Binance klines
 # ---------------------------------------------------------------------------
+
 
 def test_klines_writes_canonical_channel(tmp_path):
     from stressbench.ingestion.archive_to_bronze import binance_klines_to_bronze
@@ -194,12 +222,15 @@ def test_klines_payload_has_k_object(tmp_path):
 # Tests — Tardis trades
 # ---------------------------------------------------------------------------
 
+
 def test_tardis_trades_writes_tardis_channel(tmp_path):
     from stressbench.ingestion.archive_to_bronze import tardis_to_bronze
 
     exchange, symbol, date = "coinbase", "BTC-USD", "2024-01-01"
     csv_path = _make_tardis_trades_csv(tmp_path, exchange, symbol)
-    n = tardis_to_bronze(csv_path, exchange, symbol, "trades", date, bronze_root=tmp_path)
+    n = tardis_to_bronze(
+        csv_path, exchange, symbol, "trades", date, bronze_root=tmp_path
+    )
 
     assert n > 0
     # Channel must be tardis_trades, not "trade" or "depth"
@@ -248,17 +279,20 @@ def test_tardis_trades_payload_is_json(tmp_path):
 # Tests — Tardis book_snapshot_1s
 # ---------------------------------------------------------------------------
 
+
 def test_tardis_book_snapshot_writes_tardis_channel(tmp_path):
     from stressbench.ingestion.archive_to_bronze import tardis_to_bronze
 
     exchange, symbol, date = "coinbase", "BTC-USD", "2024-01-01"
     csv_path = _make_tardis_book_snapshot_csv(tmp_path, exchange, symbol)
-    n = tardis_to_bronze(csv_path, exchange, symbol, "book_snapshot_1s", date, bronze_root=tmp_path)
+    n = tardis_to_bronze(
+        csv_path, exchange, symbol, "book_snapshot_1s", date, bronze_root=tmp_path
+    )
 
     assert n > 0
-    parquets = list(tmp_path.glob(
-        "venue=coinbase/channel=tardis_book_snapshot_1s/**/*.parquet"
-    ))
+    parquets = list(
+        tmp_path.glob("venue=coinbase/channel=tardis_book_snapshot_1s/**/*.parquet")
+    )
     assert parquets, "Channel should be tardis_book_snapshot_1s, not 'depth'"
 
 
@@ -267,7 +301,9 @@ def test_tardis_book_snapshot_channel_not_depth(tmp_path):
 
     exchange, symbol, date = "coinbase", "BTC-USD", "2024-01-01"
     csv_path = _make_tardis_book_snapshot_csv(tmp_path, exchange, symbol)
-    tardis_to_bronze(csv_path, exchange, symbol, "book_snapshot_1s", date, bronze_root=tmp_path)
+    tardis_to_bronze(
+        csv_path, exchange, symbol, "book_snapshot_1s", date, bronze_root=tmp_path
+    )
 
     bad = list(tmp_path.glob("venue=coinbase/channel=depth/**/*.parquet"))
     assert not bad, "Tardis book snapshot landed in generic 'depth' channel"

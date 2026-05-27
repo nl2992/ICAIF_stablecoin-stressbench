@@ -13,8 +13,9 @@ Outputs:
 
 import os
 import warnings
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import yaml
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -49,7 +50,11 @@ def compute_split_metrics(df: pd.DataFrame) -> dict:
     usdc_pct_gt_10bps = (usdc_basis_abs > 10).mean() * 100
 
     max_abs_basis = abs_basis.max()
-    spread_mean = df["spread_bps_mean"].mean() if "spread_bps_mean" in df.columns else float("nan")
+    spread_mean = (
+        df["spread_bps_mean"].mean()
+        if "spread_bps_mean" in df.columns
+        else float("nan")
+    )
 
     # Exec label (5-min forward, $10K notional, >0 bps threshold)
     exec_col = "label_arb_q10000_5m_gt0bps"
@@ -111,8 +116,12 @@ def main():
     val_metrics = compute_split_metrics(splits["validation"])
     test_metrics = compute_split_metrics(splits["test"])
     print(f"  train: {train_metrics['n_minutes']} rows")
-    print(f"  validation: {val_metrics['n_minutes']} rows, exec_pos={val_metrics['exec_positive_rate_5m_q10k']:.2f}%")
-    print(f"  test: {test_metrics['n_minutes']} rows, exec_pos={test_metrics['exec_positive_rate_5m_q10k']:.2f}%")
+    print(
+        f"  validation: {val_metrics['n_minutes']} rows, exec_pos={val_metrics['exec_positive_rate_5m_q10k']:.2f}%"
+    )
+    print(
+        f"  test: {test_metrics['n_minutes']} rows, exec_pos={test_metrics['exec_positive_rate_5m_q10k']:.2f}%"
+    )
 
     # ── Load YAML catalogue ──────────────────────────────────────────────────
     print("Loading historical event catalogue ...")
@@ -243,13 +252,17 @@ def main():
     print("\n── Tier-A rows ──────────────────────────────────────────────────────")
     tier_a = df_out[df_out["data_tier"] == "A"]
     for _, r in tier_a.iterrows():
-        print(f"  {r['event_id']}: pct_gt_10={r['pct_gt_10bps']}, exec_pos={r['exec_positive_rate_5m_q10k']}")
+        print(
+            f"  {r['event_id']}: pct_gt_10={r['pct_gt_10bps']}, exec_pos={r['exec_positive_rate_5m_q10k']}"
+        )
 
     print("\n── Validation split row (Terra/UST) ─────────────────────────────────")
     val_row = df_out[df_out["event_id"] == "terra_ust_2022"]
     if not val_row.empty:
         r = val_row.iloc[0]
-        print(f"  n_minutes={r['n_minutes']}, pct_gt_10={r['pct_gt_10bps']}, exec_pos={r['exec_positive_rate_5m_q10k']}")
+        print(
+            f"  n_minutes={r['n_minutes']}, pct_gt_10={r['pct_gt_10bps']}, exec_pos={r['exec_positive_rate_5m_q10k']}"
+        )
 
     print("\nDone.")
 

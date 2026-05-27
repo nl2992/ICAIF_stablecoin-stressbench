@@ -62,9 +62,14 @@ _TARDIS_CHANNEL_MAP: dict[str, str] = {
 
 # Binance aggTrades CSV columns (no header row in archive files)
 _AGG_COLS = [
-    "agg_trade_id", "price", "quantity",
-    "first_trade_id", "last_trade_id",
-    "transact_time", "is_buyer_maker", "is_best_match",
+    "agg_trade_id",
+    "price",
+    "quantity",
+    "first_trade_id",
+    "last_trade_id",
+    "transact_time",
+    "is_buyer_maker",
+    "is_best_match",
 ]
 _AGG_DTYPES: dict[str, type] = {
     "agg_trade_id": pl.Int64,
@@ -79,12 +84,21 @@ _AGG_DTYPES: dict[str, type] = {
 
 # Binance klines CSV columns (no header row)
 _KLINE_COLS = [
-    "open_time", "open", "high", "low", "close", "volume",
-    "close_time", "quote_volume", "trade_count",
-    "taker_buy_base", "taker_buy_quote", "ignore",
+    "open_time",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "close_time",
+    "quote_volume",
+    "trade_count",
+    "taker_buy_base",
+    "taker_buy_quote",
+    "ignore",
 ]
 _KLINE_DTYPES: dict[str, type] = {c: pl.Float64 for c in _KLINE_COLS}
-_KLINE_DTYPES["open_time"] = pl.Int64   # type: ignore[assignment]
+_KLINE_DTYPES["open_time"] = pl.Int64  # type: ignore[assignment]
 _KLINE_DTYPES["close_time"] = pl.Int64  # type: ignore[assignment]
 _KLINE_DTYPES["trade_count"] = pl.Int64  # type: ignore[assignment]
 
@@ -92,6 +106,7 @@ _KLINE_DTYPES["trade_count"] = pl.Int64  # type: ignore[assignment]
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_bronze_partition(
     df: pl.DataFrame,
@@ -131,25 +146,28 @@ def _rows_to_bronze_df(
     """Convert a list of raw record dicts to a Bronze-schema DataFrame."""
     if not rows:
         return pl.DataFrame()
-    return pl.DataFrame([
-        {
-            "source": venue,
-            "channel": channel,
-            "symbol": symbol,
-            "ts_exchange": r.get("ts_exchange", ""),
-            "ts_receive_ns": r["ts_receive_ns"],
-            "payload": json.dumps(r["payload"], sort_keys=True),
-            "payload_hash": r.get("payload_hash", ""),
-            "schema_version": _SCHEMA_VERSION,
-            "ingest_batch_id": batch_id,
-        }
-        for r in rows
-    ])
+    return pl.DataFrame(
+        [
+            {
+                "source": venue,
+                "channel": channel,
+                "symbol": symbol,
+                "ts_exchange": r.get("ts_exchange", ""),
+                "ts_receive_ns": r["ts_receive_ns"],
+                "payload": json.dumps(r["payload"], sort_keys=True),
+                "payload_hash": r.get("payload_hash", ""),
+                "schema_version": _SCHEMA_VERSION,
+                "ingest_batch_id": batch_id,
+            }
+            for r in rows
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------
 # Public API — Binance aggTrades
 # ---------------------------------------------------------------------------
+
 
 def binance_aggtrades_to_bronze(
     csv_path: Path,
@@ -179,7 +197,7 @@ def binance_aggtrades_to_bronze(
     df = pl.read_csv(
         csv_path,
         has_header=False,
-        new_columns=_AGG_COLS[:df_col_count(csv_path)],
+        new_columns=_AGG_COLS[: df_col_count(csv_path)],
         schema_overrides=_AGG_DTYPES,
         ignore_errors=True,
     )
@@ -193,7 +211,9 @@ def binance_aggtrades_to_bronze(
     records: list[dict] = []
     for row in df.iter_rows(named=True):
         ts_ms = int(row["transact_time"])
-        is_buyer_maker = str(row.get("is_buyer_maker", "false")).strip().lower() == "true"
+        is_buyer_maker = (
+            str(row.get("is_buyer_maker", "false")).strip().lower() == "true"
+        )
         payload = {
             "T": ts_ms,
             "p": str(row["price"]),
@@ -202,11 +222,13 @@ def binance_aggtrades_to_bronze(
             "m": is_buyer_maker,
             "s": symbol,
         }
-        records.append({
-            "ts_receive_ns": ts_ms * 1_000_000,
-            "ts_exchange": str(ts_ms),
-            "payload": payload,
-        })
+        records.append(
+            {
+                "ts_receive_ns": ts_ms * 1_000_000,
+                "ts_exchange": str(ts_ms),
+                "payload": payload,
+            }
+        )
 
     if not records:
         return 0
@@ -219,8 +241,12 @@ def binance_aggtrades_to_bronze(
 
     written = 0
     for hour, recs in sorted(hour_buckets.items()):
-        bronze_df = _rows_to_bronze_df(recs, "binance", "aggTrades", symbol, _ARCHIVE_BATCH_ID)
-        if _write_bronze_partition(bronze_df, "binance", "aggTrades", symbol, date, hour, root, overwrite):
+        bronze_df = _rows_to_bronze_df(
+            recs, "binance", "aggTrades", symbol, _ARCHIVE_BATCH_ID
+        )
+        if _write_bronze_partition(
+            bronze_df, "binance", "aggTrades", symbol, date, hour, root, overwrite
+        ):
             written += len(recs)
 
     logger.info("[archive_to_bronze] aggTrades %s %s → %d rows", symbol, date, written)
@@ -230,6 +256,7 @@ def binance_aggtrades_to_bronze(
 # ---------------------------------------------------------------------------
 # Public API — Binance klines
 # ---------------------------------------------------------------------------
+
 
 def binance_klines_to_bronze(
     csv_path: Path,
@@ -283,11 +310,13 @@ def binance_klines_to_bronze(
                 "Q": str(row["taker_buy_quote"]),
             }
         }
-        records.append({
-            "ts_receive_ns": open_time_ms * 1_000_000,
-            "ts_exchange": str(open_time_ms),
-            "payload": payload,
-        })
+        records.append(
+            {
+                "ts_receive_ns": open_time_ms * 1_000_000,
+                "ts_exchange": str(open_time_ms),
+                "payload": payload,
+            }
+        )
 
     if not records:
         return 0
@@ -299,8 +328,12 @@ def binance_klines_to_bronze(
 
     written = 0
     for hour, recs in sorted(hour_buckets.items()):
-        bronze_df = _rows_to_bronze_df(recs, "binance", "klines", symbol, _ARCHIVE_BATCH_ID)
-        if _write_bronze_partition(bronze_df, "binance", "klines", symbol, date, hour, root, overwrite):
+        bronze_df = _rows_to_bronze_df(
+            recs, "binance", "klines", symbol, _ARCHIVE_BATCH_ID
+        )
+        if _write_bronze_partition(
+            bronze_df, "binance", "klines", symbol, date, hour, root, overwrite
+        ):
             written += len(recs)
 
     logger.info("[archive_to_bronze] klines %s %s → %d rows", symbol, date, written)
@@ -310,6 +343,7 @@ def binance_klines_to_bronze(
 # ---------------------------------------------------------------------------
 # Public API — Tardis
 # ---------------------------------------------------------------------------
+
 
 def tardis_to_bronze(
     file_path: Path,
@@ -372,14 +406,19 @@ def tardis_to_bronze(
             continue
 
         # Build payload from all row fields (preserves full Tardis record)
-        payload = {k: v for k, v in row.items()
-                   if k not in ("ts_receive_us",) and v is not None}
+        payload = {
+            k: v
+            for k, v in row.items()
+            if k not in ("ts_receive_us",) and v is not None
+        }
 
-        records.append({
-            "ts_receive_ns": ts_receive_ns,
-            "ts_exchange": str(row.get("ts_exchange", "")),
-            "payload": payload,
-        })
+        records.append(
+            {
+                "ts_receive_ns": ts_receive_ns,
+                "ts_exchange": str(row.get("ts_exchange", "")),
+                "payload": payload,
+            }
+        )
 
     if not records:
         return 0
@@ -391,18 +430,29 @@ def tardis_to_bronze(
 
     written = 0
     for hour, recs in sorted(hour_buckets.items()):
-        bronze_df = _rows_to_bronze_df(recs, exchange, channel, symbol, _TARDIS_BATCH_ID)
-        if _write_bronze_partition(bronze_df, exchange, channel, symbol, date, hour, root, overwrite):
+        bronze_df = _rows_to_bronze_df(
+            recs, exchange, channel, symbol, _TARDIS_BATCH_ID
+        )
+        if _write_bronze_partition(
+            bronze_df, exchange, channel, symbol, date, hour, root, overwrite
+        ):
             written += len(recs)
 
-    logger.info("[archive_to_bronze] tardis %s/%s %s %s → %d rows",
-                exchange, symbol, data_type, date, written)
+    logger.info(
+        "[archive_to_bronze] tardis %s/%s %s %s → %d rows",
+        exchange,
+        symbol,
+        data_type,
+        date,
+        written,
+    )
     return written
 
 
 # ---------------------------------------------------------------------------
 # Utility: detect CSV column count without reading the full file
 # ---------------------------------------------------------------------------
+
 
 def df_col_count(csv_path: Path) -> int:
     """Return the number of columns in the first row of a CSV file."""

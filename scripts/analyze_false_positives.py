@@ -100,7 +100,9 @@ def diagnose(dataset_path: Path, split: str, output_dir: Path) -> None:
         }
         for col in feat_cols:
             vals = sdf[col].to_numpy().astype(float)
-            row[f"avg_{col}"] = round(_mean_or_nan(vals[mask]), 4) if n_group > 0 else ""
+            row[f"avg_{col}"] = (
+                round(_mean_or_nan(vals[mask]), 4) if n_group > 0 else ""
+            )
         rows.append(row)
         logger.info("  %s: n=%d", group_name, n_group)
 

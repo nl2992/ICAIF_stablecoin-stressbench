@@ -118,7 +118,9 @@ class HeteroGNNWrapper:
     # Training
     # ------------------------------------------------------------------
 
-    def fit(self, graph_snapshots: list[dict], labels: np.ndarray) -> "HeteroGNNWrapper":
+    def fit(
+        self, graph_snapshots: list[dict], labels: np.ndarray
+    ) -> "HeteroGNNWrapper":
         """Train the HGT model on a sequence of graph snapshots.
 
         Args:
@@ -164,7 +166,9 @@ class HeteroGNNWrapper:
         edge_types_list = sorted(all_edge_types_set)
 
         if not edge_types_list:
-            logger.warning("No edges found across snapshots; skipping HeteroGNN training.")
+            logger.warning(
+                "No edges found across snapshots; skipping HeteroGNN training."
+            )
             return self
 
         self._trained_node_types = node_types_list
@@ -176,12 +180,16 @@ class HeteroGNNWrapper:
         out_dim = self.output_dim
 
         class _HGTModel(nn.Module):
-            def __init__(self, hidden_dim: int, output_dim: int, num_layers: int, metadata):
+            def __init__(
+                self, hidden_dim: int, output_dim: int, num_layers: int, metadata
+            ):
                 super().__init__()
-                self.convs = nn.ModuleList([
-                    HGTConv(hidden_dim, hidden_dim, metadata, heads=2, group="sum")
-                    for _ in range(num_layers)
-                ])
+                self.convs = nn.ModuleList(
+                    [
+                        HGTConv(hidden_dim, hidden_dim, metadata, heads=2, group="sum")
+                        for _ in range(num_layers)
+                    ]
+                )
                 self.head = nn.Linear(hidden_dim, output_dim)
 
             def forward(self, x_dict, edge_index_dict):
@@ -189,7 +197,11 @@ class HeteroGNNWrapper:
                     x_dict = conv(x_dict, edge_index_dict)
                     x_dict = {k: v.relu() for k, v in x_dict.items() if v is not None}
                 # Global mean pool across all node types → graph embedding
-                embeds = [v.mean(dim=0) for v in x_dict.values() if v is not None and v.numel() > 0]
+                embeds = [
+                    v.mean(dim=0)
+                    for v in x_dict.values()
+                    if v is not None and v.numel() > 0
+                ]
                 if not embeds:
                     return torch.zeros(output_dim)
                 return self.head(torch.stack(embeds).mean(dim=0))
@@ -231,12 +243,15 @@ class HeteroGNNWrapper:
             if n_steps > 0 and (epoch + 1) % 5 == 0:
                 logger.info(
                     "HeteroGNN epoch %d/%d  avg_loss=%.4f",
-                    epoch + 1, self.num_epochs, epoch_loss / n_steps,
+                    epoch + 1,
+                    self.num_epochs,
+                    epoch_loss / n_steps,
                 )
 
         logger.info(
             "HeteroGNN training complete: %d epochs, %d snapshots.",
-            self.num_epochs, len(data_list),
+            self.num_epochs,
+            len(data_list),
         )
         return self
 

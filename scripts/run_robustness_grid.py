@@ -24,7 +24,9 @@ logger = get_logger(__name__)
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Robustness grid for price-to-execution gap.")
+    p = argparse.ArgumentParser(
+        description="Robustness grid for price-to-execution gap."
+    )
     p.add_argument("--data-dir", default="data/gold")
     p.add_argument("--output-dir", default="results/experiments_addon")
     p.add_argument("--splits", nargs="+", default=["test"])

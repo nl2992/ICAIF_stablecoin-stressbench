@@ -41,9 +41,7 @@ class ResyncManager:
         """
         self.book.apply_snapshot(bids, asks)
         if self._needs_resync:
-            logger.info(
-                "Book resynced for %s at ts_ns=%d", self.instrument_id, ts_ns
-            )
+            logger.info("Book resynced for %s at ts_ns=%d", self.instrument_id, ts_ns)
         self._needs_resync = False
         self._resync_start_ns = None
 
@@ -60,9 +58,7 @@ class ResyncManager:
             ``True`` if the update was applied; ``False`` if a resync is needed.
         """
         if self._needs_resync:
-            logger.debug(
-                "Skipping update for %s (resync pending)", self.instrument_id
-            )
+            logger.debug("Skipping update for %s (resync pending)", self.instrument_id)
             return False
         self.book.apply_update(side, price, size)
         return True
@@ -76,7 +72,9 @@ class ResyncManager:
         """
         logger.warning(
             "Resync required for %s at ts_ns=%d: %s",
-            self.instrument_id, ts_ns, reason,
+            self.instrument_id,
+            ts_ns,
+            reason,
         )
         self._needs_resync = True
         self._resync_start_ns = ts_ns

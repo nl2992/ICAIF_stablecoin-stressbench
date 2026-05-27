@@ -38,8 +38,8 @@ _CHANNEL_MAP: dict[tuple[str, str], str] = {
     ("kraken", "book"): "kraken_book",
     ("uniswap_v3", "swap"): "uniswap_swaps",
     # Archive / historical channels (written by archive_to_bronze.py)
-    ("binance", "aggTrades"): "binance_trades",   # aggTrade WS-format payload
-    ("binance", "klines"): "binance_klines",       # kline WS-format payload → synthetic book
+    ("binance", "aggTrades"): "binance_trades",  # aggTrade WS-format payload
+    ("binance", "klines"): "binance_klines",  # kline WS-format payload → synthetic book
     # Tardis archive channels — source-identity preserved, routed to Tardis normalizers
     # (Tardis CSV payload shape differs from live WS message shape)
     ("coinbase", "tardis_trades"): "tardis_trades",
@@ -55,8 +55,11 @@ _CHANNEL_MAP: dict[tuple[str, str], str] = {
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build feature tables from Bronze data.")
+    parser = argparse.ArgumentParser(
+        description="Build feature tables from Bronze data."
+    )
     parser.add_argument(
         "--start",
         required=True,
@@ -70,10 +73,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bronze-dir", default="data/bronze")
     parser.add_argument("--silver-dir", default="data/silver")
     parser.add_argument("--gold-dir", default="data/gold")
-    parser.add_argument("--skip-silver", action="store_true",
-                        help="Skip Silver normalisation (use existing Silver data).")
-    parser.add_argument("--skip-labels", action="store_true",
-                        help="Skip label generation.")
+    parser.add_argument(
+        "--skip-silver",
+        action="store_true",
+        help="Skip Silver normalisation (use existing Silver data).",
+    )
+    parser.add_argument(
+        "--skip-labels", action="store_true", help="Skip label generation."
+    )
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
 
@@ -81,6 +88,7 @@ def parse_args() -> argparse.Namespace:
 # ---------------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------------
+
 
 def _date_range(start: datetime, end: datetime) -> list[str]:
     days: list[str] = []
@@ -95,36 +103,51 @@ def _get_normalizer(venue: str, channel: str) -> Callable | None:
     key = _CHANNEL_MAP.get((venue, channel))
     if key == "binance_trades":
         from stressbench.normalization.normalize_trades import normalize_binance_trades
+
         return normalize_binance_trades
     if key == "binance_depth":
         from stressbench.normalization.normalize_books import normalize_binance_depth
+
         return normalize_binance_depth
     if key == "binance_klines":
         from stressbench.normalization.normalize_books import normalize_binance_klines
+
         return normalize_binance_klines
     if key == "tardis_trades":
         from stressbench.normalization.normalize_tardis import normalize_tardis_trades
+
         return normalize_tardis_trades
     if key == "tardis_book_snapshot":
-        from stressbench.normalization.normalize_tardis import normalize_tardis_book_snapshot_1s
+        from stressbench.normalization.normalize_tardis import (
+            normalize_tardis_book_snapshot_1s,
+        )
+
         return normalize_tardis_book_snapshot_1s
     if key == "tardis_incremental_book":
-        from stressbench.normalization.normalize_tardis import normalize_tardis_incremental_book_l2
+        from stressbench.normalization.normalize_tardis import (
+            normalize_tardis_incremental_book_l2,
+        )
+
         return normalize_tardis_incremental_book_l2
     if key == "coinbase_trades":
         from stressbench.normalization.normalize_trades import normalize_coinbase_trades
+
         return normalize_coinbase_trades
     if key == "coinbase_level2":
         from stressbench.normalization.normalize_books import normalize_coinbase_level2
+
         return normalize_coinbase_level2
     if key == "kraken_trades":
         from stressbench.normalization.normalize_trades import normalize_kraken_trades
+
         return normalize_kraken_trades
     if key == "kraken_book":
         from stressbench.normalization.normalize_books import normalize_kraken_book
+
         return normalize_kraken_book
     if key == "uniswap_swaps":
         from stressbench.normalization.normalize_onchain import normalize_uniswap_swaps
+
         return normalize_uniswap_swaps
     return None
 
@@ -148,14 +171,19 @@ def _write_gold(gold_root: Path, table: str, date_str: str, df: pl.DataFrame) ->
 # Silver build
 # ---------------------------------------------------------------------------
 
-def build_silver(bronze_dir: str, silver_dir: str, start: datetime, end: datetime, dry_run: bool) -> None:
+
+def build_silver(
+    bronze_dir: str, silver_dir: str, start: datetime, end: datetime, dry_run: bool
+) -> None:
     """Normalise Bronze raw data into Silver Parquet files."""
     logger.info("Building Silver layer: %s → %s", start.date(), end.date())
     if dry_run:
         logger.info("[DRY RUN] Skipping Silver build.")
         return
 
-    from stressbench.normalization.normalize_onchain import normalize_etherscan_transfers
+    from stressbench.normalization.normalize_onchain import (
+        normalize_etherscan_transfers,
+    )
 
     bronze_root = Path(bronze_dir)
     silver_root = Path(silver_dir)
@@ -166,7 +194,7 @@ def build_silver(bronze_dir: str, silver_dir: str, start: datetime, end: datetim
         venue = venue_dir.name.split("=", 1)[1]
         for channel_dir in sorted(venue_dir.glob("channel=*")):
             channel = channel_dir.name.split("=", 1)[1]
-            is_etherscan = (venue == "etherscan" and channel == "transfer")
+            is_etherscan = venue == "etherscan" and channel == "transfer"
             normalizer = None if is_etherscan else _get_normalizer(venue, channel)
             if normalizer is None and not is_etherscan:
                 logger.debug("No normalizer for %s/%s; skipping.", venue, channel)
@@ -197,7 +225,11 @@ def build_silver(bronze_dir: str, silver_dir: str, start: datetime, end: datetim
                             )
                         except Exception as exc:
                             logger.warning(
-                                "Normalize error %s/%s/%s: %s", venue, channel, symbol, exc
+                                "Normalize error %s/%s/%s: %s",
+                                venue,
+                                channel,
+                                symbol,
+                                exc,
                             )
                             continue
                         if normalized.is_empty():
@@ -216,13 +248,15 @@ def build_silver(bronze_dir: str, silver_dir: str, start: datetime, end: datetim
 
     logger.info(
         "Silver build complete: %d Bronze files → %d Silver partitions.",
-        total_read, total_written,
+        total_read,
+        total_written,
     )
 
 
 # ---------------------------------------------------------------------------
 # Gold helpers — called once per date
 # ---------------------------------------------------------------------------
+
 
 def _load_silver_channels(
     silver_root: Path,
@@ -246,7 +280,11 @@ def _load_silver_channels(
     """
     frames: list[pl.DataFrame] = []
     for channel in channels:
-        for f in sorted(silver_root.glob(f"venue=*/channel={channel}/**/date=*/hour=*/part-0.parquet")):
+        for f in sorted(
+            silver_root.glob(
+                f"venue=*/channel={channel}/**/date=*/hour=*/part-0.parquet"
+            )
+        ):
             date_part = next(
                 (p.split("=", 1)[1] for p in f.parts if p.startswith("date=")), None
             )
@@ -256,10 +294,14 @@ def _load_silver_channels(
                 frame = pl.read_parquet(f)
                 if depth_source is not None and not frame.is_empty():
                     if "depth_source" not in frame.columns:
-                        frame = frame.with_columns(pl.lit(depth_source).alias("depth_source"))
+                        frame = frame.with_columns(
+                            pl.lit(depth_source).alias("depth_source")
+                        )
                     else:
                         frame = frame.with_columns(
-                            pl.col("depth_source").fill_null(depth_source).alias("depth_source")
+                            pl.col("depth_source")
+                            .fill_null(depth_source)
+                            .alias("depth_source")
                         )
                 frames.append(frame)
             except Exception as exc:
@@ -293,7 +335,9 @@ def _compute_book_1m(books_df: pl.DataFrame) -> pl.DataFrame:
     # Level-0 best bid / ask
     _has_depth_source = "depth_source" in snap.columns
     bids0_cols = [
-        "ts_1m_ns", "venue_id", "instrument_id",
+        "ts_1m_ns",
+        "venue_id",
+        "instrument_id",
         pl.col("price").alias("best_bid"),
         pl.col("size").alias("_bid0_sz"),
         pl.col("is_checksum_failed").cast(pl.Boolean).fill_null(False).alias("_chk"),
@@ -301,16 +345,18 @@ def _compute_book_1m(books_df: pl.DataFrame) -> pl.DataFrame:
     ]
     if _has_depth_source:
         bids0_cols.append(pl.col("depth_source").first().alias("depth_source"))
-    bids0 = snap.filter(
-        (pl.col("side") == "bid") & (pl.col("level") == 0)
-    ).select(bids0_cols)
-    asks0 = snap.filter(
-        (pl.col("side") == "ask") & (pl.col("level") == 0)
-    ).select([
-        "ts_1m_ns", "venue_id", "instrument_id",
-        pl.col("price").alias("best_ask"),
-        pl.col("size").alias("_ask0_sz"),
-    ])
+    bids0 = snap.filter((pl.col("side") == "bid") & (pl.col("level") == 0)).select(
+        bids0_cols
+    )
+    asks0 = snap.filter((pl.col("side") == "ask") & (pl.col("level") == 0)).select(
+        [
+            "ts_1m_ns",
+            "venue_id",
+            "instrument_id",
+            pl.col("price").alias("best_ask"),
+            pl.col("size").alias("_ask0_sz"),
+        ]
+    )
     bbo = bids0.join(asks0, on=["ts_1m_ns", "venue_id", "instrument_id"], how="inner")
 
     # Depth within 10 bps of mid
@@ -322,36 +368,42 @@ def _compute_book_1m(books_df: pl.DataFrame) -> pl.DataFrame:
     bid_depth = (
         snap_aug.filter(
             (pl.col("side") == "bid") & (pl.col("price") >= pl.col("best_bid") * 0.999)
-        ).group_by(["ts_1m_ns", "venue_id", "instrument_id"])
+        )
+        .group_by(["ts_1m_ns", "venue_id", "instrument_id"])
         .agg(pl.col("size").sum().alias("depth_bid_10bp"))
     )
     ask_depth = (
         snap_aug.filter(
             (pl.col("side") == "ask") & (pl.col("price") <= pl.col("best_ask") * 1.001)
-        ).group_by(["ts_1m_ns", "venue_id", "instrument_id"])
+        )
+        .group_by(["ts_1m_ns", "venue_id", "instrument_id"])
         .agg(pl.col("size").sum().alias("depth_ask_10bp"))
     )
 
-    result = (
-        bbo
-        .join(bid_depth, on=["ts_1m_ns", "venue_id", "instrument_id"], how="left")
-        .join(ask_depth, on=["ts_1m_ns", "venue_id", "instrument_id"], how="left")
-    )
+    result = bbo.join(
+        bid_depth, on=["ts_1m_ns", "venue_id", "instrument_id"], how="left"
+    ).join(ask_depth, on=["ts_1m_ns", "venue_id", "instrument_id"], how="left")
 
     mid_expr = (pl.col("best_bid") + pl.col("best_ask")) / 2.0
-    result = result.with_columns([
-        mid_expr.alias("mid"),
-        ((pl.col("best_ask") - pl.col("best_bid")) / mid_expr * 10_000.0).alias("spread_bps"),
-        (
-            (pl.col("_bid0_sz") - pl.col("_ask0_sz"))
-            / (pl.col("_bid0_sz") + pl.col("_ask0_sz") + 1e-10)
-        ).alias("imbalance_1bp"),
-        (
-            pl.lit(1.0)
-            - pl.col("_chk").cast(pl.Float64) * 0.3
-            - pl.col("_resync").cast(pl.Float64) * 0.5
-        ).clip(0.0, 1.0).alias("data_quality_score"),
-    ]).drop(["_bid0_sz", "_ask0_sz", "_chk", "_resync"])
+    result = result.with_columns(
+        [
+            mid_expr.alias("mid"),
+            ((pl.col("best_ask") - pl.col("best_bid")) / mid_expr * 10_000.0).alias(
+                "spread_bps"
+            ),
+            (
+                (pl.col("_bid0_sz") - pl.col("_ask0_sz"))
+                / (pl.col("_bid0_sz") + pl.col("_ask0_sz") + 1e-10)
+            ).alias("imbalance_1bp"),
+            (
+                pl.lit(1.0)
+                - pl.col("_chk").cast(pl.Float64) * 0.3
+                - pl.col("_resync").cast(pl.Float64) * 0.5
+            )
+            .clip(0.0, 1.0)
+            .alias("data_quality_score"),
+        ]
+    ).drop(["_bid0_sz", "_ask0_sz", "_chk", "_resync"])
 
     return result
 
@@ -361,44 +413,52 @@ def _compute_trade_1m(trades_df: pl.DataFrame) -> pl.DataFrame:
     if trades_df.is_empty():
         return pl.DataFrame()
 
-    df = (
-        trades_df
-        .filter(~pl.col("is_outlier_price").cast(pl.Boolean).fill_null(False))
-        .with_columns(
-            ((pl.col("ts_event_ns") // 60_000_000_000) * 60_000_000_000).alias("ts_1m_ns")
-        )
+    df = trades_df.filter(
+        ~pl.col("is_outlier_price").cast(pl.Boolean).fill_null(False)
+    ).with_columns(
+        ((pl.col("ts_event_ns") // 60_000_000_000) * 60_000_000_000).alias("ts_1m_ns")
     )
-    return df.group_by(["ts_1m_ns", "venue_id", "instrument_id"]).agg([
-        pl.len().alias("trade_count_1m"),
-        pl.col("size").sum().alias("trade_volume_1m"),
-    ])
+    return df.group_by(["ts_1m_ns", "venue_id", "instrument_id"]).agg(
+        [
+            pl.len().alias("trade_count_1m"),
+            pl.col("size").sum().alias("trade_volume_1m"),
+        ]
+    )
 
 
 def _annotate_instruments(df: pl.DataFrame, instruments: list[dict]) -> pl.DataFrame:
-    meta = pl.DataFrame([
-        {
-            "instrument_id": i["instrument_id"],
-            "base_asset": i["base_asset"],
-            "quote_asset": i["quote_asset"],
-        }
-        for i in instruments
-    ])
+    meta = pl.DataFrame(
+        [
+            {
+                "instrument_id": i["instrument_id"],
+                "base_asset": i["base_asset"],
+                "quote_asset": i["quote_asset"],
+            }
+            for i in instruments
+        ]
+    )
     return df.join(meta, on="instrument_id", how="left")
 
 
-def _compute_stablecoin_prices(book_1m: pl.DataFrame, instruments: list[dict]) -> pl.DataFrame:
+def _compute_stablecoin_prices(
+    book_1m: pl.DataFrame, instruments: list[dict]
+) -> pl.DataFrame:
     """Return per-venue stablecoin USD prices and deviations from $1."""
     df = _annotate_instruments(book_1m, instruments)
 
     usdt_ref = (
         df.filter((pl.col("base_asset") == "USDT") & (pl.col("quote_asset") == "USD"))
-        .group_by("ts_1m_ns").agg(pl.col("mid").mean().alias("usdt_usd_ref"))
+        .group_by("ts_1m_ns")
+        .agg(pl.col("mid").mean().alias("usdt_usd_ref"))
     )
     usdc_ref = (
         df.filter((pl.col("base_asset") == "USDC") & (pl.col("quote_asset") == "USD"))
-        .group_by("ts_1m_ns").agg(pl.col("mid").mean().alias("usdc_usd_ref"))
+        .group_by("ts_1m_ns")
+        .agg(pl.col("mid").mean().alias("usdc_usd_ref"))
     )
-    df = df.join(usdt_ref, on="ts_1m_ns", how="left").join(usdc_ref, on="ts_1m_ns", how="left")
+    df = df.join(usdt_ref, on="ts_1m_ns", how="left").join(
+        usdc_ref, on="ts_1m_ns", how="left"
+    )
 
     df = df.with_columns(
         pl.when(pl.col("quote_asset") == "USD")
@@ -415,74 +475,94 @@ def _compute_stablecoin_prices(book_1m: pl.DataFrame, instruments: list[dict]) -
         pl.col("base_asset").is_in(["USDC", "USDT", "DAI"])
         & pl.col("price_usd").is_not_null()
     )
-    return sc.select([
-        "ts_1m_ns", "venue_id", "instrument_id",
-        pl.col("base_asset").alias("stablecoin"),
-        "price_usd",
-        ((pl.col("price_usd") - 1.0) * 10_000.0).alias("deviation_from_1_usd_bps"),
-    ])
+    return sc.select(
+        [
+            "ts_1m_ns",
+            "venue_id",
+            "instrument_id",
+            pl.col("base_asset").alias("stablecoin"),
+            "price_usd",
+            ((pl.col("price_usd") - 1.0) * 10_000.0).alias("deviation_from_1_usd_bps"),
+        ]
+    )
 
 
-def _compute_basis_features(book_1m: pl.DataFrame, instruments: list[dict]) -> pl.DataFrame:
+def _compute_basis_features(
+    book_1m: pl.DataFrame, instruments: list[dict]
+) -> pl.DataFrame:
     """Compute cross-quote BTC/ETH basis per minute (the benchmark's core feature)."""
     df = _annotate_instruments(book_1m, instruments)
 
     usdt_ref = (
         df.filter((pl.col("base_asset") == "USDT") & (pl.col("quote_asset") == "USD"))
-        .group_by("ts_1m_ns").agg(pl.col("mid").mean().alias("usdt_usd_ref"))
+        .group_by("ts_1m_ns")
+        .agg(pl.col("mid").mean().alias("usdt_usd_ref"))
     )
     usdc_ref = (
         df.filter((pl.col("base_asset") == "USDC") & (pl.col("quote_asset") == "USD"))
-        .group_by("ts_1m_ns").agg(pl.col("mid").mean().alias("usdc_usd_ref"))
+        .group_by("ts_1m_ns")
+        .agg(pl.col("mid").mean().alias("usdc_usd_ref"))
     )
 
     # Fallback: derive USDC-USD from USDC-USDT × USDT-USD when no direct pair exists.
     # This is the implied price a trader would use when no USDC/USD orderbook is available.
     usdc_usdt = (
         df.filter((pl.col("base_asset") == "USDC") & (pl.col("quote_asset") == "USDT"))
-        .group_by("ts_1m_ns").agg(pl.col("mid").mean().alias("_usdc_usdt"))
+        .group_by("ts_1m_ns")
+        .agg(pl.col("mid").mean().alias("_usdc_usdt"))
     )
     usdc_ref_implied = (
         usdc_usdt.join(usdt_ref, on="ts_1m_ns", how="inner")
-        .with_columns((pl.col("_usdc_usdt") * pl.col("usdt_usd_ref")).alias("usdc_usd_ref"))
+        .with_columns(
+            (pl.col("_usdc_usdt") * pl.col("usdt_usd_ref")).alias("usdc_usd_ref")
+        )
         .select(["ts_1m_ns", "usdc_usd_ref"])
     )
     if usdc_ref.is_empty():
         usdc_ref = usdc_ref_implied
     elif not usdc_ref_implied.is_empty():
         usdc_ref = (
-            usdc_ref
-            .join(usdc_ref_implied, on="ts_1m_ns", how="full", coalesce=True, suffix="_imp")
-            .with_columns(
-                pl.col("usdc_usd_ref").fill_null(pl.col("usdc_usd_ref_imp"))
+            usdc_ref.join(
+                usdc_ref_implied,
+                on="ts_1m_ns",
+                how="full",
+                coalesce=True,
+                suffix="_imp",
             )
+            .with_columns(pl.col("usdc_usd_ref").fill_null(pl.col("usdc_usd_ref_imp")))
             .select(["ts_1m_ns", "usdc_usd_ref"])
         )
 
-    df = df.join(usdt_ref, on="ts_1m_ns", how="left").join(usdc_ref, on="ts_1m_ns", how="left")
+    df = df.join(usdt_ref, on="ts_1m_ns", how="left").join(
+        usdc_ref, on="ts_1m_ns", how="left"
+    )
 
     btc_direct = (
         df.filter((pl.col("base_asset") == "BTC") & (pl.col("quote_asset") == "USD"))
-        .group_by("ts_1m_ns").agg(pl.col("mid").mean().alias("btc_usd_direct"))
+        .group_by("ts_1m_ns")
+        .agg(pl.col("mid").mean().alias("btc_usd_direct"))
     )
 
     # Primary: BTCUSDC × USDC-USD. Fallback: BTCUSDT × USDCUSDT × USDT-USD (3-leg implied).
     btc_via_usdc_direct = (
         df.filter((pl.col("base_asset") == "BTC") & (pl.col("quote_asset") == "USDC"))
         .with_columns((pl.col("mid") * pl.col("usdc_usd_ref")).alias("_imp"))
-        .group_by("ts_1m_ns").agg(pl.col("_imp").mean().alias("btc_usd_via_usdc"))
+        .group_by("ts_1m_ns")
+        .agg(pl.col("_imp").mean().alias("btc_usd_via_usdc"))
     )
     # Implied: BTCUSDT × USDCUSDT × USDT-USD (3-leg route — valid when BTCUSDC not available)
     btc_usdt_mid = (
         df.filter((pl.col("base_asset") == "BTC") & (pl.col("quote_asset") == "USDT"))
-        .group_by("ts_1m_ns").agg(pl.col("mid").mean().alias("_btc_usdt_mid"))
+        .group_by("ts_1m_ns")
+        .agg(pl.col("mid").mean().alias("_btc_usdt_mid"))
     )
     btc_via_usdc_implied = (
-        btc_usdt_mid
-        .join(usdc_usdt, on="ts_1m_ns", how="inner")
+        btc_usdt_mid.join(usdc_usdt, on="ts_1m_ns", how="inner")
         .join(usdt_ref, on="ts_1m_ns", how="inner")
         .with_columns(
-            (pl.col("_btc_usdt_mid") * pl.col("_usdc_usdt") * pl.col("usdt_usd_ref")).alias("btc_usd_via_usdc")
+            (
+                pl.col("_btc_usdt_mid") * pl.col("_usdc_usdt") * pl.col("usdt_usd_ref")
+            ).alias("btc_usd_via_usdc")
         )
         .select(["ts_1m_ns", "btc_usd_via_usdc"])
     )
@@ -490,8 +570,13 @@ def _compute_basis_features(book_1m: pl.DataFrame, instruments: list[dict]) -> p
         btc_via_usdc = btc_via_usdc_implied
     elif not btc_via_usdc_implied.is_empty():
         btc_via_usdc = (
-            btc_via_usdc_direct
-            .join(btc_via_usdc_implied, on="ts_1m_ns", how="full", coalesce=True, suffix="_imp")
+            btc_via_usdc_direct.join(
+                btc_via_usdc_implied,
+                on="ts_1m_ns",
+                how="full",
+                coalesce=True,
+                suffix="_imp",
+            )
             .with_columns(
                 pl.col("btc_usd_via_usdc").fill_null(pl.col("btc_usd_via_usdc_imp"))
             )
@@ -503,25 +588,28 @@ def _compute_basis_features(book_1m: pl.DataFrame, instruments: list[dict]) -> p
     btc_via_usdt = (
         df.filter((pl.col("base_asset") == "BTC") & (pl.col("quote_asset") == "USDT"))
         .with_columns((pl.col("mid") * pl.col("usdt_usd_ref")).alias("_imp"))
-        .group_by("ts_1m_ns").agg(pl.col("_imp").mean().alias("btc_usd_via_usdt"))
+        .group_by("ts_1m_ns")
+        .agg(pl.col("_imp").mean().alias("btc_usd_via_usdt"))
     )
 
-    basis = (
-        btc_direct
-        .join(btc_via_usdc, on="ts_1m_ns", how="full", coalesce=True)
-        .join(btc_via_usdt, on="ts_1m_ns", how="full", coalesce=True)
-    )
+    basis = btc_direct.join(
+        btc_via_usdc, on="ts_1m_ns", how="full", coalesce=True
+    ).join(btc_via_usdt, on="ts_1m_ns", how="full", coalesce=True)
 
     d = pl.col("btc_usd_direct")
     safe = d.is_not_null() & (d > 0)
-    basis = basis.with_columns([
-        pl.when(safe)
-        .then(10_000.0 * (pl.col("btc_usd_via_usdc") - d) / d)
-        .otherwise(None).alias("cross_quote_basis_usdc_bps"),
-        pl.when(safe)
-        .then(10_000.0 * (pl.col("btc_usd_via_usdt") - d) / d)
-        .otherwise(None).alias("cross_quote_basis_usdt_bps"),
-    ])
+    basis = basis.with_columns(
+        [
+            pl.when(safe)
+            .then(10_000.0 * (pl.col("btc_usd_via_usdc") - d) / d)
+            .otherwise(None)
+            .alias("cross_quote_basis_usdc_bps"),
+            pl.when(safe)
+            .then(10_000.0 * (pl.col("btc_usd_via_usdt") - d) / d)
+            .otherwise(None)
+            .alias("cross_quote_basis_usdt_bps"),
+        ]
+    )
 
     # Max-absolute basis: generic stress detector (larger of USDC vs USDT deviation)
     basis = basis.with_columns(
@@ -536,20 +624,24 @@ def _compute_basis_features(book_1m: pl.DataFrame, instruments: list[dict]) -> p
 
     # Primary basis: USDC-specific (for SVB/USDC event analysis).
     # Falls back to max-absolute when USDC basis is unavailable.
-    basis = basis.with_columns([
-        pl.col("cross_quote_basis_usdc_bps")
-        .fill_null(pl.col("cross_quote_basis_maxabs_bps"))
-        .alias("cross_quote_basis_primary_bps"),
-        pl.when(pl.col("cross_quote_basis_usdc_bps").is_not_null())
-        .then(pl.lit("USDC"))
-        .otherwise(pl.lit("max_abs"))
-        .alias("basis_primary_asset"),
-    ])
+    basis = basis.with_columns(
+        [
+            pl.col("cross_quote_basis_usdc_bps")
+            .fill_null(pl.col("cross_quote_basis_maxabs_bps"))
+            .alias("cross_quote_basis_primary_bps"),
+            pl.when(pl.col("cross_quote_basis_usdc_bps").is_not_null())
+            .then(pl.lit("USDC"))
+            .otherwise(pl.lit("max_abs"))
+            .alias("basis_primary_asset"),
+        ]
+    )
 
     return basis
 
 
-def _compute_fragmentation(book_1m: pl.DataFrame, instruments: list[dict]) -> pl.DataFrame:
+def _compute_fragmentation(
+    book_1m: pl.DataFrame, instruments: list[dict]
+) -> pl.DataFrame:
     """Cross-venue fragmentation metrics per stablecoin per minute."""
     df = _annotate_instruments(book_1m, instruments)
     sc = df.filter(
@@ -561,13 +653,18 @@ def _compute_fragmentation(book_1m: pl.DataFrame, instruments: list[dict]) -> pl
 
     mid_mean = pl.col("mid").mean()
     return (
-        sc.group_by(["ts_1m_ns", "base_asset"]).agg([
-            pl.len().alias("num_active_venues"),
-            (pl.col("mid").std() / mid_mean * 10_000.0).alias("mid_dispersion_bps"),
-            ((pl.col("mid").max() - pl.col("mid").min()) / mid_mean * 10_000.0).alias("max_minus_min_bps"),
-            pl.col("depth_bid_10bp").mean().alias("depth_bid_mean"),
-            pl.col("depth_ask_10bp").mean().alias("depth_ask_mean"),
-        ])
+        sc.group_by(["ts_1m_ns", "base_asset"])
+        .agg(
+            [
+                pl.len().alias("num_active_venues"),
+                (pl.col("mid").std() / mid_mean * 10_000.0).alias("mid_dispersion_bps"),
+                (
+                    (pl.col("mid").max() - pl.col("mid").min()) / mid_mean * 10_000.0
+                ).alias("max_minus_min_bps"),
+                pl.col("depth_bid_10bp").mean().alias("depth_bid_mean"),
+                pl.col("depth_ask_10bp").mean().alias("depth_ask_mean"),
+            ]
+        )
         .rename({"base_asset": "stablecoin"})
     )
 
@@ -663,7 +760,9 @@ def _compute_net_profit_1m(
                         continue
                     t_sell = fee_sched.get(sell_venue, {}).get("taker_bps", 10.0)
                     net = vwap_net_profit(
-                        buy_book, sell_book, qty_btc,
+                        buy_book,
+                        sell_book,
+                        qty_btc,
                         taker_fee_buy_bps=t_buy,
                         taker_fee_sell_bps=t_sell,
                         withdrawal_fee_usd=wfee,
@@ -676,7 +775,9 @@ def _compute_net_profit_1m(
                         best_buy_v = buy_venue
                         best_sell_v = sell_venue
 
-            row[f"net_profit_bps_q{q}"] = best_net if best_net is not None else float("nan")
+            row[f"net_profit_bps_q{q}"] = (
+                best_net if best_net is not None else float("nan")
+            )
             if best_buy_v:
                 found_any = True
 
@@ -686,7 +787,9 @@ def _compute_net_profit_1m(
             # Propagate depth quality using granular vocabulary.
             if "depth_source" in snap.columns:
                 _real_sources = {"real_l2_snapshot", "real_l2_incremental"}
-                ts_sources = set(slice_t["depth_source"].drop_nulls().unique().to_list())
+                ts_sources = set(
+                    slice_t["depth_source"].drop_nulls().unique().to_list()
+                )
                 used_real = ts_sources & _real_sources
                 row["depth_sources_used"] = ",".join(sorted(ts_sources))
                 row["is_paper_grade_depth"] = bool(used_real)
@@ -725,14 +828,16 @@ def _compute_settlement_1m(
         s1 = s0 + 60
 
         t_slice = (
-            pl.DataFrame() if no_transfers
+            pl.DataFrame()
+            if no_transfers
             else transfers_df.filter(
                 (pl.col("ts_unix_seconds").cast(pl.Int64) >= s0)
                 & (pl.col("ts_unix_seconds").cast(pl.Int64) < s1)
             )
         )
         s_slice = (
-            pl.DataFrame() if no_swaps
+            pl.DataFrame()
+            if no_swaps
             else swaps_df.filter(
                 (pl.col("ts_unix_seconds").cast(pl.Int64) >= s0)
                 & (pl.col("ts_unix_seconds").cast(pl.Int64) < s1)
@@ -747,6 +852,7 @@ def _compute_settlement_1m(
 # Gold build (public)
 # ---------------------------------------------------------------------------
 
+
 def build_gold_features(
     silver_dir: str,
     gold_dir: str,
@@ -760,7 +866,7 @@ def build_gold_features(
         logger.info("[DRY RUN] Skipping Gold feature build.")
         return
 
-    from stressbench.common.config import load_instruments, load_fee_schedules
+    from stressbench.common.config import load_fee_schedules, load_instruments
 
     silver_root = Path(silver_dir)
     gold_root = Path(gold_dir)
@@ -778,13 +884,22 @@ def build_gold_features(
         # Real L2 (executable-quality) is preferred for net-profit calculations.
         # Synthetic klines are acceptable for microstructure feature snapshots only.
         _REAL_L2_CHANNELS = [
-            "depth", "level2", "book",
-            "tardis_book_snapshot_1s", "tardis_incremental_book_l2",
+            "depth",
+            "level2",
+            "book",
+            "tardis_book_snapshot_1s",
+            "tardis_incremental_book_l2",
         ]
-        books_real = _load_silver_channels(silver_root, _REAL_L2_CHANNELS, one_day, depth_source="real_l2_snapshot")
-        books_synth = _load_silver_channels(silver_root, ["klines"], one_day, depth_source="synthetic_kline")
+        books_real = _load_silver_channels(
+            silver_root, _REAL_L2_CHANNELS, one_day, depth_source="real_l2_snapshot"
+        )
+        books_synth = _load_silver_channels(
+            silver_root, ["klines"], one_day, depth_source="synthetic_kline"
+        )
         book_frames = [df for df in [books_real, books_synth] if not df.is_empty()]
-        books = pl.concat(book_frames, how="diagonal") if book_frames else pl.DataFrame()
+        books = (
+            pl.concat(book_frames, how="diagonal") if book_frames else pl.DataFrame()
+        )
 
         trades = _load_silver_channels(
             silver_root,
@@ -827,7 +942,9 @@ def build_gold_features(
         # Never use this table for paper results.
         if books_real.is_empty() and not books.is_empty():
             net_profit_proxy = _compute_net_profit_1m(books, instruments, fee_cfg)
-            _write_gold(gold_root, "feat_net_profit_1m_proxy", date_str, net_profit_proxy)
+            _write_gold(
+                gold_root, "feat_net_profit_1m_proxy", date_str, net_profit_proxy
+            )
 
         settle = _compute_settlement_1m(transfers, swaps)
         _write_gold(gold_root, "feat_settlement_1m", date_str, settle)
@@ -839,7 +956,10 @@ def build_gold_features(
 # Labels build (public)
 # ---------------------------------------------------------------------------
 
-def _add_split_column(df: pl.DataFrame, event_windows: dict, ts_col: str) -> pl.DataFrame:
+
+def _add_split_column(
+    df: pl.DataFrame, event_windows: dict, ts_col: str
+) -> pl.DataFrame:
     df = df.with_columns(pl.lit("train").alias("split"))
     for _name, ev in event_windows.items():
         if not isinstance(ev, dict) or "start" not in ev:
@@ -863,15 +983,15 @@ def build_labels(gold_dir: str, start: datetime, end: datetime, dry_run: bool) -
         logger.info("[DRY RUN] Skipping label build.")
         return
 
-    from stressbench.labels.basis_labels import add_basis_labels
-    from stressbench.labels.regime_labels import add_regime_labels
-    from stressbench.labels.recovery_labels import add_recovery_labels
-    from stressbench.labels.arbitrage_labels import add_arbitrage_labels
-    from stressbench.labels.profitability_labels import (
-        add_profitability_rank_label,
-        add_is_profitable_label,
-    )
     from stressbench.common.config import load_event_windows
+    from stressbench.labels.arbitrage_labels import add_arbitrage_labels
+    from stressbench.labels.basis_labels import add_basis_labels
+    from stressbench.labels.profitability_labels import (
+        add_is_profitable_label,
+        add_profitability_rank_label,
+    )
+    from stressbench.labels.recovery_labels import add_recovery_labels
+    from stressbench.labels.regime_labels import add_regime_labels
 
     gold_root = Path(gold_dir)
     dates_set = set(_date_range(start, end))
@@ -897,7 +1017,9 @@ def build_labels(gold_dir: str, start: datetime, end: datetime, dry_run: bool) -
     book_feat_df = _load_table("feat_book_1m")
 
     if basis_df.is_empty():
-        logger.warning("No basis features found for the given date range; skipping labels.")
+        logger.warning(
+            "No basis features found for the given date range; skipping labels."
+        )
         return
 
     df = basis_df.clone()
@@ -909,24 +1031,37 @@ def build_labels(gold_dir: str, start: datetime, end: datetime, dry_run: bool) -
             if col in book_feat_df.columns:
                 book_agg_exprs.append(pl.col(col).mean().alias(f"{col}_mean"))
         if "imbalance_1bp" in book_feat_df.columns:
-            book_agg_exprs.append(pl.col("imbalance_1bp").mean().alias("imbalance_1bp_mean"))
+            book_agg_exprs.append(
+                pl.col("imbalance_1bp").mean().alias("imbalance_1bp_mean")
+            )
         if "data_quality_score" in book_feat_df.columns:
             book_agg_exprs.append(
                 pl.col("data_quality_score").min().alias("data_quality_score_min")
             )
         if "trade_count_1m" in book_feat_df.columns:
-            book_agg_exprs.append(pl.col("trade_count_1m").sum().alias("trade_count_1m_total"))
+            book_agg_exprs.append(
+                pl.col("trade_count_1m").sum().alias("trade_count_1m_total")
+            )
         if "trade_volume_1m" in book_feat_df.columns:
-            book_agg_exprs.append(pl.col("trade_volume_1m").sum().alias("trade_volume_1m_total"))
+            book_agg_exprs.append(
+                pl.col("trade_volume_1m").sum().alias("trade_volume_1m_total")
+            )
         book_agg = book_feat_df.group_by(TS).agg(book_agg_exprs)
         df = df.join(book_agg, on=TS, how="left")
 
     if not settle_df.is_empty():
         settle_cols = [TS] + [
-            c for c in [
-                "transfer_count_1m", "transfer_volume_1m", "large_transfer_count_1m",
-                "gas_proxy", "block_lag_proxy", "dex_swap_volume_1m", "dex_net_flow_1m",
-                "mint_count_1h", "burn_count_1h",
+            c
+            for c in [
+                "transfer_count_1m",
+                "transfer_volume_1m",
+                "large_transfer_count_1m",
+                "gas_proxy",
+                "block_lag_proxy",
+                "dex_swap_volume_1m",
+                "dex_net_flow_1m",
+                "mint_count_1h",
+                "burn_count_1h",
             ]
             if c in settle_df.columns
         ]
@@ -939,29 +1074,49 @@ def build_labels(gold_dir: str, start: datetime, end: datetime, dry_run: bool) -
     # Mean absolute deviation across stablecoins and venues → regime detection
     if not sc_dev_df.is_empty():
         avg_dev = sc_dev_df.group_by(TS).agg(
-            pl.col("deviation_from_1_usd_bps").abs().mean().alias("deviation_from_1_usd_bps")
+            pl.col("deviation_from_1_usd_bps")
+            .abs()
+            .mean()
+            .alias("deviation_from_1_usd_bps")
         )
         df = df.join(avg_dev, on=TS, how="left")
 
     # Mean fragmentation metrics across stablecoins
     if not frag_df.is_empty():
-        avg_frag = frag_df.group_by(TS).agg([
-            pl.col("num_active_venues").mean().alias("num_active_venues_mean"),
-            pl.col("mid_dispersion_bps").mean().alias("mid_dispersion_bps_mean"),
-            pl.col("max_minus_min_bps").mean().alias("max_minus_min_bps_mean"),
-        ])
+        avg_frag = frag_df.group_by(TS).agg(
+            [
+                pl.col("num_active_venues").mean().alias("num_active_venues_mean"),
+                pl.col("mid_dispersion_bps").mean().alias("mid_dispersion_bps_mean"),
+                pl.col("max_minus_min_bps").mean().alias("max_minus_min_bps_mean"),
+            ]
+        )
         df = df.join(avg_frag, on=TS, how="left")
 
     # --- Apply labels ---
     # Primary (USDC-specific, fallback to max-abs) → label_basis_*  [backward compat]
     if "cross_quote_basis_primary_bps" in df.columns:
-        df = add_basis_labels(df, basis_col="cross_quote_basis_primary_bps", ts_col=TS, label_prefix="basis")
+        df = add_basis_labels(
+            df,
+            basis_col="cross_quote_basis_primary_bps",
+            ts_col=TS,
+            label_prefix="basis",
+        )
     # USDC-specific → label_basis_usdc_*
     if "cross_quote_basis_usdc_bps" in df.columns:
-        df = add_basis_labels(df, basis_col="cross_quote_basis_usdc_bps", ts_col=TS, label_prefix="basis_usdc")
+        df = add_basis_labels(
+            df,
+            basis_col="cross_quote_basis_usdc_bps",
+            ts_col=TS,
+            label_prefix="basis_usdc",
+        )
     # Max-absolute (generic stress) → label_basis_maxabs_*
     if "cross_quote_basis_maxabs_bps" in df.columns:
-        df = add_basis_labels(df, basis_col="cross_quote_basis_maxabs_bps", ts_col=TS, label_prefix="basis_maxabs")
+        df = add_basis_labels(
+            df,
+            basis_col="cross_quote_basis_maxabs_bps",
+            ts_col=TS,
+            label_prefix="basis_maxabs",
+        )
 
     df = add_regime_labels(df, ts_col=TS)
 
@@ -991,7 +1146,9 @@ def build_labels(gold_dir: str, start: datetime, end: datetime, dry_run: bool) -
     df.write_parquet(out_path)
     logger.info(
         "Dataset written to %s  (%d rows, %d columns).",
-        out_path, len(df), len(df.columns),
+        out_path,
+        len(df),
+        len(df.columns),
     )
 
 
@@ -999,13 +1156,18 @@ def build_labels(gold_dir: str, start: datetime, end: datetime, dry_run: bool) -
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     args = parse_args()
 
     if not args.skip_silver:
-        build_silver(args.bronze_dir, args.silver_dir, args.start, args.end, args.dry_run)
+        build_silver(
+            args.bronze_dir, args.silver_dir, args.start, args.end, args.dry_run
+        )
 
-    build_gold_features(args.silver_dir, args.gold_dir, args.start, args.end, args.dry_run)
+    build_gold_features(
+        args.silver_dir, args.gold_dir, args.start, args.end, args.dry_run
+    )
 
     if not args.skip_labels:
         build_labels(args.gold_dir, args.start, args.end, args.dry_run)

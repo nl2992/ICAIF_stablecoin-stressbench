@@ -72,7 +72,9 @@ def compute_issuer_event_flags(
             continue
 
     is_in_window = min_distance_ns <= window_ns
-    nearest_hours = min_distance_ns / 3_600_000_000_000 if min_distance_ns < float("inf") else None
+    nearest_hours = (
+        min_distance_ns / 3_600_000_000_000 if min_distance_ns < float("inf") else None
+    )
 
     return {
         "is_issuer_event_window": is_in_window,
