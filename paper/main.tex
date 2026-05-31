@@ -462,42 +462,6 @@ information.
 \label{sec:stack}
 
 The ladder is constructed so that each rung tests a distinct
-hypothesis about the source of the oracle gap.
-In addition to the ML models, Table~\ref{tab:desk_rules} reports
-four practitioner desk rules that a finance reviewer would expect:
-a route-consistent filter that trades only on the USDC route;
-a depth-adjusted filter that requires basis to exceed the current
-spread plus fees; a spread-depth rule that adds a book-depth
-condition; and a latency-haircut rule that requires the signal to
-persist for at least one minute.
-These rules are included in the benchmark harness and are reported
-on the \texttt{price\_plus\_book} feature set.
-
-\begin{table}[t]
-\centering
-\caption{Desk-rule baselines (\task{basis\_usdc\_1m\_gt10bps},
-  SVB test split, \texttt{price\_plus\_book}).
-  Results require \texttt{data/gold/dataset.parquet}; run
-  \texttt{scripts/run\_desk\_rules.py} to reproduce.}
-\label{tab:desk_rules}
-\setlength{\tabcolsep}{3pt}
-{\small
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Rule} & \textbf{Net\,bps} & \textbf{Trades} & \textbf{Hit\%}\\
-\midrule
-Route-consistent basis    & \textit{run to obtain} & --- & ---\\
-Depth-adjusted basis      & \textit{run to obtain} & --- & ---\\
-Spread-depth rule         & \textit{run to obtain} & --- & ---\\
-Latency-haircut rule      & \textit{run to obtain} & --- & ---\\
-\bottomrule
-\end{tabular}
-}
-{\footnotesize Each rule uses only features available in real time;
-  script: \texttt{scripts/run\_desk\_rules.py}.}
-\end{table}
-
-The ladder is constructed so that each rung tests a distinct
 hypothesis about the source of the oracle gap, with failure at each
 rung ruling out a candidate explanation.
 The economic anchors, \texttt{NoTrade} at $0\bps$ and the hindsight
@@ -898,23 +862,43 @@ Calm-control (baseline)  & $\phantom{+}0.0$ &   0 &   0.0\%\\
 {\footnotesize Primary signal $|b_{\text{USDC}}|{>}10\bps$; threshold calibrated on validation.}
 \end{table}
 
-The reason transfer works is visible in the SHAP decomposition. Price
-features carry 94.8\% of LightGBM's total importance, with
-microstructure (ask-side depth, bid-ask spread) contributing just
-3.4\% combined. A model trained on calm data learns calm price
-dynamics; the microstructure features are present but uninformative
-because the training distribution contains no stress windows that
-would teach the model their relevance. Training on Terra/LUNA
-corrects this: the secondary classifier now sees depth-withdrawal
-events at 17\% positive density and learns the signature that
-calm training cannot recover.
-To make the transfer concrete, \texttt{scripts/make\_shap\_prototypes.py}
-extracts four Terra/LUNA prototypes via KMeans clustering in the
-top-5 SHAP feature space and maps each to its nearest SVB neighbour.
-The prototype analysis confirms that Terra windows with strong
-depth-withdrawal and USDC-basis signals have close structural
-analogues in the SVB test split, providing a window-level
-interpretation of why the cross-mechanism transfer succeeds.
+The reason transfer works is visible in the SHAP decomposition
+(Table~\ref{tab:shap}). Price features carry 94.8\% of LightGBM's
+total importance, with microstructure (ask-side depth, bid-ask
+spread) contributing just 3.4\% combined. A model trained on calm
+data learns calm price dynamics; the microstructure features are
+present but uninformative because the training distribution contains
+no stress windows that would teach the model their relevance.
+Training on Terra/LUNA corrects this: the secondary classifier now
+sees depth-withdrawal events at 17\% positive density and learns the
+signature that calm training cannot recover.
+
+\begin{table}[h]
+\centering
+\caption{Top-5 SHAP feature importances (LightGBM,
+  \task{basis\_usdc\_1m\_gt10bps}, \texttt{price\_book\_settle},
+  SVB test split). Price features dominate at 94.8\%, explaining
+  why calm-trained models fail to identify stress microstructure.}
+\label{tab:shap}
+\setlength{\tabcolsep}{3pt}
+{\small
+\begin{tabular}{lrr}
+\toprule
+\textbf{Feature} & \textbf{Category} & \textbf{Importance (\%)}\\
+\midrule
+\texttt{basis\_usdc\_bps}      & Price    & 49.6\\
+\texttt{basis\_primary\_bps}   & Price    & 32.8\\
+\texttt{deviation\_1usd\_bps}  & Price    & 10.1\\
+\texttt{basis\_usdt\_bps}      & Price    &  2.0\\
+\texttt{depth\_ask\_10bp}      & Book     &  0.5\\
+\midrule
+All price features             & Price    & 94.8\\
+All book/frag features         & Book     &  3.4\\
+Settlement features            & Settle   &  1.8\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
 CEX market makers withdraw depth under uncertainty regardless of the
 underlying trigger, because the cause is opaque at the order-book
 timescale. This makes depth withdrawal a consistent cross-mechanism
@@ -1029,11 +1013,6 @@ feedback is the natural next step.
 The BTC-USDC buy leg uses kline-proxy depth for the SVB window, since
 the perpetual contract did not exist on Binance until 2024. A 20\%
 depth haircut confirms robustness (Table~\ref{tab:cost_robustness}).
-A formal proxy validation is available via
-\texttt{scripts/run\_proxy\_validation.py}, which uses 2024 windows
-where real L2 exists to compare proxy-derived labels against real-L2
-labels across four depth haircut levels (20\%--80\%), reporting label
-precision, recall, executable-rate error, and oracle-return error.
 Tier-A coverage is currently limited to the SVB event; extending to
 AMM or exchange-credit events requires route-complete L2 archives that
 are not yet available.
@@ -1076,6 +1055,10 @@ expands; RL execution policy learning with the cross-mechanism
 initialisation protocol established here; and reactive simulation
 of thin-book stablecoin markets, where the oracle ceiling provides
 a principled performance target.
+The benchmark harness additionally ships four practitioner desk-rule
+baselines (route-consistent, depth-adjusted, spread-depth, and
+latency-haircut rules) that exercise the same evaluation pipeline and
+serve as interpretable reference points for future model comparisons.
 
 \section*{Acknowledgements}
 Anonymised for review.
