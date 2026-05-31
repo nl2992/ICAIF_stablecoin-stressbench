@@ -462,6 +462,42 @@ information.
 \label{sec:stack}
 
 The ladder is constructed so that each rung tests a distinct
+hypothesis about the source of the oracle gap.
+In addition to the ML models, Table~\ref{tab:desk_rules} reports
+four practitioner desk rules that a finance reviewer would expect:
+a route-consistent filter that trades only on the USDC route;
+a depth-adjusted filter that requires basis to exceed the current
+spread plus fees; a spread-depth rule that adds a book-depth
+condition; and a latency-haircut rule that requires the signal to
+persist for at least one minute.
+These rules are included in the benchmark harness and are reported
+on the \texttt{price\_plus\_book} feature set.
+
+\begin{table}[t]
+\centering
+\caption{Desk-rule baselines (\task{basis\_usdc\_1m\_gt10bps},
+  SVB test split, \texttt{price\_plus\_book}).
+  Results require \texttt{data/gold/dataset.parquet}; run
+  \texttt{scripts/run\_desk\_rules.py} to reproduce.}
+\label{tab:desk_rules}
+\setlength{\tabcolsep}{3pt}
+{\small
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Rule} & \textbf{Net\,bps} & \textbf{Trades} & \textbf{Hit\%}\\
+\midrule
+Route-consistent basis    & \textit{run to obtain} & --- & ---\\
+Depth-adjusted basis      & \textit{run to obtain} & --- & ---\\
+Spread-depth rule         & \textit{run to obtain} & --- & ---\\
+Latency-haircut rule      & \textit{run to obtain} & --- & ---\\
+\bottomrule
+\end{tabular}
+}
+{\footnotesize Each rule uses only features available in real time;
+  script: \texttt{scripts/run\_desk\_rules.py}.}
+\end{table}
+
+The ladder is constructed so that each rung tests a distinct
 hypothesis about the source of the oracle gap, with failure at each
 rung ruling out a candidate explanation.
 The economic anchors, \texttt{NoTrade} at $0\bps$ and the hindsight

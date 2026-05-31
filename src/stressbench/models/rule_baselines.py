@@ -93,6 +93,142 @@ class GrossArbThresholdBaseline:
         return np.column_stack([1.0 - signal, signal])
 
 
+class RouteConsistentBasisRule:
+    """Trade when the USDC-route basis exceeds a threshold.
+
+    Isolates the USDC route to prevent route-direction mismatch false
+    positives (FP windows show USDC basis ~0.56 bps while USDT is elevated).
+
+    Args:
+        col_index: Index of cross_quote_basis_usdc_bps in X.
+        threshold_bps: USDC basis threshold in basis points.
+    """
+
+    def __init__(self, col_index: int = 0, threshold_bps: float = 10.0) -> None:
+        self.col_index = col_index
+        self.threshold_bps = threshold_bps
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "RouteConsistentBasisRule":
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        return (X[:, self.col_index] > self.threshold_bps).astype(np.int8)
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        signal = self.predict(X).astype(float)
+        return np.column_stack([1.0 - signal, signal])
+
+
+class DepthAdjustedBasisRule:
+    """Trade when USDC basis exceeds spread + fee estimate.
+
+    Filters windows where the basis cannot survive current spread plus fees.
+
+    Args:
+        basis_col_index: Index of cross_quote_basis_usdc_bps in X.
+        spread_col_index: Index of spread_bps_mean in X.
+        fee_estimate_bps: Round-trip fee estimate in basis points.
+    """
+
+    def __init__(
+        self,
+        basis_col_index: int = 0,
+        spread_col_index: int = 1,
+        fee_estimate_bps: float = 8.0,
+    ) -> None:
+        self.basis_col_index = basis_col_index
+        self.spread_col_index = spread_col_index
+        self.fee_estimate_bps = fee_estimate_bps
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "DepthAdjustedBasisRule":
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        basis = X[:, self.basis_col_index]
+        spread = X[:, self.spread_col_index]
+        return (basis > spread + self.fee_estimate_bps).astype(np.int8)
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        signal = self.predict(X).astype(float)
+        return np.column_stack([1.0 - signal, signal])
+
+
+class SpreadDepthRule:
+    """Trade when USDC basis exceeds a threshold AND ask depth is sufficient.
+
+    Combines a basis filter with a minimum book depth requirement.
+    The depth threshold defaults to 0 (no filter) and can be calibrated
+    via fit() — set to the median ask depth of positive training labels.
+
+    Args:
+        basis_col_index: Index of cross_quote_basis_usdc_bps in X.
+        depth_col_index: Index of depth_ask_10bp_mean in X.
+        basis_threshold_bps: Basis threshold in basis points.
+        depth_threshold: Minimum ask depth; overwritten by fit() if > 0 labels exist.
+    """
+
+    def __init__(
+        self,
+        basis_col_index: int = 0,
+        depth_col_index: int = 1,
+        basis_threshold_bps: float = 10.0,
+        depth_threshold: float = 0.0,
+    ) -> None:
+        self.basis_col_index = basis_col_index
+        self.depth_col_index = depth_col_index
+        self.basis_threshold_bps = basis_threshold_bps
+        self.depth_threshold = depth_threshold
+        self._depth_threshold: float = depth_threshold
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "SpreadDepthRule":
+        pos_mask = y == 1
+        if pos_mask.any():
+            self._depth_threshold = float(
+                np.median(X[pos_mask, self.depth_col_index])
+            )
+        else:
+            self._depth_threshold = self.depth_threshold
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        basis_ok = X[:, self.basis_col_index] > self.basis_threshold_bps
+        depth_ok = X[:, self.depth_col_index] > self._depth_threshold
+        return (basis_ok & depth_ok).astype(np.int8)
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        signal = self.predict(X).astype(float)
+        return np.column_stack([1.0 - signal, signal])
+
+
+class LatencyHaircutRule:
+    """Trade only when USDC basis exceeds threshold at both t and t-1.
+
+    Persistence filter: requires two consecutive bars above threshold to
+    reduce latency-sensitive false positives. First bar always = 0.
+
+    Args:
+        col_index: Index of cross_quote_basis_usdc_bps in X.
+        threshold_bps: Basis threshold in basis points.
+    """
+
+    def __init__(self, col_index: int = 0, threshold_bps: float = 10.0) -> None:
+        self.col_index = col_index
+        self.threshold_bps = threshold_bps
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "LatencyHaircutRule":
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        above = X[:, self.col_index] > self.threshold_bps
+        signal = np.zeros(len(X), dtype=np.int8)
+        signal[1:] = (above[1:] & above[:-1]).astype(np.int8)
+        return signal
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        signal = self.predict(X).astype(float)
+        return np.column_stack([1.0 - signal, signal])
+
+
 class NetProfitOracleUpperBound:
     """Oracle upper bound: signal = 1 when realized net profit > threshold.
 
