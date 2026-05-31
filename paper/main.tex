@@ -908,6 +908,13 @@ would teach the model their relevance. Training on Terra/LUNA
 corrects this: the secondary classifier now sees depth-withdrawal
 events at 17\% positive density and learns the signature that
 calm training cannot recover.
+To make the transfer concrete, \texttt{scripts/make\_shap\_prototypes.py}
+extracts four Terra/LUNA prototypes via KMeans clustering in the
+top-5 SHAP feature space and maps each to its nearest SVB neighbour.
+The prototype analysis confirms that Terra windows with strong
+depth-withdrawal and USDC-basis signals have close structural
+analogues in the SVB test split, providing a window-level
+interpretation of why the cross-mechanism transfer succeeds.
 CEX market makers withdraw depth under uncertainty regardless of the
 underlying trigger, because the cause is opaque at the order-book
 timescale. This makes depth withdrawal a consistent cross-mechanism
@@ -1021,9 +1028,15 @@ feedback is the natural next step.
 
 The BTC-USDC buy leg uses kline-proxy depth for the SVB window, since
 the perpetual contract did not exist on Binance until 2024. A 20\%
-depth haircut confirms robustness. Tier-A coverage is currently
-limited to the SVB event; extending to AMM or exchange-credit events
-requires route-complete L2 archives that are not yet available.
+depth haircut confirms robustness (Table~\ref{tab:cost_robustness}).
+A formal proxy validation is available via
+\texttt{scripts/run\_proxy\_validation.py}, which uses 2024 windows
+where real L2 exists to compare proxy-derived labels against real-L2
+labels across four depth haircut levels (20\%--80\%), reporting label
+precision, recall, executable-rate error, and oracle-return error.
+Tier-A coverage is currently limited to the SVB event; extending to
+AMM or exchange-credit events requires route-complete L2 archives that
+are not yet available.
 
 The RL results carry two important caveats. First, the conditioned
 PPO-GRU's $-29.2\bps$ result may reflect overfitting to Terra/LUNA's
