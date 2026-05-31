@@ -44,6 +44,10 @@ _DEFAULT_MODELS = [
     "price_threshold_10bps",
     "price_threshold_25bps",
     "gross_arb_threshold",
+    "route_consistent_basis",
+    "depth_adjusted_basis",
+    "spread_depth_rule",
+    "latency_haircut_rule",
     "last_value",
     "rolling_mean",
     "ar1",
@@ -104,10 +108,14 @@ def make_model(name: str, feature_cols: list[str]) -> Any:
     feature_cols are resolved *before* this function is called.
     """
     from stressbench.models.rule_baselines import (
+        DepthAdjustedBasisRule,
         GrossArbThresholdBaseline,
+        LatencyHaircutRule,
         NetProfitOracleUpperBound,
         NoTradeBaseline,
         PriceBasisThresholdBaseline,
+        RouteConsistentBasisRule,
+        SpreadDepthRule,
     )
 
     if name == "no_trade":
@@ -183,6 +191,57 @@ def make_model(name: str, feature_cols: list[str]) -> Any:
         from stressbench.models.tree_models import RandomForestWrapper
 
         return RandomForestWrapper(task="classification")
+
+    if name == "route_consistent_basis":
+        col_name = "cross_quote_basis_usdc_bps"
+        if col_name not in feature_cols:
+            raise ValueError(
+                f"route_consistent_basis requires '{col_name}' in the feature set. "
+                f"Available: {feature_cols}"
+            )
+        col_idx = feature_cols.index(col_name)
+        return RouteConsistentBasisRule(col_index=col_idx, threshold_bps=10.0)
+
+    if name == "depth_adjusted_basis":
+        basis_col = "cross_quote_basis_usdc_bps"
+        spread_col = "spread_bps_mean"
+        for col_name in (basis_col, spread_col):
+            if col_name not in feature_cols:
+                raise ValueError(
+                    f"depth_adjusted_basis requires '{col_name}' in the feature set. "
+                    f"Available: {feature_cols}"
+                )
+        return DepthAdjustedBasisRule(
+            basis_col_index=feature_cols.index(basis_col),
+            spread_col_index=feature_cols.index(spread_col),
+            fee_estimate_bps=8.0,
+        )
+
+    if name == "spread_depth_rule":
+        basis_col = "cross_quote_basis_usdc_bps"
+        depth_col = "depth_ask_10bp_mean"
+        for col_name in (basis_col, depth_col):
+            if col_name not in feature_cols:
+                raise ValueError(
+                    f"spread_depth_rule requires '{col_name}' in the feature set. "
+                    f"Available: {feature_cols}"
+                )
+        return SpreadDepthRule(
+            basis_col_index=feature_cols.index(basis_col),
+            depth_col_index=feature_cols.index(depth_col),
+            basis_threshold_bps=10.0,
+        )
+
+    if name == "latency_haircut_rule":
+        col_name = "cross_quote_basis_usdc_bps"
+        if col_name not in feature_cols:
+            raise ValueError(
+                f"latency_haircut_rule requires '{col_name}' in the feature set. "
+                f"Available: {feature_cols}"
+            )
+        col_idx = feature_cols.index(col_name)
+        return LatencyHaircutRule(col_index=col_idx, threshold_bps=10.0)
+
     raise ValueError(f"Unknown model: {name!r}")
 
 
