@@ -54,28 +54,25 @@
 
 %% ---- Abstract -----------------------------------------------
 \begin{abstract}
+On a price chart, stablecoin arbitrage during a depeg looks abundant.
+In practice almost none of it can be traded at a profit.
 During the March 2023 USDC depeg, 34.3\% of one-minute windows
 showed a cross-venue price basis above 10\,bps, yet only one in
-twelve of those apparent arbitrage opportunities survived execution
-costs.
-VWAP slippage, order-book depth depletion, and settlement latency
-reduced the genuinely profitable fraction to just 2.88\%, a
-$12\times$ price-to-execution gap (block bootstrap 95\,\% CI:
-$8\times$--$24\times$) that widens with notional size and is absent
-from every prior stablecoin benchmark.
+twelve of those apparent opportunities survived VWAP slippage,
+order-book depth depletion, and settlement latency
+(block bootstrap 95\,\% CI: $8\times$--$24\times$).
 We introduce Stablecoin StressBench to quantify three compounding
-gaps.
-\textit{Gap 1 (optical to executable)}: the $12\times$ ratio shows
-that price-based labels overstate stablecoin arbitrage by an order
-of magnitude.
-\textit{Gap 2 (executable to predictable)}: even with correct labels,
-every model trained on calm data loses money; the hindsight oracle
-exceeds best-model performance by more than 260\,bps.
-\textit{Gap 3 (supervision to policy)}: cross-mechanism meta-labeling
-trained on Terra/LUNA achieves $+82.5\bps$ on SVB (50.8\% of oracle),
-while a conditioned RL agent at identical training density earns
-$-29.2\bps$, isolating explicit binary supervision as the requirement
-that reward optimisation cannot replicate.
+gaps between an apparent arbitrage opportunity and a captured one.
+The first gap is execution: price labels overstate opportunities by
+$12\times$.
+The second gap is prediction: even with execution-aware labels, every
+calm-trained model loses money and the hindsight oracle stays more
+than 260\,bps ahead of the best deployable model.
+The third gap is policy: cross-mechanism meta-labeling trained on
+Terra/LUNA achieves $+82.5\bps$ on SVB (50.8\% of oracle), while a
+conditioned RL agent at identical training density earns $-29.2\bps$,
+isolating explicit binary supervision as the requirement that reward
+optimisation cannot replicate at low positive rates.
 \end{abstract}
 
 \keywords{stablecoin arbitrage, market microstructure,
@@ -90,41 +87,45 @@ that reward optimisation cannot replicate.
 When Silicon Valley Bank collapsed in March 2023, USDC briefly
 depegged and cross-venue price gaps appeared profitable on every
 chart.
-Only one in twelve of those apparent arbitrage opportunities survived execution costs.
+Almost none of them could be traded at a profit.
+A price chart shows twelve times more stablecoin arbitrage than a
+trader can capture, and this paper traces where the other eleven
+twelfths disappear.
 VWAP slippage consumed the spread as orders cleared depth, taker fees
 eroded the margin, and CEX-to-CEX settlement latency turned a
 profitable window into a loss before the transfer confirmed.
 Only 2.88\% of one-minute windows survived all three costs and
-remained net-profitable, a $12\times$ ratio to the optical basis rate
-(block bootstrap 95\,\% CI: $8\times$--$24\times$).
+remained net-profitable.
 We call dislocations that appear on price charts but vanish under
 execution \emph{optical}, and the surviving fraction \emph{executable}.
 Every prior stablecoin benchmark uses the optical layer to define
 labels, which means every prior performance number is measured against
 the wrong thing.
 
-Stablecoin StressBench corrects this.
-We construct per-minute execution-aware labels for the USDC/SVB event
-using a full VWAP book-walking model applied to Binance L2 depth,
-distinguishing three layers: \emph{optical} (price basis above
-threshold), \emph{executable} (net profit after VWAP, fees, and
-settlement), and \emph{predictable} (correctly identified ex ante).
-The gap between layers is our core measurement.
-Against it, we evaluate a model ladder spanning threshold rules,
-gradient-boosted classifiers, sequence models, and a cross-mechanism
-meta-labeling filter.
-The results reveal three compounding gaps that the benchmark is
-designed to measure.
-\textit{Gap 1 (optical to executable)}: price labels overstate
-stablecoin arbitrage opportunities by $12\times$.
-\textit{Gap 2 (executable to predictable)}: even with the correct
-labels, every calm-trained model loses money; the hindsight oracle
-gap exceeds 260\,bps.
-\textit{Gap 3 (supervision to policy)}: a conditioned RL agent given
-identical training density to meta-labeling still trails it by
-111.7\,bps, showing that explicit binary supervision provides
-directional precision that reward optimisation cannot replicate.
-Together these three gaps define the StressBench evaluation surface.
+Stablecoin StressBench corrects this by constructing per-minute
+execution-aware labels for the USDC/SVB event using a full VWAP
+book-walking model applied to Binance L2 depth, separating three
+layers: \emph{optical} (price basis above threshold),
+\emph{executable} (net profit after VWAP, fees, and settlement),
+and \emph{predictable} (correctly identified ex ante).
+The distance between each pair of layers is a distinct, measurable
+gap, and the benchmark is designed to quantify all three.
+
+Stablecoin StressBench measures three compounding gaps that separate
+an apparent arbitrage opportunity from a captured one.
+The first gap is execution.
+A price chart shows a dislocation that an order book cannot fill at
+a profit, and we measure this gap at twelve to one.
+The second gap is prediction.
+Even when the labels are correct, every model trained on calm data
+loses money, and the hindsight oracle stays more than 260\,bps ahead
+of the best deployable model.
+The third gap is policy.
+A learning agent can be given the right training density and still
+fail to trade profitably, because reward optimisation does not supply
+the binary supervision that meta-labeling provides.
+The remainder of the paper measures each gap in turn, in
+\S\ref{sec:gap}, \S\ref{sec:ladder}, and \S\ref{sec:diagnostics}.
 
 \paragraph{Contributions.}
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
@@ -566,16 +567,18 @@ shipped with StressBench v1.0.
 \section{Results}
 \label{sec:results}
 
-\subsection{The Execution Gap}
+\subsection{Gap 1: Execution}
 \label{sec:gap}
 
-At a 10\,bps threshold, 34.3\% of test minutes show a price
-dislocation while only 2.88\% remain net-profitable after execution
-costs, a $12\times$ price-to-execution ratio (block bootstrap 95\,\%
-CI: $8\times$--$24\times$, $B{=}10{,}000$, 60-min blocks).
-This ratio is not a threshold artefact: it persists and widens across
-all tested basis levels (Table~\ref{tab:gap}), and is robust to
-data-quality concerns. Applying a 20\% depth haircut to the
+The first gap is between what a price chart shows and what an order
+book will fill.
+At a 10\,bps threshold, 34.3\% of test minutes show a dislocation
+and only 2.88\% remain profitable after VWAP slippage, taker fees,
+and settlement latency.
+The ratio is twelve to one, and it widens as trade size grows
+(Table~\ref{tab:gap}).
+This ratio is not a threshold artefact: it persists across all tested
+basis levels and is robust to data-quality concerns. Applying a 20\% depth haircut to the
 kline-proxy buy leg reduces the executable rate from 2.88\% to
 2.40\%, which widens the ratio to $14\times$ and keeps the oracle
 above $+130\bps$, confirming the headline result.
@@ -656,14 +659,17 @@ Inst.\ (10\,bps) & 3.66 & 3.42 & 3.20 & 2.96\\
 }
 \end{table}
 
-\subsection{Every Model Trained on Calm Data Loses Money}
+\subsection{Gap 2: Prediction}
 \label{sec:ladder}
 
-The oracle earns $+162.2\bps$ on the basis task and $+225.0\bps$
-on the executable arbitrage task (Table~\ref{tab:oracle}).
-Figure~\ref{fig:cumulative_pnl} shows the full performance hierarchy.
-Every model trained on calm-market data is below zero on the
-executable task.
+The second gap is between a profitable window and a model that can
+find it in advance.
+Even with execution-aware labels, every model trained on calm data
+loses money on the executable task.
+The hindsight oracle earns $+225.0\bps$ while the best deployable
+model reaches $-41.1\bps$, a structural gap of more than 260\,bps
+that richer features and sequence models do not close
+(Table~\ref{tab:oracle}; Figure~\ref{fig:cumulative_pnl}).
 
 \begin{table}[t]
 \centering
@@ -836,8 +842,19 @@ microstructure conditioning partially addresses this, though a 67\%
 false-positive rate persists and the agent still loses money in net
 terms because each false positive is expensive.
 
-\subsection{Cross-Mechanism Transfer}
+\subsection{Gap 3: Policy}
 \label{sec:diagnostics}
+
+The third gap is between a correct signal and a profitable policy.
+Cross-mechanism meta-labeling trained on Terra/LUNA is the only
+method that crosses zero, earning $+82.5\bps$ and recovering half of
+the oracle return.
+A reinforcement learning agent given the same 17\% training density
+earns $-29.2\bps$, which isolates explicit binary supervision as the
+ingredient that reward optimisation cannot replicate at low positive
+rates.
+
+\subsubsection*{6.3.1\enspace Cross-Mechanism Transfer}
 
 Calm-control training yields zero meta-positives by construction,
 because the training split contains no executable stress windows from
@@ -950,7 +967,7 @@ Oracle net bps      & $+225.0$    & $+88^\dagger$\\
 {\footnotesize $^\dagger$Kline-proxy; directional only.}
 \end{table}
 
-\subsection{RL Diagnostic: Density Necessary, Supervision Sufficient}
+\subsubsection*{6.3.2\enspace Density Is Necessary and Supervision Is Decisive}
 \label{sec:rl_results}
 
 Meta-labeling and a conditioned PPO-GRU share identical training
