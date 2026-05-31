@@ -68,9 +68,11 @@ Cross-mechanism meta-labeling trained on Terra/LUNA achieves
 $+82.5\bps$ on the SVB test split (50.8\% of oracle returns),
 providing evidence that order-book microstructure is transferable
 across structurally distinct stress mechanisms.
-A PPO-GRU agent trained on the same protocol converges to NoTrade,
-confirming that positive-example sparsity (2.3\% rate) is the key
-benchmark design challenge, not sequential observability.
+A three-way RL diagnostic distinguishes density from supervision:
+the unconditioned PPO-GRU (2.3\% positive rate) degenerates to
+NoTrade; a conditioned PPO-GRU (17\% rate, primary-signal windows
+only) trades 919 times but earns $-29.2\bps$; only meta-labeling's
+explicit positive-label supervision reaches $+82.5\bps$.
 To the best of our knowledge, Stablecoin StressBench is the first
 public benchmark for stablecoin stress events that labels one-minute
 dislocations using executable route simulation, combining documented
@@ -155,13 +157,16 @@ returns ($+82.5\bps$, 50.8\% oracle capture).
         FP cost, timing, and sizing components.
         (\S\ref{sec:oracle_gap}, Table~\ref{tab:oracle};
          \S\ref{sec:decomp})
-  \item \textbf{Cross-mechanism transfer and execution transferability:}
-        A meta-model trained on Terra/LUNA dynamics and evaluated on
-        USDC/SVB achieves $+82.5\bps$ net (50.8\% oracle capture);
-        PPO-GRU diagnostic shows positive example density is the
-        key training-design constraint.
+  \item \textbf{Cross-mechanism transfer and RL diagnostics:}
+        Meta-labeling trained on Terra/LUNA achieves $+82.5\bps$
+        (50.8\% oracle capture) on SVB.
+        Conditioned and unconditioned PPO-GRU experiments establish
+        that density is necessary but explicit positive-label
+        supervision is additionally required: conditioned PPO-GRU
+        at 17\% density earns $-29.2\bps$ vs.\ meta-labeling's
+        $+82.5\bps$.
         (\S\ref{sec:diagnostics}, Table~\ref{tab:metalabel};
-         \S\ref{sec:rl_results})
+         \S\ref{sec:rl_results}, Table~\ref{tab:rl_results})
 \end{enumerate}
 
 \tp{Paper organisation.}
@@ -559,10 +564,9 @@ and the ratio widens to 14$\times$.
 At \$50K notional the executable rate falls to 1.62\%; at \$500K it
 reaches 0.03\%, confirming that book depth, not fees, prices out
 institutional participants.
-At institutional scale, a 0.03\% executable rate implies that
-arbitrage-enforced peg stability is empirically unsupported during
-stress: peg enforcement via arbitrage is infeasible above the
-\$10K--\$50K retail ceiling.
+At institutional scale, book depth rather than fees is the binding
+constraint (0.03\% executable rate at \$500K), consistent with the
+depth-based limits-to-arbitrage arguments in \S\ref{sec:related}.
 
 \begin{table}[t]
 \centering
@@ -1045,6 +1049,21 @@ meta-labeling ($+82.5\bps$, 111.7\,bps gap), indicating that
 \emph{explicit positive-label supervision} (which meta-labeling
 provides via the secondary classifier) outperforms RL reward
 optimisation at the same training density.
+The 919 trades at $-29.2\bps$ (3$\times$ the oracle's 315 trades)
+suggests the agent learned a coarse ``enter at primary fires'' policy
+rather than fine-grained timing discrimination within primary fires.
+Whether this reflects insufficient training convergence or a genuine
+Terra/LUNA-to-SVB timing mismatch (depth-withdrawal speed may differ
+between mechanism types) is not resolvable without additional
+cross-mechanism pairs.
+The overtrading pattern itself offers a diagnostic: a policy that
+fails due to insufficient training typically converges toward NoTrade,
+not systematic false-positive entry; the 919-trade result is therefore
+more consistent with a timing-transfer mismatch (the agent learned
+Terra/LUNA's specific depth-withdrawal sequence) than with RL being
+fundamentally unable to learn selectivity at 17\% density, which
+implies that multi-mechanism training rather than additional
+Terra/LUNA-only episodes is the productive next step.
 The PPO-GRU experiments jointly serve as a benchmark diagnostic:
 density is necessary but not sufficient; explicit supervision of the
 positive subset is what meta-labeling adds.
@@ -1061,9 +1080,14 @@ Extending Tier-A coverage to AMM or exchange-credit events requires
 route-complete L2 archives for those venues.
 
 \tp{Model scope.}
-The model ladder covers tabular classifiers, sequence models, and a
-cross-mechanism PPO-GRU; positive example density in the training
-distribution is the binding constraint (\S\ref{sec:rl_results}).
+The model ladder covers tabular classifiers, sequence models, and
+cross-mechanism PPO-GRU variants.
+The conditioned RL result ($-29.2\bps$, 919 trades) may reflect
+overfitting to Terra/LUNA's specific depth-withdrawal timing rather
+than a fundamental failure of sequential optimisation; resolving this
+requires additional cross-mechanism pairs or longer training runs.
+Positive example density and explicit positive-label supervision are
+jointly necessary for positive net returns (\S\ref{sec:rl_results}).
 
 
 %% =============================================================
