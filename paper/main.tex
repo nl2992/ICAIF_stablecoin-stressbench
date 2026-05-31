@@ -383,16 +383,17 @@ C ($N{=}5$)  & RWA, niche           & Thin market            & Taxonomy only\\
 \label{sec:versioning}
 
 StressBench is versioned as \textbf{v1.0} for this submission.
-Tier-A expansion requires a new event with route-complete CEX L2
-archives and at least 5{,}000 labelled test-split minutes; the
-data-tier framework (\S\ref{sec:historical}) governs what claims
-each tier supports.
-The community can propose new stress events via the public repository
-issue tracker (link released at acceptance); proposed events are
-evaluated against the depth-provenance and data-quality criteria
-in Table~\ref{tab:route_provenance}.
-The planned release format is a versioned Hugging Face dataset with
-CC-BY~4.0 licensing, covering labels, features, and pipeline code.
+Three near-term Tier-A expansion candidates are: (1)~the USDC
+recovery window (Mar~15--31 2023), which would test recovery-phase
+vs.\ stress-phase execution structure; (2)~2024 Binance BTC-USDC
+windows, where the real-L2 perpetual eliminates the kline-proxy
+dependency; and (3)~an exchange-credit event (e.g.\ FTX Nov~2022)
+if route-complete L2 archives can be reconstructed.
+The community can propose events via the public repository issue
+tracker (link at acceptance), evaluated against the depth-provenance
+criteria in Table~\ref{tab:route_provenance}.
+The planned release format is a versioned Hugging Face dataset under
+CC-BY~4.0 covering labels, features, and pipeline code.
 
 \subsection{Feature Sets}
 \label{sec:features}
@@ -558,6 +559,10 @@ and the ratio widens to 14$\times$.
 At \$50K notional the executable rate falls to 1.62\%; at \$500K it
 reaches 0.03\%, confirming that book depth, not fees, prices out
 institutional participants.
+At institutional scale, a 0.03\% executable rate implies that
+arbitrage-enforced peg stability is empirically unsupported during
+stress: peg enforcement via arbitrage is infeasible above the
+\$10K--\$50K retail ceiling.
 
 \begin{table}[t]
 \centering
@@ -716,6 +721,10 @@ problem directly (Figure~\ref{fig:pr_curves}).
 losing $-270\bps$; LightGBM achieves AP~0.25 and AUROC~0.72 as the
 sole non-oracle model above zero.
 High AP or AUROC is necessary but not sufficient for positive returns.
+High AUROC with low Hit\% reflects the threshold regime: the
+calibrated threshold sits in a high-recall, low-precision region
+where most trades are false positives, even though the model's
+overall ranking is correct.
 
 \begin{figure}[t]
   \centering
@@ -814,14 +823,16 @@ This is consistent with execution microstructure that transfers
 across stress mechanisms: the same order-book features that predict
 profitable windows during an algorithmic collapse (Terra/LUNA) also
 predict them during a fiat-reserve shock (SVB).
-The meta-model's dominant features mirror the main SHAP ranking.
-Ask-side depth and bid-ask spread lead, consistent with the SHAP
-analysis below (\S\ref{sec:shap}), which identifies the same
-microstructure signals.
-The intuition is that regardless of whether the stress trigger is an
-algorithmic redemption spiral or a bank reserve shock, the order book
-thins in the same way before the price fragments: depth withdrawal
-preceding basis widening is a consistent cross-mechanism precursor.
+The meta-model's dominant features mirror the main SHAP ranking:
+ask-side depth at 10\,bps and bid-ask spread are the leading
+microstructure signals in both calm-trained LightGBM and the
+Terra-trained meta-model secondary classifier.
+The structural explanation: CEX market makers withdraw depth under
+uncertainty regardless of trigger, because the cause is opaque at
+the order-book timescale, making depth withdrawal a consistent
+cross-mechanism precursor whose feature signature transfers while
+the magnitude differs by event
+(5.9$\times$ Terra/LUNA vs.\ 12$\times$ SVB).
 We are not aware of prior work demonstrating cross-mechanism transfer
 for execution-aware stablecoin models.
 
