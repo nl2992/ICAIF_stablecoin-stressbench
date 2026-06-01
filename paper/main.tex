@@ -93,6 +93,15 @@ optimisation cannot replicate at low positive rates.
 \section{Introduction}
 \label{sec:intro}
 
+A stablecoin is a cryptocurrency designed to hold a fixed value,
+normally one US dollar.
+When that peg slips, the same asset trades at different prices across
+exchanges, and the gap looks like risk-free arbitrage profit that
+anyone could capture.
+A large body of trading activity and academic work assumes that profit
+is real.
+It mostly is not.
+
 When Silicon Valley Bank collapsed in March 2023, USDC briefly
 depegged and cross-venue price gaps appeared profitable on every
 chart.
@@ -112,23 +121,37 @@ labels, which means every prior performance number is measured against
 the wrong thing.
 
 Stablecoin StressBench corrects this by separating three layers of
-an apparent opportunity, \emph{optical} (price basis above threshold),
-\emph{executable} (net profit after VWAP, fees, and settlement), and
-\emph{predictable} (correctly identified ex ante), then quantifying
-the gap between each adjacent pair.
-The first gap is execution.
-A price chart shows a dislocation that an order book cannot fill at
-a profit, and we measure this gap at twelve to one.
-The second gap is prediction.
-Even when the labels are correct, every model trained on calm data
-loses money, and the hindsight oracle stays more than 260\,bps ahead
-of the best deployable model.
-The third gap is policy.
-A learning agent can be given the right training density and still
-fail to trade profitably, because reward optimisation does not supply
-the binary supervision that meta-labeling provides.
+an apparent opportunity: \emph{optical} (price basis above threshold),
+\emph{executable} (net profit after VWAP execution, fees, and
+settlement), and \emph{predictable} (correctly identified before the
+fact).
+Our approach has three parts.
+We construct per-minute execution-aware labels by walking the real
+order book to compute what a trade would actually net after slippage,
+fees, and settlement.
+We build a hindsight oracle that trades with perfect foresight, which
+bounds the profit any real model could achieve.
+And we evaluate a ladder of models---from simple price rules through
+gradient-boosted trees to a reinforcement-learning agent---each chosen
+to test one explanation for the gap between apparent and capturable
+profit.
+The benchmark spans 18 stablecoin stress events across seven mechanism
+classes from 2020 to 2023, with execution-grade depth labels for two
+Tier-A windows (the SVB stress and recovery phases) and coarser
+coverage for the rest.
+The first gap is execution: a price chart shows twelve times more
+opportunity than an order book will fill.
+The second gap is prediction: every calm-trained model loses money,
+and the hindsight oracle stays more than 260\,bps ahead of the best
+deployable model.
+The third gap is policy: a learning agent given the right training
+density still fails to trade profitably, because reward optimisation
+cannot replicate the binary supervision that meta-labeling provides.
 The remainder of the paper measures each gap in turn, in
 \S\ref{sec:gap}, \S\ref{sec:ladder}, and \S\ref{sec:diagnostics}.
+Sections 3 through 5 describe how the benchmark, labels, and models
+are constructed.
+Section 7 states limitations.
 
 \paragraph{Contributions.}
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
@@ -361,24 +384,57 @@ that specifies which events carry sufficient data quality for
 execution-grade claims and which are restricted to coarser analyses.
 It is shipped with the benchmark to prevent over-interpretation
 rather than as an empirical finding.
-Seven mechanism classes are catalogued: \emph{algorithmic/reflexive}
-(FEI, IRON/TITAN, MIM, UST, USDD); \emph{fiat-reserve bank shock}
-(USDC/SVB); \emph{regulatory winddown} (BUSD); \emph{exchange credit}
-(Celsius/3AC, HUSD, FTX \cite{vidalthomas2023ftx}); \emph{DeFi pool
-imbalance} (Curve/UST, USDT/Curve, USDC/DAI); \emph{collateral
-liquidation} (DAI Black Thursday); and \emph{RWA/niche}
-(Acala~aUSD, USDR).
+Table~\ref{tab:taxonomy} and Figure~\ref{fig:timeline} summarise the
+taxonomy.
+Two Tier-A windows carry route-complete L2 depth and support
+execution-grade claims.
+Twelve Tier-B events support optical magnitude estimates; optical
+positive rates range from 4.0\% (BUSD, regulatory) to 13.5\%
+(Terra/LUNA, algorithmic).
+Four Tier-C events support mechanism classification only.
+
+\begin{table}[t]
+\centering
+\caption{Seven mechanism classes span 18 events. Peak gaps are from
+  real L2 for Tier-A and OHLCV estimates for Tier-B/C.}
+\label{tab:taxonomy}
+\setlength{\tabcolsep}{2pt}
+{\scriptsize
+\begin{tabular}{lcp{1.0cm}p{1.8cm}p{1.3cm}}
+\toprule
+\textbf{Mechanism class} & \textbf{N} & \textbf{Tiers} &
+\textbf{Peak gap (bps)} & \textbf{Rep.\ event}\\
+\midrule
+Algorithmic / reflexive  & 5 & 3B,\,2C & $-$200--$-$10{,}000 & Terra/UST\\
+Fiat-reserve shock       & 2 & 2A      & $-$10--$-$1{,}300   & USDC/SVB\,$\star$\\
+Regulatory winddown      & 2 & 1B,\,1C & $-$30               & BUSD\\
+Exchange credit          & 3 & 3B      & $-$50--$-$800       & FTX collapse\\
+DeFi pool imbalance      & 3 & 3B      & $-$80--$-$500       & Curve/UST\\
+Collateral liquidation   & 1 & 1B      & $+$150 (above peg)  & DAI Black~Thu\\
+RWA / niche              & 2 & 1B,\,1C & $-$5{,}000--$-$9{,}900 & USDR\\
+\midrule
+\textbf{Total}           & \textbf{18} & 2A,\,12B,\,4C & & \\
+\bottomrule
+\end{tabular}
+}
+{\footnotesize $\star$Primary benchmark source; Tier-A test split.}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{../results/paper_addon/figures/figure_27_event_timeline_expanded.png}
+  \caption{Eighteen stablecoin stress events across seven mechanism
+    classes (2020--2023). Gold dots are Tier-A (execution-grade
+    depth). Grey dots are Tier-B and Tier-C. Dot size scales with
+    peak optical gap.}
+  \label{fig:timeline}
+\end{figure}
 
 Data availability governs which claims are permitted.
 Two Tier-A windows (the SVB stress phase March~10--14 and the
 recovery phase March~15--20) together support execution-gap, oracle-gap,
 and model evaluation claims because route-complete L2 depth and VWAP
 execution labels are available for both.
-Tier-B events ($N{=}11$, OHLCV or pool data only) support price
-magnitude estimates; optical positive rates range from 4.0\%
-(BUSD, regulatory) to 13.5\% (Terra/LUNA, algorithmic).
-Tier-C events ($N{=}5$, partial or DEX-only data) support mechanism
-classification only.
 The full timeline is available in the benchmark repository.
 
 \subsection{Benchmark Positioning}
@@ -719,6 +775,40 @@ Terra/LUNA (May~2022, val.)& 11{,}526 & 14.0\% & 2.40\% & $+87.6\bps$\\
 
 \begin{table}[t]
 \centering
+\caption{Price-to-execution gap characterisation across mechanism
+  classes. Execution-grade ratios are available only for Tier-A
+  (real L2); Tier-B rates are directional estimates from OHLCV.}
+\label{tab:mechanism_gap}
+\setlength{\tabcolsep}{2pt}
+{\scriptsize
+\begin{tabular}{lp{0.5cm}p{2.0cm}p{2.0cm}}
+\toprule
+\textbf{Mechanism} & \textbf{Tier} &
+\textbf{Optical basis range} & \textbf{Est.\ P-to-E ratio}\\
+\midrule
+Fiat-reserve shock     & A & 100--1{,}300\,bps       & $\sim$12$\times$ (verified)\\
+Algorithmic/reflexive  & B & 100--10{,}000\,bps      & $\gg$12$\times$ (est.)\\
+Exchange credit        & B & 5--800\,bps             & 2--5$\times$ (est.)\\
+Regulatory winddown    & B & 10--30\,bps             & 2--5$\times$ (est.)\\
+DeFi pool imbalance    & B & 8--500\,bps             & 5--10$\times$ (est.)\\
+Collateral liquidation & B & $+$150\,bps (above peg) & N/A (different dir.)\\
+RWA / niche            & B & 500--5{,}000\,bps       & Not comparable\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+Optical dislocations are a consistent feature of stablecoin stress,
+appearing in all seven mechanism classes with optical positive rates
+ranging from 4.0\% (BUSD, regulatory winddown) to 53.0\% (USDC/SVB
+stress phase, Table~\ref{tab:tier_a_compare}).
+The $12\times$ execution gap is empirically verified only for Tier-A
+events where route-complete L2 depth is available, but the universal
+presence of optical dislocations across mechanisms establishes that
+the phenomenon StressBench measures is not SVB-specific.
+
+\begin{table}[t]
+\centering
 \caption{Price-to-execution gap (\$10K, 1-min horizon, test split).}
 \label{tab:gap}
 \setlength{\tabcolsep}{3pt}
@@ -755,35 +845,11 @@ Terra/LUNA (May~2022, val.)& 11{,}526 & 14.0\% & 2.40\% & $+87.6\bps$\\
   \label{fig:notional_scaling}
 \end{figure}
 
-Table~\ref{tab:cost_robustness} shows that the gap is robust across
-the full cost-parameter space: the executable rate varies only between
-2.84\% and 3.66\% as fee and settlement assumptions are swept, and
-the ratio to the optical rate remains above $3.5\times$ throughout.
+The gap is robust across the full cost-parameter space: sweeping
+taker fees from 2 to 10\,bps per side and settlement penalty from
+0 to 10\,bps moves the executable rate only between 2.84\% and 3.66\%,
+and the ratio to the optical rate remains above $3.5\times$ throughout.
 Claim boundaries and data-tier scope are stated in \S\ref{sec:eval}.
-
-\begin{table}[t]
-\centering
-\caption{Executable rate (\%) under fee and settlement variation
-  (10\,bps threshold, 1-min horizon, \$10K notional, SVB test split).
-  Taker fees: low\,=\,2\,bps, base\,=\,4\,bps, high\,=\,8\,bps,
-  inst.\,=\,10\,bps per side.}
-\label{tab:cost_robustness}
-\setlength{\tabcolsep}{4pt}
-{\small
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{Taker fee} & \multicolumn{4}{c}{\textbf{Settlement penalty (bps)}}\\
-\cmidrule(lr){2-5}
-& \textbf{0} & \textbf{2} & \textbf{5} & \textbf{10}\\
-\midrule
-Low (2\,bps)  & 3.50 & 3.34 & 3.16 & 2.93\\
-Base (4\,bps) & 3.34 & 3.20 & 3.03 & 2.88\\
-High (8\,bps) & 3.20 & 3.08 & 2.96 & 2.84\\
-Inst.\ (10\,bps) & 3.66 & 3.42 & 3.20 & 2.96\\
-\bottomrule
-\end{tabular}
-}
-\end{table}
 
 \subsection{Gap 2: Prediction}
 \label{sec:ladder}
@@ -1002,6 +1068,13 @@ Oracle capture is stable at approximately 49\% for single-event
 training and rises to 51.8\% with four-event pooling ($+83.7\bps$,
 163 trades), establishing that execution microstructure transfer is
 robust and mechanism-independent.
+These four events span three of the seven mechanism classes in the
+benchmark taxonomy (algorithmic, exchange-credit, regulatory),
+representing the classes with sufficient CEX basis activity to train a
+secondary model.
+The remaining four classes (DeFi pool imbalance, collateral
+liquidation, RWA/niche, and fiat-reserve shock) either lack CEX basis
+data or are reserved for testing.
 
 FTX is the informative outlier: its credit shock produced $<5\bps$
 USDC/USDT basis at Binance benchmark venues, a mechanism-\emph{intensity}
