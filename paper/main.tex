@@ -113,10 +113,10 @@ remained net-profitable.
 We call dislocations that appear on price charts but vanish under
 execution \textbf{\emph{optical}}, and the surviving fraction
 \textbf{\emph{executable}}.
-Every prior stablecoin benchmark uses the optical layer to define
-labels---which means every published performance number overstates
-what a model can actually achieve, because it is measured against
-windows that cannot be traded at a profit.
+Prior stablecoin stress studies typically evaluate price-visible
+depeg or basis labels, which means published performance numbers
+overstate what a model can actually achieve, because they are measured
+against windows that cannot be traded at a profit.
 The only empirically validated path to capturing executable
 dislocations is training on a mechanistically distinct stress event.
 We show that a model trained on an algorithmic crypto collapse
@@ -163,21 +163,9 @@ why reward-only RL fails.
         positive-label density.
 \end{enumerate}
 
-Figure~\ref{fig:workflow} shows the full benchmark pipeline.
-StressBench ships five artefacts: the 18-event catalogue,
-source-tracked event windows, execution labels with depth provenance,
+StressBench ships five artefacts: the 18-event source-tracked
+catalogue, event windows, execution labels with depth provenance,
 a hindsight oracle, and a reproducible model harness.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.96\columnwidth]{../results/paper_addon/figures/figure_workflow.png}
-  \caption{StressBench pipeline. The 18-event catalogue is filtered
-    to Tier-A execution-grade windows for VWAP labels and oracle
-    evaluation; Tier-B/C events supply mechanism-diverse transfer
-    training. Models are ranked by mean net bps per triggered trade,
-    not price-label AUROC.}
-  \label{fig:workflow}
-\end{figure}
 
 
 %% =============================================================
@@ -228,8 +216,10 @@ rather than environment reactivity as the binding constraint.
 \subsection{Data Sources and Instruments}
 \label{sec:data}
 
-The final dataset contains 56,134 1-minute bars across six windows
-(Table~\ref{tab:dataset}).
+The 18-event catalogue defines the historical stress universe; the
+six-window empirical panel (56,134 1-minute bars) defines the model
+dataset; and the Tier-A SVB windows define the execution-grade testbed.
+The final dataset is described in Table~\ref{tab:dataset}.
 Price features are sourced from Binance Vision (klines and aggTrades)
 and Coinbase REST candles.
 Net-profit labels use three depth legs, Binance BTC-USDC (buy),
@@ -530,8 +520,7 @@ $r_t = \text{net}(q,t)$ if entering (positive for profitable windows,
 negative otherwise) or $r_t = 0$ if waiting.
 The state $s_t$ is the 30-minute look-back window of
 \texttt{price\_plus\_book} features, the smallest feature set that
-delivers meaningful microstructure lift over price-only signals
-(see \S\ref{sec:diagnostics} for SHAP evidence).
+delivers meaningful microstructure lift over price-only signals.
 This feature set is available in real time without
 settlement-latency dependency.
 We train a PPO agent with a GRU policy network (one hidden layer,
@@ -883,15 +872,21 @@ PPO-GRU conditioned & RL on Terra & $-29.2$ & 919 & $-18.1\%$\\
 }
 \end{table}
 
-Figure~\ref{fig:shap_side} provides direct empirical proof for why
-transfer works: ask-side depth collapses and spread widens identically
-in primary-signal windows across Terra/LUNA (algorithmic) and SVB
-stress (fiat-reserve), despite different triggers. CEX market makers
-withdraw depth under uncertainty regardless of the trigger's cause.
-At the order-book timescale, depth withdrawal is mechanism-agnostic,
-and its feature signature transfers even as its magnitude differs
-($5.9\times$ for Terra/LUNA versus $12\times$ for SVB). Figure~\ref{fig:diversity_bar}
-shows oracle capture across all four training conditions.
+The primary price rule identifies candidate stress minutes; the
+meta-labeler learns which survive execution. Cross-mechanism training
+helps because depth withdrawal, spread widening, and route mismatch
+recur across stress triggers even when the trigger itself differs.
+Figure~\ref{fig:shap_side} provides direct empirical proof: ask-side
+depth collapses and spread widens identically in primary-signal windows
+across Terra/LUNA (algorithmic) and SVB stress (fiat-reserve). SHAP
+analysis confirms the two-stage structure: price-basis features supply
+the candidate signal (94.8\% of importance), while ask-side depth and
+spread act as execution-relevant filters (3.4\%) once the model has
+seen stress-regime depth withdrawal in Terra/LUNA.
+Figure~\ref{fig:diversity_bar} shows oracle capture across all four
+training conditions. Capturing 51.0--51.8\% of the oracle is
+economically meaningful because the oracle trades with hindsight, while
+the meta-labeler must choose before observing the executable outcome.
 FTX's credit shock produced $<5\bps$ USDC/USDT basis at benchmark
 venues; its near-degenerate transfer reflects weak signal intensity,
 not a failure of the exchange-credit class.
