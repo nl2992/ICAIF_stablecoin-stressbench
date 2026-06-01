@@ -163,13 +163,21 @@ why reward-only RL fails.
         positive-label density.
 \end{enumerate}
 
-StressBench ships five artefacts: the 18-event catalogue, source-tracked event windows, execution labels with depth provenance, a hindsight oracle, and a reproducible model harness.
-StressBench is intended for three user groups.
-Market makers and arbitrage desks can audit when apparent stablecoin
-basis survives executable depth; risk teams can track which historical
-stress mechanisms resemble current liquidity withdrawal; and benchmark
-researchers can evaluate models against economic labels rather than
-price-only depeg detection.
+Figure~\ref{fig:workflow} shows the full benchmark pipeline.
+StressBench ships five artefacts: the 18-event catalogue,
+source-tracked event windows, execution labels with depth provenance,
+a hindsight oracle, and a reproducible model harness.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.96\columnwidth]{../results/paper_addon/figures/figure_workflow.png}
+  \caption{StressBench pipeline. The 18-event catalogue is filtered
+    to Tier-A execution-grade windows for VWAP labels and oracle
+    evaluation; Tier-B/C events supply mechanism-diverse transfer
+    training. Models are ranked by mean net bps per triggered trade,
+    not price-label AUROC.}
+  \label{fig:workflow}
+\end{figure}
 
 
 %% =============================================================
