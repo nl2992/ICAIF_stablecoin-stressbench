@@ -28,19 +28,20 @@
 \definecolor{colblue}{HTML}{75B2DD}
 \definecolor{colgold}{HTML}{F2A900}
 
-%% ---- Spacing (two-column narrow columns) --------------------
+%% ---- Spacing ---------------------------------------------------
 \setlength{\emergencystretch}{3em}
 \tolerance=1000
 \hbadness=1500
 \setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
-\setlength{\floatsep}{6pt plus 2pt minus 2pt}
-\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt  plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt  plus 2pt minus 2pt}
 \setlength{\abovecaptionskip}{4pt}
 \setlength{\belowcaptionskip}{1pt}
-\setlength{\abovedisplayskip}{5pt plus 1pt minus 1pt}
-\setlength{\belowdisplayskip}{5pt plus 1pt minus 1pt}
-\setlength{\abovedisplayshortskip}{3pt plus 1pt}
-\setlength{\belowdisplayshortskip}{4pt plus 1pt minus 1pt}
+%% Display-math breathing room (was 5 pt; raised for numbered equations)
+\setlength{\abovedisplayskip}{7pt plus 2pt minus 1pt}
+\setlength{\belowdisplayskip}{7pt plus 2pt minus 1pt}
+\setlength{\abovedisplayshortskip}{4pt plus 2pt}
+\setlength{\belowdisplayshortskip}{5pt plus 2pt minus 1pt}
 
 %% ---- Convenience macros ------------------------------------
 \newcommand{\bps}{\,\text{bps}}
@@ -452,41 +453,43 @@ how they are constructed.
 \subsection{Cross-Quote Basis and Labels}
 \label{sec:basis}
 
-The basis is the percentage difference between BTC priced in USDC and
-BTC priced in real dollars, expressed in basis points (bps); a
-non-zero basis signals that an apparent arbitrage dislocation exists.
-\[
-  b_{\text{USDC}}(t) = 10{,}000 \times
-    \frac{P_{\text{BTC/USDC}}(t) - P_{\text{BTC/USD}}(t)}
-         {P_{\text{BTC/USD}}(t)} \quad [\text{bps}]
-\]
-$b_{\max} = \max(|b_{\text{USDC}}|, |b_{\text{USDT}}|)$.
-Basis label: $y_{\text{basis}}(t) = \mathbf{1}[|b_{\text{USDC}}(t{+}h)| > \tau]$.
-Primary task: \task{basis\_usdc\_1m\_gt10bps}.
+The basis measures the percentage difference between BTC priced in
+USDC and BTC priced in real dollars; a non-zero basis signals an
+apparent dislocation.
+Three quantities define the label construction:
+\begin{align}
+  b_{\text{USDC}}(t)  &\;=\; 10{,}000 \times
+      \frac{P_{\text{BTC/USDC}}(t) - P_{\text{BTC/USD}}(t)}
+           {P_{\text{BTC/USD}}(t)}
+      \quad [\text{bps}] \label{eq:basis}\\[2pt]
+  b_{\max}(t)         &\;=\; \max\!\bigl(
+      |b_{\text{USDC}}(t)|,\;|b_{\text{USDT}}(t)|\bigr)
+      \label{eq:bmax}\\[2pt]
+  y_{\text{basis}}(t) &\;=\; \mathbf{1}\!\left[
+      |b_{\text{USDC}}(t{+}h)| > \tau\right]
+      \label{eq:ylabel}
+\end{align}
+Primary task: \task{basis\_usdc\_1m\_gt10bps} ($\tau{=}10\bps$, $h{=}1$\,min).
 
 \subsection{VWAP Execution and Net Profit Labels}
 \label{sec:netlabels}
 
 \begin{align}
-  \text{net}(q,t) &= 10{,}000 \times
+  \text{net}(q,t) &\;=\; 10{,}000 \times
     \left[\frac{\text{VWAP}_{\text{sell}} - \text{VWAP}_{\text{buy}}}{P_{\text{ref}}}
     - f_{\text{buy}} - f_{\text{sell}} - \delta_{\text{settle}}\right]
-    \quad [\text{bps}]\\
-  y_{\text{arb}}(q,h,t) &= \mathbf{1}\!\left[
-    \max_{s \in [t,\,t+h]} \text{net}(q,s) > c \right]
+    \enspace [\text{bps}] \label{eq:net} \\[3pt]
+  y_{\text{arb}}(q,h,t) &\;=\; \mathbf{1}\!\left[
+    \max_{s \in [t,\,t+h]} \text{net}(q,s) \;>\; c \right] \label{eq:yarb}
 \end{align}
 
-Here $P_{\text{ref}}$ is the Coinbase BTC-USD reference price and
+Here $P_{\text{ref}}$ is the Coinbase BTC-USD reference price;
 $f_{\text{buy}}, f_{\text{sell}}, \delta_{\text{settle}}$ are
-dimensionless fractions representing per-leg taker fees and settlement
-latency costs, respectively.
-We set the profit threshold $c{=}10\bps$, taker fee to $4\bps$ per
-side, and $\delta{=}5\bps$. The primary economic task is
-\task{executable\_arb\_q10000\_5m}.
+dimensionless per-leg taker fees and settlement latency cost.
+Parameters: profit threshold $c{=}10\bps$, taker fee $4\bps$/side,
+$\delta{=}5\bps$. Primary economic task: \task{executable\_arb\_q10000\_5m}.
 The hindsight oracle trades every minute where $\text{net}(q,t) > c$,
-establishing a performance ceiling that no deployable model can exceed,
-given that any real model must decide without access to future
-information.
+establishing a ceiling no deployable model can exceed.
 
 
 %% =============================================================
