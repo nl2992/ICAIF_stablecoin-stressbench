@@ -68,8 +68,8 @@ We introduce Stablecoin StressBench to quantify three compounding
 gaps between an apparent arbitrage opportunity and a captured one,
 evaluated over two real-L2-depth Tier-A windows (stress and recovery).
 The first gap is execution. Price labels overstate opportunities by
-$12\times$ in the stress phase; the recovery phase contains zero
-profitable windows.
+$12\times$ in the stress phase, while the recovery phase contains zero
+profitable windows once the peg is restored.
 The second gap is prediction. Even with execution-aware labels, every
 calm-trained model loses money and the hindsight oracle stays more
 than 260\,bps ahead of the best deployable model.
@@ -877,27 +877,27 @@ Oracle$^\dagger$ & ---  & $+161.7$ & 316  & ---   & 100\%\\
 \midrule
 \texttt{ExpNetProfit}   & px   & $-73.8$  & 537  & ---   &  3\%\\
 \bottomrule
+\multicolumn{6}{l}{\footnotesize px\,=\,\texttt{price\_only}; all\,=\,\texttt{price\_book\_settle}.}\\
 \end{tabular}
 }
-{\footnotesize px\,=\,\texttt{price\_only}; all\,=\,\texttt{price\_book\_settle}.}
 \end{table}
 
 
-All tabular ML models produce 0 trades under calm-training, equivalent
-to NoTrade. The structural failure of calm-trained models is the subject
-of this section; the cross-mechanism fix is presented in \S\ref{sec:diagnostics}.
+All calibrated ML models degenerate to zero trades under calm-training,
+equivalent to NoTrade. This section examines why the prediction gap is
+structural; the cross-mechanism fix that resolves it is in \S\ref{sec:diagnostics}.
 Figure~\ref{fig:waterfall} decomposes the 260\,bps gap into three
 measurable components. False-positive cost is the dominant and
 directly quantifiable drag, as \texttt{PriceBasis10bps} produces
 1,969 trades of which 1,851 are false positives.
-Of those, 581 are attributable specifically to route-direction
-mismatch (USDT dislocations triggering on the max-abs basis when
-the USDC route is not simultaneously profitable) at $-38.7\bps$
-each; the remainder reflects imprecise timing. The remaining gap splits into timing error (estimated
-40--80\,bps), arising from entering 1--2 minutes late in a declining
-depth regime, and sizing error (40--100\,bps), since depth depletion
-reduces the profitable fraction from 2.88\% at \$10K to 1.62\% at
-\$50K.
+Of those, 581 are attributable to route-direction mismatch (USDT
+dislocations triggering on the max-abs basis when the USDC route is
+not simultaneously profitable) at $-38.7\bps$ each, and the remainder
+reflects imprecise timing.
+The remaining gap breaks into timing error (estimated 40--80\,bps),
+which arises from entering 1--2 minutes late in a declining depth
+regime, and sizing error (40--100\,bps), as depth depletion reduces
+the profitable fraction from 2.88\% at \$10K to 1.62\% at \$50K.
 
 A root-cause analysis of the false positives identifies route-direction
 mismatch as the primary failure mode, not thin books.
@@ -1031,9 +1031,10 @@ are the leading predictors in all non-degenerate models.
 
 Positive-label density (the fraction of primary-signal windows that
 are genuinely profitable) is 17\% for both the meta-labeling secondary
-classifier and the conditioned PPO-GRU---17\% of the minutes where
-the basis threshold triggers, versus 2.88\% of all test minutes---yet
-the two methods differ by 111.7\,bps in net return. This controlled comparison isolates explicit
+classifier and the conditioned PPO-GRU. To be precise, 17\% of the
+minutes where the basis threshold triggers are executable, compared to
+2.88\% of all test minutes. Despite identical density, the two methods
+differ by 111.7\,bps in net return. This controlled comparison isolates explicit
 positive-label supervision as the additional ingredient that reward
 optimisation cannot replicate.
 
@@ -1063,34 +1064,29 @@ MLP-Window supervised (calm-ctrl)                 & $-340.7$ & 1{,}052\\
 }
 \end{table}
 
-The unconditioned PPO-GRU degenerates to zero entries, as the 2.3\%
-positive rate in the full Terra/LUNA stream is too sparse to generate
-a reward signal that calibrates entry timing. Conditioning on
-primary-signal windows resolves the density problem. The agent trades
-(919 entries, AUROC~0.87) but earns $-29.2\bps$.
-The distinction between the conditioned agent and meta-labeling is
-qualitative. The meta-labeling classifier receives direct binary
-feedback, where $y{=}1$ marks exactly the profitable windows, while
-the RL agent must infer the same subset through a reward signal that
-is negative on 83\% of entries. The supervision is categorically
-cleaner, not merely denser.
-The 919-trade overtrading pattern is itself informative. The agent
-fires on 919 of 15,832 test windows, nearly three times the oracle's
-316 profitable windows, entering consistently on windows that are not
-profitable. Policies that fail due to insufficient training converge
-toward NoTrade, not sustained false-positive entry. The 919-trade
-result is therefore more consistent with a timing-transfer mismatch,
-meaning the agent learned Terra/LUNA's specific depth-withdrawal
-sequence and triggers on it in the SVB context even when the timing
-does not match.
-This interpretation has a constructive implication. If the failure
-reflects a mechanism mismatch rather than an RL capability limit,
-then multi-mechanism training that exposes the agent to depth
-withdrawal events across diverse stress triggers should improve
-selectivity without requiring a fundamentally different RL algorithm.
-Combining the cross-mechanism protocol established here for supervised
-transfer with a reactive simulator that provides market-impact
-feedback is the natural next step.
+Without conditioning, the PPO-GRU degenerates to zero entries. The
+2.3\% positive rate in the full Terra/LUNA stream is too sparse to
+generate a reward signal that calibrates entry timing. Restricting the
+agent to primary-signal windows (where the basis threshold fires) resolves
+the density problem, and the conditioned agent trades 919 windows with
+AUROC~0.87, yet still earns $-29.2\bps$.
+
+The distinction from meta-labeling is qualitative, not quantitative.
+Meta-labeling receives an explicit binary label, $y{=}1$ for every
+profitable window, while the RL agent must infer the same distinction
+through a reward signal that is negative on 83\% of entries.
+Explicit supervision is categorically cleaner than implicit reward.
+
+The overtrading pattern points toward a specific failure mode. The
+agent fires on 919 of 15,832 test windows, nearly three times the
+oracle's 316 profitable windows. When a policy fails due to
+insufficient training, it typically converges toward NoTrade, not
+toward sustained false-positive entry. The sustained overtrading is
+therefore more consistent with a timing-transfer mismatch: the agent
+learned Terra/LUNA's depth-withdrawal sequence and keeps firing on it
+in the SVB context even when the timing is wrong. Multi-mechanism
+training on the pooled protocol established here is the direct path
+to testing whether this mismatch is the binding constraint.
 
 
 %% =============================================================
@@ -1098,19 +1094,18 @@ feedback is the natural next step.
 \label{sec:limitations}
 
 The BTC-USDC buy leg uses kline-proxy depth for SVB and all four
-training events (Terra/LUNA, Celsius/3AC, FTX, BUSD), since the
-perpetual did not exist on Binance until January 2024; a 20\% haircut
-confirms robustness equally across all conditions (\S\ref{sec:gap}).
+training events, because the perpetual contract did not exist on
+Binance until January 2024. A 20\% depth haircut confirms robustness
+equally across all conditions (\S\ref{sec:gap}).
 
-We validate the $\delta{=}5\bps$ settlement penalty assumption using
-on-chain Etherscan data for 100,000 USDC transfers across the SVB
-window (Table~\ref{tab:settlement}).
-The median ERC-20 transfer cost on $10\mathrm{K}$ notional was
-1.4--3.2\,bps on nine of ten days, confirming that $\delta{=}5\bps$
-is conservative.
-The exception is March~11 (peak depeg), where gas spiked to 61.5\,gwei
-and the P95 cost reached 8.6\,bps, the only day the assumption is
-tight.
+The $\delta{=}5\bps$ settlement penalty is validated against on-chain
+Etherscan data for 100,000 USDC transfers across the SVB window
+(Table~\ref{tab:settlement}). On nine of ten days, the median ERC-20
+transfer cost for \$10K notional was 1.4--3.2\,bps, well below the
+assumed $5\bps$. The one exception is March~11 at peak depeg, where
+gas spiked to 61.5\,gwei and the P95 cost reached 8.6\,bps. That is
+the only day the assumption is tight, and even then the oracle remains
+profitable at $+259.9\bps$ per trade.
 
 \begin{table}[h]
 \centering
@@ -1132,44 +1127,41 @@ Mar~12 & 21.6 & 2.21 & 3.68 & 22\\
 Mar~13 & 26.1 & 2.68 & 4.47 & 29\\
 Mar~14--19 & 13.9--24 & 1.43--2.46 & 2.44--4.11 & 0--2\\
 \bottomrule
+\multicolumn{5}{l}{\footnotesize $^\dagger$Only day where P95 cost exceeds $\delta{=}5\bps$.}\\
+\multicolumn{5}{l}{\footnotesize Gas data from 100K USDC transfers via Etherscan API.}\\
 \end{tabular}
 }
-{\footnotesize $^\dagger$Only day where P95 cost exceeds $\delta{=}5\bps$.
-  Gas data from 100K USDC transfers via Etherscan API.}
 \end{table}
 
-Tier-A coverage is currently limited to the SVB event. Extending to
-AMM or exchange-credit events requires route-complete L2 archives that
-are not yet available.
+Execution-grade Tier-A coverage currently spans only the SVB stress
+and recovery windows. Extending to AMM or exchange-credit events
+requires route-complete L2 archives not yet available.
 
-The RL results carry two important caveats. First, the conditioned
-PPO-GRU's $-29.2\bps$ result may reflect overfitting to Terra/LUNA's
-specific depth-withdrawal timing rather than a fundamental RL
-limitation, which additional cross-mechanism training pairs could
-resolve. Second, unlike reactive-simulator approaches such as Olby
-et al.\ \cite{rightplace2024}, the PPO-GRU is trained on historical
-replay without market-impact feedback. In a thin-book stress regime
-this systematically miscalibrates entry sizing because the agent
-observes book depth as it was rather than as it would be after its
-own orders clear liquidity, which is a plausible contributor to the
-919-trade overtrading pattern. Integrating the cross-mechanism
-protocol shown here into a reactive simulator is the most direct
-path to resolving the timing component of the oracle gap.
+Two caveats apply to the RL results. First, the conditioned
+PPO-GRU's $-29.2\bps$ may reflect overfitting to Terra/LUNA's specific
+depth-withdrawal timing rather than a fundamental ceiling; pooled
+multi-mechanism training would test this directly. Second, the agent
+is trained on historical replay without market-impact feedback, which
+systematically miscalibrates entry sizing in thin-book regimes because
+the agent sees depth as it was, not as it would be after its own orders
+clear liquidity. Integrating the cross-mechanism protocol into a
+reactive simulator is the most direct path to resolving the
+overtrading pattern.
 
 
 %% =============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-The $12\times$ optical-to-executable gap establishes that stablecoin
+The $12\times$ optical-to-executable gap shows that stablecoin
 arbitrage benchmarks built on price labels measure the wrong quantity.
-The executable fraction of apparent opportunities is small, shrinks
-with notional size, and is invisible to every model trained on
-calm-market data. Cross-mechanism training on a structurally different
-stress event is the only empirically validated path to positive net
-returns. The RL diagnostic provides a precise account of why.
-Label density enables trading, but binary supervision over the
-profitable subset provides the directional accuracy that reward
+Executable opportunities are scarce, shrink with trade size, and
+are invisible to any model trained on calm-market data. The only
+empirically validated path to positive returns is cross-mechanism
+training on a structurally different stress event, and the RL
+diagnostic explains precisely why: label density is necessary for the
+model to trade at all, but explicit binary supervision over the
+profitable subset is what produces the directional accuracy that reward
 optimisation cannot replicate at low positive rates.
 The benchmark, labels, oracle implementation, and training scripts
 are released under CC-BY 4.0 (URL redacted for review).
