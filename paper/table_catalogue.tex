@@ -1,0 +1,39 @@
+\begin{table*}[t]
+\centering
+\caption{StressBench event catalogue: all 18 events, chronological.
+  Max depeg in bps ($+$=above peg; $\dagger$=percentage-point collapse to zero).
+  ``est.''~=~source-verified estimate, not per-minute data.
+  Tier~A~=~execution-grade (VWAP labels + oracle); Tier~B~=~price/liquidity claims; Tier~C~=~taxonomy only.}
+\label{tab:catalogue}
+\setlength{\tabcolsep}{3pt}
+{\scriptsize
+\begin{tabular}{p{3.1cm}rp{1.2cm}p{2.0cm}rrlp{3.1cm}rp{1.2cm}p{2.0cm}rrl}
+\toprule
+\textbf{Event} & \textbf{Date} & \textbf{Coin} & \textbf{Mechanism} & \textbf{Max dep.} & \textbf{Dur.} & \textbf{T} &
+\textbf{Event} & \textbf{Date} & \textbf{Coin} & \textbf{Mechanism} & \textbf{Max dep.} & \textbf{Dur.} & \textbf{T}\\
+\midrule
+DAI Black Thursday          & Mar~'20 & \texttt{DAI}  & Collateral       & est.~$+150$              & days & B &
+Acala aUSD Exploit          & Aug~'22 & \texttt{aUSD} & RWA/Niche        & est.~$-99$pp$^\dagger$   & days & C \\
+FEI Launch Stress           & Apr~'21 & \texttt{FEI}  & Algo./Reflex.    & est.~$-20$pp$^\dagger$   & days & C &
+HUSD Issuer Failure         & Aug~'22 & \texttt{HUSD} & Exch.\ Credit    & est.~$-800$              & days & B \\
+IRON/TITAN Collapse         & Jun~'21 & \texttt{IRON} & Algo./Reflex.    & est.~$-100$pp$^\dagger$  & hrs  & C &
+Binance USDC$\to$BUSD Conv. & Sep~'22 & \texttt{BUSD} & Regulatory       & est.~$+0$                & wks  & C \\
+MIM/Wonderland Shock        & Jan~'22 & \texttt{MIM}  & Algo./Reflex.    & est.~$-300$              & days & C &
+FTX Collapse                & Nov~'22 & \texttt{USDT} & Exch.\ Credit    & est.~$-50$               & days & B \\
+Terra/UST Collapse          & May~'22 & \texttt{UST}  & Algo./Reflex.    & est.~$-100$pp$^\dagger$  & wks  & B &
+BUSD Regulatory Winddown    & Feb~'23 & \texttt{BUSD} & Regulatory       & est.~$-30$               & wks  & B \\
+Curve 3Pool/UST Stress      & May~'22 & \texttt{UST}  & DeFi Pool        & est.~$-500$              & days & B &
+USDC/DAI DeFi Secondary     & Mar~'23 & \texttt{USDC} & DeFi Pool        & est.~$-200$              & days & B \\
+Celsius/3AC Contagion       & Jun~'22 & \texttt{USDT} & Exch.\ Credit    & est.~$-100$              & wks  & B &
+\textbf{USDC/SVB Stress}    & Mar~'23 & \texttt{USDC} & Fiat Reserve     & $-13$pp$^\dagger$        & days & \textbf{A} \\
+USDD/TRON Stress            & Jun~'22 & \texttt{USDD} & Algo./Reflex.    & est.~$-200$              & days & B &
+USDC Recovery (Post-SVB)    & Mar~'23 & \texttt{USDC} & Fiat Reserve     & $-10$                    & wks  & \textbf{A} \\
+  & & & & & & &
+USDT/Curve Pool Stress      & Jun~'23 & \texttt{USDT} & DeFi Pool        & est.~$-80$               & days & B \\
+  & & & & & & &
+USDR RWA Failure            & Oct~'23 & \texttt{USDR} & RWA/Niche        & est.~$-50$pp$^\dagger$   & days & B \\
+\bottomrule
+\multicolumn{14}{l}{\footnotesize 2A, 11B, 5C events. Tier-A VWAP labels available only for USDC/SVB (primary benchmark) and its recovery window.}\\
+\end{tabular}
+}
+\end{table*}
