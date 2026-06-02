@@ -68,8 +68,11 @@ Tier C supports taxonomy only.
 On the execution-grade SVB windows, price-visible arbitrage appears
 twelve times more often than it survives VWAP book-walking, fees, and
 settlement costs (34.3\% optical versus 2.88\% executable).
+Across eight prediction tasks the benchmark evaluates 25+ model
+configurations spanning price rules, tabular classifiers, sequence
+models, class-balanced variants, and reinforcement learning.
 Calm-trained models fail economically despite richer features and
-sequence models, while cross-mechanism meta-labeling trained on
+sequence models; cross-mechanism meta-labeling trained on
 Terra/LUNA recovers 51.0\% of the oracle on SVB ($+82.5\bps$), and a
 four-event mechanism-diverse protocol reaches 51.8\% ($+83.7\bps$).
 A conditioned PPO-GRU agent at identical training density earns
@@ -158,9 +161,11 @@ why reward-only RL fails.
         \$10K, 34.3\% of SVB minutes are optically dislocated but only
         2.88\% are executable.
   \item \textbf{Transfer and policy result.} Cross-mechanism
-        meta-labeling recovers 51.0--51.8\% of the oracle, while a
-        conditioned PPO-GRU earns $-29.2\bps$ despite identical
-        positive-label density.
+        meta-labeling trained on Terra/LUNA achieves $+82.5\bps$
+        (51.0\% oracle capture, the fraction of the oracle's per-trade
+        return recovered by the model); pooling four events reaches
+        51.8\%, while a conditioned PPO-GRU earns $-29.2\bps$ at
+        identical positive-label density.
 \end{enumerate}
 
 StressBench ships five artefacts: the 18-event source-tracked
@@ -225,30 +230,15 @@ and Coinbase REST candles.
 Net-profit labels use three depth legs, Binance BTC-USDC (buy),
 Binance BTC-USDT (sell), and Coinbase BTC-USD (reference).
 
-Data quality varies by leg and window, and every depth record is
-tagged with a provenance field (Table~\ref{tab:route_provenance}).
-The sell leg (BTC-USDT) and cross leg (USDC-USDT) use real L2 or raw
-futures bookDepth where archived, with proxy/partial tags where route
-coverage is incomplete.
-The buy leg (BTC-USDC) is the main challenge. The BTC-USDC
-perpetual contract did not exist on Binance until January 2024, so
-the SVB window requires kline-proxy depth, one-minute candlestick
-volume as a substitute for unarchived order-book depth (high-volume
-candles do not guarantee deep books, and a 20\% haircut bounds this error).
-Coverage is tracked at the row and route-leg level rather than
-silently imputed.
-For Mar~10--11, incomplete BTC-USDC and USDC-USDT route legs are
-tagged proxy/partial; Mar~12--20 has complete cross-leg coverage in
-the committed route audit.
-All headline execution claims are recomputed under the 20\% depth
-haircut (Table~\ref{tab:route_provenance} gives the route-leg
-provenance audit).
-For all 2024 windows, real L2 data is available.
-To bound the proxy error, we apply a 20\% depth haircut to the
-kline-proxy buy leg. The executable rate falls from 2.88\% to
-2.40\%, the ratio widens from $12\times$ to $14\times$, and the
-oracle remains above $+130\bps$. The headline result is therefore
-robust to the approximation.
+Data quality varies by leg and window; every depth record carries a
+provenance tag (Table~\ref{tab:route_provenance}).
+The sell leg (BTC-USDT) and cross leg (USDC-USDT) use real L2 or
+raw futures bookDepth where archived, with proxy/partial tags elsewhere.
+The buy leg (BTC-USDC) requires kline-proxy depth for the SVB window,
+because the BTC-USDC perpetual did not exist on Binance until
+January~2024.
+For all 2024 windows real L2 depth is available; the kline-proxy
+robustness is bounded in \S\ref{sec:gap}.
 
 \begin{table}[t]
 \centering
@@ -679,9 +669,11 @@ ratio $[7.6, 23.0]\times$; oracle $[+213.9, +304.2]\bps$.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{../results/paper/figures/figure_oracle_gap_waterfall.png}
-  \caption{Oracle gap decomposition (\$10K notional). Three components
-    account for the 266\,bps gap from oracle ($+224.6\bps$) to best model
-    ($-41\bps$): FP drag, timing error, and sizing error.}
+  \caption{Oracle gap decomposition (\$10K notional). FP drag is
+    directly measured from false-positive trades. Timing error
+    (40--80\,bps) and sizing error (40--100\,bps) are estimated from
+    entry-delay and notional-scaling analysis; stated ranges reflect
+    these estimates.}
   \label{fig:waterfall}
 \end{figure}
 
@@ -764,12 +756,13 @@ The \texttt{ExpNetProfitRegressor}, which directly targets the
 economic criterion rather than a classification proxy, reaches
 $-73.8\bps$, ruling out label mismatch as the explanation. The gap
 is structural (Table~\ref{tab:ablation}).
-GRU and MLP-Window sequence models confirm this. The GRU achieves
-AUROC~0.80---the highest ranking accuracy of any calm-trained
-model---yet earns $-239\bps$, illustrating the central disconnect:
-high ranking accuracy does not translate to positive returns when
-97\% of test windows are non-executable and the training split
-contains zero stress examples. The MLP-Window reaches $-341\bps$.
+GRU and MLP-Window sequence models confirm this conclusion.
+The GRU illustrates the disconnect most starkly: it achieves the
+highest ranking accuracy of any calm-trained model (AUROC~0.80) yet
+the worst economic return ($-239\bps$), because rank-ordering windows
+correctly is useless when the model cannot find a threshold that
+isolates the 2.88\% executable minority.
+The MLP-Window reaches $-341\bps$.
 
 \begin{table}[t]
 \centering
@@ -795,19 +788,19 @@ Oracle$^\dagger$ & ---  & $+161.7$ & 316  & ---   & 100\%\\
 \midrule
 \texttt{ExpNet\_lgbm}   & px   & $-73.8$  & 537  & ---   &  6\%\\
 \texttt{ExpNet\_xgb}    & px   & $-57.2$  &  70  & ---   &  9\%\\
+\midrule
+\texttt{lgbm\_weighted} & pb   & $-65.9$  &   2  & 0.497 &  0\%\\
+\texttt{xgb\_weighted}  & px   & $-90.5$  &  30  & 0.631 &  0\%\\
+\texttt{rf\_balanced}   & px   & $-89.2$  &  11  & 0.467 &  0\%\\
 \bottomrule
 \multicolumn{6}{l}{\footnotesize px\,=\,\texttt{price\_only};
+  pb\,=\,\texttt{price\_plus\_book};
   all\,=\,\texttt{price\_book\_settle}.}\\
-\multicolumn{6}{l}{\footnotesize Class-balanced (lgbm/xgb/rf): all
-  degenerate to 0 executable trades.}\\
 \end{tabular}
 }
 \end{table}
 
 
-All calibrated ML models degenerate to zero trades under calm-training,
-equivalent to NoTrade. This section examines why the prediction gap is
-structural; the cross-mechanism fix that resolves it is in \S\ref{sec:diagnostics}.
 Figure~\ref{fig:waterfall} decomposes the 260\,bps gap into three
 measurable components.
 False-positive exposure is the dominant drag.
@@ -830,6 +823,9 @@ rule shows that cross-mechanism training substantially reduces
 route-direction mismatch, though a 49\% false-positive rate and
 roughly 113 missed profitable windows remain, confining net returns to
 $+82.5\bps$.
+In summary, the prediction gap is not a model-selection problem: it is
+a training-distribution problem, and the only empirically validated
+solution is cross-mechanism supervision.
 
 \subsection{Cross-Mechanism Transfer}
 \label{sec:diagnostics}
@@ -939,15 +935,12 @@ generate a calibrated reward signal. Conditioning on primary-signal
 windows resolves the density problem, but the agent still earns
 $-29.2\bps$ on 919 trades.
 
-The failure is qualitative, not a density problem. Meta-labeling
-receives explicit binary labels ($y{=}1$ for every profitable window);
-the RL agent must infer the same information through a reward signal
-negative on 83\% of entries. The 919-trade overtrading pattern is
-consistent with a timing-transfer mismatch: the agent learned
-Terra/LUNA's depth-withdrawal sequence and fires on it in the SVB
-context even when the timing does not match. Multi-mechanism training
-and reactive market-impact feedback are the direct paths to closing
-the remaining gap.
+The 919-trade overtrading pattern is consistent with a
+timing-transfer mismatch: the agent learned Terra/LUNA's
+depth-withdrawal sequence and fires on it in the SVB context even
+when the timing does not match.
+Multi-mechanism training and reactive market-impact feedback are the
+direct paths to closing the remaining gap.
 
 
 %% =============================================================
@@ -1067,7 +1060,7 @@ Anonymised for review.
 %% =============================================================
 \bibliographystyle{ACM-Reference-Format}
 \scriptsize
-\begin{thebibliography}{21}
+\begin{thebibliography}{23}
 
 \bibitem{uhlig2022luna}
 Uhlig, H.\ (2022).
