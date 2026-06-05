@@ -39,7 +39,8 @@ C_ORACLE = "#F2A900"  # gold
 C_LGBM = "#003057"  # navy
 C_PRICE = "#d73027"  # red
 C_NOTRADE = "#bababa"  # dashed grey
-C_META = "#2ca02c"  # green (cross-mechanism meta-label)
+C_META = "#1b7837"  # dark green (Terra/LUNA meta-label)
+C_META2 = "#74c476"  # light green (4-event pooled meta-label)
 
 # ---------------------------------------------------------------------------
 # Read all_results.csv and extract key statistics
@@ -241,10 +242,9 @@ def make_figure(out_path: Path, title_suffix: str = "") -> None:
     ax.plot(
         x,
         pooled_cum,
-        color=C_META,
-        lw=1.6,
+        color=C_META2,
+        lw=1.8,
         ls=":",
-        alpha=0.7,
         label=f"Meta-label, 4-event pooled ({pooled_trades} trades, +{pooled_bps:.1f} bps)",
         zorder=4,
     )
@@ -266,18 +266,20 @@ def make_figure(out_path: Path, title_suffix: str = "") -> None:
         zorder=1,
     )
 
-    # Annotate final values (per-trade mean net bps)
+    # Annotate final values (per-trade mean net bps). The two green curves end
+    # ~1 bps apart, so their labels are pushed apart vertically (Terra below,
+    # pooled above) with leader lines back to the true endpoints.
     pad = N_MINUTES * 0.01
-    for cum, color, label in [
-        (oracle_cum, C_ORACLE, f"{oracle_cum[-1]:+.1f} bps/trade"),
-        (meta_cum, C_META, f"{meta_cum[-1]:+.1f} bps (Terra only)"),
-        (pooled_cum, C_META, f"{pooled_cum[-1]:+.1f} bps (pooled)"),
-        (price_cum, C_PRICE, f"{price_cum[-1]:+.1f} bps/trade"),
+    for cum, color, label, dy in [
+        (oracle_cum, C_ORACLE, f"{oracle_cum[-1]:+.1f} bps/trade", 0),
+        (meta_cum, C_META, f"{meta_cum[-1]:+.1f} bps (Terra only)", -16),
+        (pooled_cum, C_META2, f"{pooled_cum[-1]:+.1f} bps (pooled)", +16),
+        (price_cum, C_PRICE, f"{price_cum[-1]:+.1f} bps/trade", 0),
     ]:
         ax.annotate(
             label,
             xy=(N_MINUTES - 1, cum[-1]),
-            xytext=(N_MINUTES - 1 + pad, cum[-1]),
+            xytext=(N_MINUTES - 1 + pad, cum[-1] + dy),
             fontsize=8,
             color=color,
             va="center",
@@ -293,19 +295,10 @@ def make_figure(out_path: Path, title_suffix: str = "") -> None:
         zorder=3,
         label="Profitable threshold (0 bps)",
     )
-    ax.text(
-        N_MINUTES * 0.02,
-        2.5,
-        "profitable threshold (0 bps)",
-        fontsize=8.5,
-        color="black",
-        alpha=0.75,
-        style="italic",
-    )
     ax.set_xlabel("Test split (minutes, chronological)", fontsize=11)
     ax.set_ylabel("Running mean net bps per trade", fontsize=11)
     ax.set_title(
-        f"Hero Figure: Running Mean Net bps — SVB Test Split (USDC Basis, 1-min){title_suffix}",
+        f"Running mean net bps, SVB test split (USDC basis, 1-min){title_suffix}",
         fontsize=11,
     )
     ax.legend(fontsize=8.5, loc="lower left")
