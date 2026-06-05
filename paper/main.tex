@@ -1069,30 +1069,36 @@ No private user-level trading data is included.
 
 Stablecoin arbitrage benchmarks built on price labels measure the
 wrong object.
-The $12\times$ optical-to-executable gap means that every
-published AUROC or F1 score on basis data overstates deployable
-performance by a factor of twelve or more.
-Gap~1 is not a model problem. It is a labeling problem.
-Gap~2 is not a feature engineering problem. It is a training
-distribution problem.
-The only empirically validated solution to Gap~2 is cross-mechanism
-supervision, and that solution saturates near 50\% oracle capture
-under current conditions.
+Across the SVB crisis, 34.3\% of minutes appeared dislocated but only
+2.88\% survived VWAP book-walking, fees, and settlement---a $12\times$
+gap, replicated independently on Terra/LUNA at $5.9\times$.
+The two gaps have separate cures: Gap~1 is closed by execution-grade
+labels, and Gap~2 by cross-mechanism supervision, which succeeds
+because the order book responds to uncertainty rather than its cause.
+A single transfer from an algorithmic collapse to a bank-reserve shock
+recovers half the return available to a hindsight oracle, and pooling
+four mechanism classes confirms the result.
 
-For practitioners: any backtest reporting AUROC or F1 on cross-quote
-basis labels overstates tradeable performance by roughly $12\times$.
-Those numbers should be discounted before any capital decision.
+StressBench gives practitioners a corrected denominator: a backtest
+reporting AUROC or F1 on cross-quote basis labels overstates tradeable
+performance by roughly $12\times$, and those scores should be
+discounted before any capital decision.
 
-What this implies for researchers: improving on StressBench requires
-either expanding Tier-A coverage to additional stress events (so that
-transfer can be tested, not just assumed) or demonstrating that a
-reactive RL agent with market-impact feedback can close the gap
-that historical replay cannot.
-The oracle ceiling provides a principled performance target for both
-directions.
-We release the catalogue, labels, oracle, and harness so that any
-model claiming to capture stablecoin stress arbitrage can be evaluated
-against the correct denominator.
+We see three directions forward.
+First, \emph{coverage}: extending Tier-A execution labels to
+exchange-credit and DeFi events turns cross-mechanism transfer from a
+two-event result into a general law.
+Second, \emph{reactivity}: a market-impact simulator initialised with
+the cross-mechanism protocol is the direct test of whether the
+111.7\,bps gap between meta-labeling and reinforcement learning closes
+once the agent prices its own footprint.
+Third, \emph{timing}: early-entry labels target the late-stage
+ambiguity that currently caps oracle capture near 50\%.
+The oracle ceiling supplies a principled performance target for all
+three.
+We release the catalogue, labels, oracle, and harness under CC-BY~4.0
+so that any model claiming to capture stablecoin stress arbitrage can
+be evaluated against the correct denominator.
 
 
 \section*{Acknowledgements}
