@@ -55,9 +55,12 @@
 
 %% ---- Abstract -----------------------------------------------
 \begin{abstract}\sloppy
-Price charts show twelve times more profitable stablecoin arbitrage than
-a trader can capture, so a model that scores well on price labels can
-still lose money on every trade.
+On 10 March 2023, Silicon Valley Bank's seizure forced USDC off its
+dollar peg: price charts showed $34.3\%$ of one-minute windows as
+profitable stablecoin arbitrage.  Fewer than $3$ in $100$ ($2.88\%$)
+survived VWAP book-walking, fees, and settlement---a \textbf{$12\times$
+gap} between visible and executable profit.  A model scoring well on
+price labels can still lose money on every trade.
 We study when a learned trading model transfers across financial crises,
 using stablecoin depegs as the testbed.
 The central obstacle is distributional. A model trained on calm or
@@ -1090,6 +1093,25 @@ StressBench gives practitioners a corrected denominator. A backtest
 reporting AUROC or F1 on cross-quote basis labels overstates tradeable
 performance by roughly $12\times$, and those scores should be
 discounted before any capital decision.
+
+\paragraph{Practitioner takeaways.}
+\textbf{(1) Divide every price-label AUROC by $12\times$ before any
+capital decision.}  Across two independent crises (SVB: $12\times$,
+Terra: $5.9\times$) the execution gap is robust.  Until a study reports
+VWAP-grade labels, its performance figures are unreliable for production
+deployment.
+\textbf{(2) Train on a different mechanism, not on the same event.}
+Every calm-trained or within-event model we test fails economically in a
+new regime.  Cross-mechanism supervision (algorithmic-collapse
+$\to$ bank-reserve shock) recovers $+82.5\bps$ because the order book
+responds to \emph{uncertainty}, not its cause.  Aggregate training data
+across mechanism classes, not across time within one.
+\textbf{(3) Prefer supervised meta-labeling over RL for execution
+decisions.}  At identical positive-label density, explicit binary labels
+earn $+82.5\bps$ while PPO-GRU earns $-29.2\bps$.  RL under sparse
+execution rewards collapses to an always-inactive policy; if reward
+shaping cannot be verified against the oracle ceiling, the safer choice
+is a calibrated classifier.
 
 We see three directions forward.
 First, \emph{coverage}. Extending Tier-A execution labels to
