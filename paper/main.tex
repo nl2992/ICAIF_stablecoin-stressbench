@@ -116,9 +116,15 @@ Only 2.88\% of one-minute windows survived all three costs, against
 executable arbitrage.
 
 We separate three layers of the same event.
-\textbf{Layer~1 (optical)} is what the price chart shows.
-\textbf{Layer~2 (executable)} is what survives VWAP book-walking, fees,
-and settlement.
+\textbf{Layer~1 (optical)} is what the price chart shows: a stablecoin's
+\emph{basis}---its deviation from \$1---appears positive, suggesting a
+profitable arbitrage.
+\textbf{Layer~2 (executable)} is what survives real execution.  A market
+order does not fill at the quoted price; it consumes successive price
+levels in the order book, and the resulting VWAP (volume-weighted average
+price, $\bar{P}=\sum_i P_i Q_i / \sum_i Q_i$ across consumed levels)
+worsens with size.  Layer~2 keeps only the minutes where the VWAP-filled
+profit---after fees and settlement delay---is still positive.
 \textbf{Layer~3 (captured)} is what a model can flag in advance.
 Gap~1 is the distance from Layer~1 to Layer~2. Gap~2 is the distance from Layer~2 to
 Layer~3.
@@ -179,10 +185,13 @@ oracle.
         (\S\ref{sec:ladder},~\ref{sec:rl_results})
   \item \textbf{An execution-aware benchmark that makes these claims
         measurable.}
-        StressBench supplies the apparatus, an 18-event source-tracked
-        catalogue across seven mechanism classes, per-minute VWAP
-        book-walking labels with route provenance, and a hindsight oracle
-        ceiling. It exposes a $12\times$ optical-to-executable gap, so a
+        StressBench supplies the apparatus: an 18-event source-tracked catalogue
+        across seven mechanism classes, per-minute VWAP book-walking labels with
+        route provenance, and a \emph{hindsight oracle ceiling}---the profit
+        achievable by a hypothetical agent that knows at each minute exactly which
+        windows are executable, forming an upper bound on any model's performance.
+        Measuring oracle capture (recovered profit as a fraction of the oracle)
+        provides a principled denominator that raw bps figures lack. It exposes a $12\times$ optical-to-executable gap, so a
         model scored on price labels overstates tradeable performance by
         roughly twelve times, an evaluation-integrity result for any AI
         trading model on this data.
@@ -206,7 +215,17 @@ and CEX signals differ fundamentally.
 Wu and Liu \cite{wu2026spillovers} study tail spillovers across stablecoin
 designs without per-minute execution analysis.
 None of these works provide VWAP-grade execution labels, a hindsight
-oracle, or cross-mechanism transfer evaluation.
+oracle, or cross-mechanism transfer evaluation.  Our design therefore
+follows three principles from the broader literature: Cont and
+Kukanov~\cite{cont2013optimal} show VWAP book-walking is the correct
+profitability measure for sequential execution---we implement this
+exactly.  Shleifer and Vishny~\cite{shleifer1997limits} show that visible
+arbitrage gaps need not survive execution frictions---our $12\times$ gap
+is a direct measurement of this effect at one-minute resolution.  And
+Lopez de Prado~\cite{lopezdeprado2018} shows that a meta-labeler trained
+on the execution outcome outperforms direction predictors---our
+cross-mechanism result is the evidence that this extends across stress
+mechanisms.
 
 \textbf{Limits to arbitrage and execution frictions.}
 Shleifer and Vishny \cite{shleifer1997limits}, Gromb and Vayanos
@@ -225,10 +244,16 @@ Adams et al.\ \cite{adams2023mev} study swap costs on Uniswap without
 stress-event execution analysis.
 
 \textbf{ML and RL for execution.}
-Lopez de Prado \cite{lopezdeprado2018} introduces meta-labeling, which
-we extend to the cross-mechanism transfer setting.
-Moallemi and Wang \cite{moallemi2022rl} and Ning et al.\
-\cite{ning2021ddql} supply the finite-horizon MDP framing we adopt.
+Lopez de Prado~\cite{lopezdeprado2018} introduces \emph{meta-labeling}: a
+two-stage architecture in which a primary model (here, the Layer-1 dislocation
+flag) proposes candidate trades, and a secondary \emph{meta-labeler} learns
+which of those proposals will actually be profitable.  The meta-labeler thus
+predicts the binary label ``this candidate survives execution'' rather than
+predicting the market direction from scratch.  We extend this to the
+\emph{cross-mechanism} setting, where the meta-labeler is trained on one crisis
+type (Terra/LUNA) and applied unchanged to another (USDC/SVB).
+Moallemi and Wang~\cite{moallemi2022rl} and Ning et al.~\cite{ning2021ddql}
+supply the finite-horizon MDP framing we adopt for the RL baseline.
 Mohl et al.\ \cite{jaxmarlhft2024} and Olby et al.\
 \cite{rightplace2024} operate in reactive LOB environments with
 market-impact feedback. Our diagnostic uses historical replay
