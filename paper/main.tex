@@ -1155,7 +1155,7 @@ Stablecoin arbitrage benchmarks built on price labels measure the
 wrong object.
 Across the SVB crisis, 34.3\% of minutes appeared dislocated but only
 2.88\% survived VWAP book-walking, fees, and settlement, a $12\times$
-gap, replicated independently on Terra/LUNA at $5.9\times$.
+gap, replicated on Terra/LUNA at $5.9\times$ (validation-grade synthetic labels; see Table~\ref{tab:tier_a_compare}).
 The two gaps have separate cures. Gap~1 is closed by execution-grade
 labels, and Gap~2 by cross-mechanism supervision, which succeeds
 because the order book responds to uncertainty rather than its cause.
@@ -1171,7 +1171,7 @@ discounted before any capital decision.
 \paragraph{Practitioner takeaways.}
 \textbf{(1) Divide every price-label AUROC by $12\times$ before any
 capital decision.}  Across two independent crises (SVB: $12\times$,
-Terra: $5.9\times$) the execution gap is robust.  Until a study reports
+Terra: $5.9\times$, validation-grade) the execution gap is robust.  Until a study reports
 VWAP-grade labels, its performance figures are unreliable for production
 deployment.
 \textbf{(2) Train on a different mechanism, not on the same event.}
