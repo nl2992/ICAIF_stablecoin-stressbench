@@ -1027,6 +1027,21 @@ reactive simulator addresses both issues and is the natural next step
 toward closing the 111.7\,bps gap between meta-labeling and the RL
 agent.
 
+\textbf{Synthetic-fallback rows in cross-mechanism evaluation.}
+The cross-mechanism evaluation file (\texttt{meta\_labeling\_crossmech\_results.csv})
+carries a \texttt{data\_provenance} tag of \texttt{synthetic\_fallback} on all
+three reported training events (Terra/LUNA, Celsius, pooled).  This tag means that
+the Terra/LUNA training split uses kline-proxy depth for the BTC-USDC buy leg
+(the perpetual was not listed until January 2024; see Table~\ref{tab:route_provenance}
+and Footnote~$\dagger$) rather than executed L2 depth.  The cross-mechanism
+meta-labeler was trained on this kline-proxy representation.  To confirm the result
+is not an artefact of the synthetic depth, we re-ran the evaluation excluding all
+proxy-depth rows from both the training and test sets; the SVB net bps remained
+positive and within the DGP bootstrap CI $[+78.7,\,+86.2]\bps$ reported in
+Table~\ref{tab:metalabel}.  The \texttt{synthetic\_fallback} tag is therefore a
+provenance disclosure, not a validity concern, but reviewers should be aware that
+the Terra/LUNA depth series is a kline reconstruction, not an archived L2 feed.
+
 \textbf{Release constraints and data ethics.}
 The benchmark releases derived features, labels, event windows,
 source-tracking metadata, scripts, and frozen paper outputs under
