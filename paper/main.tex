@@ -1045,8 +1045,8 @@ oracle-to-executable gap open.
 \label{sec:conclusion}
 
 Stablecoin arbitrage benchmarks built on price labels measure the wrong object. 34.3\% of SVB minutes appeared dislocated but only 2.88\% survived VWAP execution, a $12\times$ gap replicated at $5.9\times$ on Terra/LUNA.
-Gap~1 is closed by execution-grade labels. Gap~2 by cross-mechanism supervision, which succeeds because the order book responds to uncertainty rather than its cause.
-A single transfer from algorithmic collapse to bank-reserve shock recovers half the oracle return. Pooling four mechanism classes confirms the result.
+Gap~1 is closed by execution-grade labels. Gap~2 is closed by cross-mechanism supervision, which succeeds because the order book responds to uncertainty rather than its cause.
+A single transfer from algorithmic collapse to bank-reserve shock recovers half the oracle return, and pooling four mechanism classes confirms the result.
 
 \paragraph{Practitioner takeaways}
 \textbf{(1) Divide every price-label AUROC by $12\times$ before any
@@ -1063,7 +1063,7 @@ across mechanism classes, not across time within one.
 \textbf{(3) Prefer supervised meta-labeling over RL.}
 At identical label density, binary labels earn $+82.5$\,bps. PPO-GRU earns $-29.2$\,bps, sparse rewards collapse to inactivity.
 
-Future work. Tier-A labels for DeFi and exchange-credit events. Market-impact simulator to close the $111.7$\,bps gap. Early-entry labels to reduce late-stage ambiguity.
+Future work includes Tier-A labels for DeFi and exchange-credit events, a market-impact simulator to close the $111.7$\,bps gap, and early-entry labels to reduce late-stage ambiguity.
 Catalogue, labels, oracle, and harness released under CC-BY~4.0.
 
 
