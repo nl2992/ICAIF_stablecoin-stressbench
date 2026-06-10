@@ -30,10 +30,10 @@ OUT = REPO / "results" / "paper" / "figures" / "figure_1_usdc_basis_svb.png"
 SVB_START_NS = 1_678_406_400_000_000_000  # 2023-03-10 00:00 UTC
 SVB_END_NS = 1_678_838_400_000_000_000  # 2023-03-15 00:00 UTC
 
-C_USDC = "#2166ac"  # blue
+C_USDC = "#75B2DD"  # Columbia light-mid blue (distinct from the navy max-abs line)
 C_USDT = "#d73027"  # red
-C_MAXABS = "#4d4d4d"  # dark grey
-C_THRESH = "#fdae61"  # orange dashed
+C_MAXABS = "#003057"  # Columbia navy — the emphasis (max-abs) series
+C_THRESH = "#F2A900"  # Columbia gold dashed
 
 
 def synthetic_figure() -> None:

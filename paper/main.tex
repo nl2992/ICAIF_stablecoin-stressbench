@@ -59,7 +59,8 @@ On 10 March 2023, Silicon Valley Bank's seizure forced USDC off its
 dollar peg. Price charts showed $34.3\%$ of one-minute windows as
 profitable stablecoin arbitrage.  Fewer than $3$ in $100$ ($2.88\%$)
 survived VWAP book-walking, fees, and settlement, a \textbf{$12\times$
-gap} between visible and executable profit.  A model scoring well on
+gap} between visible and executable profit (proxy-bounded to $12$--$14\times$
+under a conservative $20\%$ depth haircut).  A model scoring well on
 price labels can still lose money on every trade.
 We study when a learned trading model transfers across financial crises,
 using stablecoin depegs as the testbed.
@@ -76,11 +77,10 @@ A meta-labeling classifier trained on an algorithmic collapse
 recovers $+82.5\bps$ (51.0\% of a hindsight oracle), apparently because depth
 withdrawal and spread widening behave alike regardless of the trigger, since the order
 book responds to uncertainty rather than its cause.
-\emph{Scope}. This real cross-mechanism transfer is demonstrated for a single
-source$\,\to\,$destination pair (Terra/LUNA$\,\to\,$Tier-A USDC/SVB). Additional
-multi-mechanism conditions use synthetic stress events that illustrate, rather than
-independently confirm, the invariance hypothesis, so a second execution-grade event
-is the primary open validation requirement.
+\emph{Scope}. This real transfer is demonstrated for a single
+source$\,\to\,$destination pair (Terra/LUNA$\,\to\,$Tier-A USDC/SVB); the other
+multi-mechanism conditions are synthetic, so a second execution-grade event is the
+primary open validation requirement (see Limitations).
 We further isolate \emph{supervision format} as the binding constraint.
 At identical positive-label density, explicit binary labels earn
 $+82.5\bps$ while reward optimisation (PPO-GRU) earns $-29.2\bps$.
@@ -1020,13 +1020,30 @@ in SVB even when the timing does not match.
 
 
 %% =============================================================
+\section{Limitations}
+\label{sec:limitations}
+We collect the boundaries of the evidence in one place.
+\textbf{(1)~Single execution-grade destination.} All \emph{real} cross-mechanism
+transfer shares one Tier-A test event (Terra/LUNA$\,\to\,$USDC/SVB); the remaining
+multi-mechanism conditions are synthetic and illustrate rather than confirm the
+invariance, so a second execution-grade event is the primary open validation
+requirement. \textbf{(2)~Proxy buy leg.} The flagship gap rests on a kline-proxy
+BTC-USDC buy leg for the pre-2024 SVB window (no Binance perpetual existed before
+January 2024); a $20\%$ depth haircut bounds it to $12$--$14\times$ with the oracle
+still above $+130\bps$, so the headline is proxy-bounded, not a point estimate.
+\textbf{(3)~Single RL configuration.} The PPO-GRU baseline is one conditioned run; a
+definitive supervision-format claim would average multiple seeds and a shaped
+(per-step net-bps) reward. \textbf{(4)~No market-impact model.} Labels book-walk
+static depth and do not simulate the agent's own impact, leaving the $111.7\bps$
+oracle-to-executable gap open.
+
+%% =============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
 Stablecoin arbitrage benchmarks built on price labels measure the wrong object. 34.3\% of SVB minutes appeared dislocated but only 2.88\% survived VWAP execution, a $12\times$ gap replicated at $5.9\times$ on Terra/LUNA.
 Gap~1 is closed by execution-grade labels. Gap~2 by cross-mechanism supervision, which succeeds because the order book responds to uncertainty rather than its cause.
 A single transfer from algorithmic collapse to bank-reserve shock recovers half the oracle return. Pooling four mechanism classes confirms the result.
-\emph{Scope}. All transfer results share a single Tier-A test destination (USDC/SVB). A second test event is the primary open validation requirement.
 
 \paragraph{Practitioner takeaways}
 \textbf{(1) Divide every price-label AUROC by $12\times$ before any

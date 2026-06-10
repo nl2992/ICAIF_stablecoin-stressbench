@@ -31,7 +31,7 @@ PARQ = REPO / "data" / "gold" / "dataset.parquet"
 OUT = REPO / "results" / "paper_addon" / "figures" / "figure_depth_withdrawal.png"
 OUT.parent.mkdir(parents=True, exist_ok=True)
 
-C_DEPTH = "#1f77b4"  # blue
+C_DEPTH = "#003057"  # Columbia navy (matches the stressbench figure palette)
 C_SPREAD = "#d62728"  # red
 
 BASIS_COL = "cross_quote_basis_usdc_bps"
