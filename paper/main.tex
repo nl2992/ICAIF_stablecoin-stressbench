@@ -94,6 +94,7 @@ provenance, and a hindsight oracle ceiling, under CC-BY~4.0.
   execution-aware labels, market microstructure, stablecoin arbitrage,
   financial benchmarks}
 
+\hypersetup{pdftitle={Stablecoin StressBench, a Cross-Mechanism Transfer-Learning Benchmark for Executable Arbitrage Under a 12x Optical Gap}}
 \maketitle
 
 %% =============================================================
@@ -170,7 +171,7 @@ seeing it.
 This single transfer recovers half the return available to a hindsight
 oracle.
 
-\paragraph{Contributions.}
+\paragraph{Contributions}
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
   \item \textbf{Cross-mechanism transfer for executable arbitrage.}
         A meta-labeling classifier trained on one crisis type (Terra/LUNA) and
@@ -360,7 +361,7 @@ Adams et al.~\cite{adams2023mev}, no prior benchmark combines per-minute executa
 route-level L2 provenance, a hindsight oracle ceiling, and cross-mechanism transfer evaluation.
 StressBench is the first to provide all four.
 
-\paragraph{Feature sets.} Four nested sets (\texttt{price\_only} $\subset$
+\paragraph{Feature sets} Four nested sets (\texttt{price\_only} $\subset$
 \texttt{price\_plus\_book} $\subset$ \texttt{price\_book\_frag} $\subset$
 \texttt{price\_book\_settle}) isolate marginal signal from price basis,
 microstructure (spread, depth, imbalance), fragmentation, and on-chain settlement
@@ -678,7 +679,7 @@ taker fees from 2 to 10\,bps and settlement penalty from 0 to 10\,bps
 moves the executable rate between 2.84\% and 3.66\%.
 
 \paragraph{The gap is venue-specific. On-chain AMM execution closes it across all
-five episodes.}
+five episodes}
 To test whether the optical-to-executable gap is intrinsic to depegs or specific to
 CEX order-book microstructure, we measure it on \emph{real} on-chain pool data
 (Curve/StableSwap reserve state $\to$ implied price and \$10k slippage, sourced
@@ -869,7 +870,7 @@ candidate signal (94.8\% of importance), while ask-side depth and
 spread filter execution quality (3.4\%) once the model has seen
 stress-regime depth withdrawal.
 
-\paragraph{SHAP mechanism invariance. Synthetic training preserves real signal structure.}
+\paragraph{SHAP mechanism invariance. Synthetic training preserves real signal structure}
 A direct cross-mechanism SHAP comparison addresses the key concern about synthetic training data.
 Does the model trained on calibrated synthetic Terra/LUNA data actually learn the same features
 that matter on real SVB microstructure?
@@ -968,7 +969,7 @@ We treat this as a hypothesis. A definitive test requires multiple
 RL runs across the pooled multi-mechanism protocol, which we leave as
 the most immediate next experiment.
 
-\paragraph{Supervision format ablation.}
+\paragraph{Supervision format ablation}
 Table~\ref{tab:supervision_format} isolates supervision format as the
 binding variable by holding all other components fixed (same features,
 same cross-mechanism train/test split, same execution-grade labels).
@@ -1028,7 +1029,7 @@ Gap~1 is closed by execution-grade labels. Gap~2 by cross-mechanism supervision,
 A single transfer from algorithmic collapse to bank-reserve shock recovers half the oracle return. Pooling four mechanism classes confirms the result.
 \emph{Scope}. All transfer results share a single Tier-A test destination (USDC/SVB). A second test event is the primary open validation requirement.
 
-\paragraph{Practitioner takeaways.}
+\paragraph{Practitioner takeaways}
 \textbf{(1) Divide every price-label AUROC by $12\times$ before any
 capital decision.}  Across two independent crises (SVB. $12\times$,
 Terra. $5.9\times$, validation-grade) the execution gap is robust.  Until a study reports
@@ -1061,33 +1062,33 @@ Uhlig, H.\ (2022).
 \newblock {\em NBER Working Paper 30256}.
 
 \bibitem{griffin2020tether}
-Griffin, J.~M. And Shams, A.\ (2020).
+Griffin, J.~M. and Shams, A.\ (2020).
 \newblock Is Bitcoin really untethered?
 \newblock {\em Journal of Finance}, 75(4):1913--1964.
 
 \bibitem{hautsch2018blockchain}
-Hautsch, N. Scheuch, C. And Voigt, S.\ (2018).
+Hautsch, N. Scheuch, C. and Voigt, S.\ (2018).
 \newblock Building trust takes time. Limits to arbitrage for blockchain-based
   assets.
 \newblock {\em arXiv:1812.00595}.
 
 \bibitem{shleifer1997limits}
-Shleifer, A. And Vishny, R.~W.\ (1997).
+Shleifer, A. and Vishny, R.~W.\ (1997).
 \newblock The limits of arbitrage.
 \newblock {\em Journal of Finance}, 52(1):35--55.
 
 \bibitem{gromb2010limits}
-Gromb, D. And Vayanos, D.\ (2010).
+Gromb, D. and Vayanos, D.\ (2010).
 \newblock Limits of arbitrage. The state of the theory.
 \newblock {\em Annual Review of Financial Economics}, 2:251--275.
 
 \bibitem{cont2013optimal}
-Cont, R. And Kukanov, A.\ (2013).
+Cont, R. and Kukanov, A.\ (2013).
 \newblock Optimal order placement in limit order markets.
 \newblock {\em Quantitative Finance}, 17(1):21--39.
 
 \bibitem{makarov2020trading}
-Makarov, I. And Schoar, A.\ (2020).
+Makarov, I. and Schoar, A.\ (2020).
 \newblock Trading and arbitrage in cryptocurrency markets.
 \newblock {\em Journal of Financial Economics}, 135(2):293--319.
 
@@ -1097,18 +1098,18 @@ L\'{o}pez de Prado, M.\ (2018).
 \newblock Wiley.
 
 \bibitem{cintra2023bocpd}
-Cintra, R. And Holloway, C.\ (2023).
+Cintra, R. and Holloway, C.\ (2023).
 \newblock Detecting depegs. Towards safer passive liquidity provision on
   Curve Finance.
 \newblock {\em arXiv:2306.10612}.
 
 \bibitem{vidalthomas2023ftx}
-Vidal-Tom\`{a}s, D. Briola, A. And Aste, T.\ (2023).
+Vidal-Tom\`{a}s, D. Briola, A. and Aste, T.\ (2023).
 \newblock FTX's downfall and Binance's consolidation.
 \newblock {\em arXiv:2302.11371}.
 
 \bibitem{gatev2006pairs}
-Gatev, E. Goetzmann, W.~N. And Rouwenhorst, K.~G.\ (2006).
+Gatev, E. Goetzmann, W.~N. and Rouwenhorst, K.~G.\ (2006).
 \newblock Pairs trading. Performance of a relative-value arbitrage rule.
 \newblock {\em Review of Financial Studies}, 19(3):797--827.
 
@@ -1123,58 +1124,58 @@ Breiman, L.\ (2001).
 \newblock {\em Machine Learning}, 45(1):5--32.
 
 \bibitem{chen2016xgboost}
-Chen, T. And Guestrin, C.\ (2016).
+Chen, T. and Guestrin, C.\ (2016).
 \newblock XGBoost. A scalable tree boosting system.
 \newblock In {\em KDD}, pp.~785--794.
 
 \bibitem{adamsmackay2007bocpd}
-Adams, R.~P. And MacKay, D.~J.~C.\ (2007).
+Adams, R.~P. and MacKay, D.~J.~C.\ (2007).
 \newblock Bayesian online changepoint detection.
 \newblock {\em arXiv:0710.3742}.
 
 \bibitem{moallemi2022rl}
-Moallemi, C.~C. And Wang, M.\ (2022).
+Moallemi, C.~C. and Wang, M.\ (2022).
 \newblock A reinforcement learning approach to optimal execution.
 \newblock {\em Quantitative Finance}, 22(6):1051--1069.
 
 \bibitem{ning2021ddql}
-Ning, B. Lin, F.~H.~T. And Jaimungal, S.\ (2021).
+Ning, B. Lin, F.~H.~T. and Jaimungal, S.\ (2021).
 \newblock Double deep Q-learning for optimal execution.
 \newblock {\em Applied Mathematical Finance}, 28(4):361--380.
 
 \bibitem{gogol2024amm}
-Gogol, K. Messias, J. Miori, D. Tessone, C. And Livshits, B.\ (2024).
+Gogol, K. Messias, J. Miori, D. Tessone, C. and Livshits, B.\ (2024).
 \newblock Quantifying arbitrage in automated market makers. An empirical study
   of {Ethereum} {ZK} rollups.
 \newblock In {\em MARBLE 2024}.
 
 \bibitem{adams2023mev}
-Adams, A. Chan, B.~Y. Markovich, S. And Wan, X.\ (2023).
+Adams, A. Chan, B.~Y. Markovich, S. and Wan, X.\ (2023).
 \newblock Don't let {MEV} slip. The costs of swapping on the {Uniswap}
   protocol.
 \newblock {\em arXiv:2309.13648}.
 
 \bibitem{wu2026spillovers}
-Wu, W. And Liu, C.\ (2026).
+Wu, W. and Liu, C.\ (2026).
 \newblock Stability anchors and risk amplifiers. Tail spillovers across
   stablecoin designs.
 \newblock {\em arXiv:2602.18820}.
 
 \bibitem{hernandezcruz2024svb}
-Hernandez~Cruz, W. Xu, J. Tasca, P. And Campajola, C.\ (2024).
+Hernandez~Cruz, W. Xu, J. Tasca, P. and Campajola, C.\ (2024).
 \newblock No questions asked. Effects of transparency on stablecoin liquidity
   during the collapse of {Silicon Valley Bank}.
 \newblock {\em arXiv:2407.11716}.
 
 \bibitem{jaxmarlhft2024}
 Mohl, V. Frey, S. Leyland, R. Li, K. Nigmatulin, G. Cucuringu, M.
-  Zohren, S. Foerster, J. And Calinescu, A.\ (2025).
+  Zohren, S. Foerster, J. and Calinescu, A.\ (2025).
 \newblock {JaxMARL-HFT}. {GPU}-accelerated large-scale multi-agent
   reinforcement learning for high-frequency trading.
 \newblock In {\em ICAIF '25}. ArXiv:2511.02136.
 
 \bibitem{rightplace2024}
-Olby, O. Bacalum, A. Baggott, R. And Stillman, N.\ (2025).
+Olby, O. Bacalum, A. Baggott, R. and Stillman, N.\ (2025).
 \newblock Right place, right time. Market simulation-based {RL} for execution
   optimisation.
 \newblock In {\em ICAIF '25}. ArXiv:2510.22206.
