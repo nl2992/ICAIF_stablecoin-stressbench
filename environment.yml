@@ -1,0 +1,12 @@
+# Reproducible environment for stablecoin-stressbench.
+#   conda env create -f environment.yml && conda activate stressbench
+# (mirrors the CI install; Python 3.11 is the tested version)
+# Fresh Coinbase/Kraken pulls also need TARDIS_API_KEY in .env (see .env.example).
+name: stressbench
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - -e .[dev]

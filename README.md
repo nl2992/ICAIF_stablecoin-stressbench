@@ -1,5 +1,7 @@
 # Stablecoin StressBench
 
+[![CI](https://github.com/nl2992/ICAIF_stablecoin-stressbench/actions/workflows/ci.yml/badge.svg)](https://github.com/nl2992/ICAIF_stablecoin-stressbench/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](environment.yml)
+
 <p align="center">
   <img src="results/figures/figure_2_price_vs_exec.png" width="760" alt="The core finding: only ~2.88% of optically-dislocated minutes survive VWAP book-"/>
 </p>
@@ -136,7 +138,7 @@ MIT License
 
 ## Reproduce (data → analysis → paper)
 
-**Prerequisites.** Python 3.11+, then:
+**Prerequisites.** Python 3.11. For the exact pinned environment use conda — `conda env create -f environment.yml && conda activate stressbench` — or with pip:
 ```bash
 make install && cp .env.example .env   # add ETHERSCAN/TARDIS keys if pulling fresh
 ```
