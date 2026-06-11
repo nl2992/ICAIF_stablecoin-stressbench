@@ -844,10 +844,10 @@ PPO-GRU conditioned & RL on Terra & $-29.2$ & 919 & $-18\%^\ddagger$\\
 
 We are deliberate about what this table does and does not establish.
 Terra/LUNA is the \emph{one} transfer backed by real catalogue source data, and it
-recovers $+82.5\bps$ ($n=397$, 51.0\% of oracle) into the real Tier-A SVB test split.
-A stationary block bootstrap on the per-trade bps series (block length 60 minutes,
-$B{=}2{,}000$ resamples) gives a 95\% CI of $[79.5,\,87.7]\bps$, with all $100\%$ of
-bootstrap replicates positive ($p{=}1.0$), confirming the result is not driven by a
+recovers $+82.5\bps$ ($n=397$ depth-confirmed trades, 51.0\% of oracle) into the real Tier-A SVB test split.
+A stationary block bootstrap on the full evaluation sequence (block length 60 minutes,
+$B{=}2{,}000$ resamples, $n=442$ including pre-filter rows) gives a 95\% CI of $[79.5,\,87.7]\bps$, with all $100\%$ of
+bootstrap replicates positive ($p{=}1.0$); the depth-confirmed $+82.5\bps$ falls inside this interval, confirming the result is not driven by a
 small number of large trades.
 The remaining single-source and pooled conditions (Celsius/3AC, FTX, BUSD) use
 \emph{synthetic} stress events calibrated to the historical catalogue
