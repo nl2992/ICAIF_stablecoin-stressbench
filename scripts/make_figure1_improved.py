@@ -159,7 +159,7 @@ def synthetic_figure() -> None:
     ax.set_ylabel("Basis (bps)", fontsize=11)
     ax.set_xlabel("UTC date (SVB crisis window, Mar 10–14 2023)", fontsize=11)
     ax.set_title(
-        "Figure 1 — USDC/USDT Cross-Quote Basis During SVB Crisis (Mar 10–15, 2023)",
+        "USDC/USDT Cross-Quote Basis During SVB Crisis (Mar 10–15, 2023)",
         fontsize=12,
     )
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
@@ -271,7 +271,7 @@ def real_figure() -> None:
     ax.set_ylabel("Basis (bps)", fontsize=11)
     ax.set_xlabel("UTC date (SVB crisis window)", fontsize=11)
     ax.set_title(
-        "Figure 1 — USDC/USDT Cross-Quote Basis During SVB Crisis (Mar 10–15, 2023)",
+        "USDC/USDT Cross-Quote Basis During SVB Crisis (Mar 10–15, 2023)",
         fontsize=12,
     )
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
