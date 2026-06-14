@@ -907,12 +907,10 @@ Jaccard (top-3)  & \multicolumn{3}{c}{$1.000$} \\
 }
 \end{table}
 
-The positive-return result is robust to training-data sampling.
-DGP bootstrap ranges (500 seeds, resampling the training set) keep
-every lower bound strictly positive. Terra $[+78.7, +86.2]\bps$,
-Celsius $[+74.1, +89.9]\bps$, pooled $[+75.3, +93.1]\bps$.
-No resampled training configuration produces a negative net return
-on the SVB test split.
+The result is robust to training-data sampling (DGP bootstrap, 500 seeds:
+Terra $[+78.7,\!+86.2]$, Celsius $[+74.1,\!+89.9]$, pooled $[+75.3,\!+93.1]\bps$)
+and to cost stress ($2{\times}$ fees, $40\%$ depth haircut: $+73.3\bps$, the
+worst of a $3{\times}3$ fee-haircut grid). No configuration yields negative returns.
 Performance is also stable across prediction horizons: requiring the
 label decision $h{=}1$--$5$\,min before the primary signal fires
 yields $79$--$82\,\bps$ net; at $h{=}10$\,min return degrades to
