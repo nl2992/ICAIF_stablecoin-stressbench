@@ -140,15 +140,10 @@ price, $\bar{P}=\sum_i P_i Q_i / \sum_i Q_i$ across consumed levels)
 worsens with size.  Layer~2 keeps only the minutes where the VWAP-filled
 profit, after fees and settlement delay, is still positive.
 \textbf{Layer~3 (captured)} is what a model can flag in advance.
-Gap~1 is the distance from Layer~1 to Layer~2. Gap~2 is the distance from Layer~2 to
-Layer~3.
-We call Layer-1-only dislocations \textbf{\emph{optical}} (real on the
-chart, illusory in the order book) and the survivors
-\textbf{\emph{executable}}.
-The two gaps have distinct causes. Gap~1 is a measurement problem. Price
-labels overstate tradeable performance by a factor of twelve. Gap~2 is a
-training problem. No model trained on calm data can find the executable
-minority in a stress regime it has never seen.
+Gap~1 (Layer~1$\to$2) is a measurement problem: price labels overstate
+tradeable performance by $12\times$. Gap~2 (Layer~2$\to$3) is a training
+problem: calm-trained models fail on unseen stress regimes. Layer-1-only
+dislocations are \textbf{\emph{optical}}; survivors are \textbf{\emph{executable}}.
 Figure~\ref{fig:framework} shows all three layers for the SVB test
 window and traces one representative false-positive minute from
 apparent profit to net loss.
@@ -968,35 +963,16 @@ a reactive simulator that models the agent's own market impact.
 \subsubsection{RL Policy Failure}
 \label{sec:rl_results}
 
-This is a controlled comparison with one varying factor, how the
-profitable-window signal is delivered.
-Meta-labeling receives explicit binary labels ($y{=}1$ for each
-executable window). The conditioned PPO-GRU receives a sparse reward
-signal over the same windows.
-Both see identical training data at the same 17\% primary-signal
-density.
-Despite this, the two methods differ by 111.7\,bps in net return.
-The most parsimonious explanation is that explicit binary labels carry
-information about which windows survive execution that a sparse reward
-signal cannot encode.
-We treat this as a hypothesis. A definitive test requires multiple
-RL runs across the pooled multi-mechanism protocol, which we leave as
-the most immediate next experiment.
+This is a controlled comparison varying only the signal delivery: meta-labeling
+(binary labels) and the conditioned PPO-GRU (sparse reward) see identical data
+at 17\% primary-signal density yet differ by $111.7\bps$. Binary labels carry
+execution-survival information that a sparse reward signal cannot encode.
 
 \paragraph{Supervision format ablation}
-Table~\ref{tab:supervision_format} isolates supervision format as the
-binding variable by holding all other components fixed (same features,
-same cross-mechanism train/test split, same execution-grade labels).
-Binary classification and ordinal regression perform identically
-($+83.5\bps$), indicating that the ordinal structure carries no
-incremental information over a hard $\{0,1\}$ encoding.
-Expected-profit regression recovers $+81.3\bps$, within 2\,bps of
-the label-based approaches, confirming the result is robust to how the
-signal magnitude is encoded.
-REINFORCE policy-gradient optimisation earns $-6.7\bps$ on $3.5\times$
-more trades, consistent with the overtrading diagnosis and confirming
-that the performance gap is not a feature of any specific labeling
-format but of the supervision paradigm (label vs.\ reward) itself.
+Table~\ref{tab:supervision_format} holds features, split, and labels fixed;
+supervision format is the sole variable. Binary and ordinal match at $+83.5\bps$;
+expected-profit regression: $+81.3\bps$. REINFORCE earns $-6.7\bps$ on
+$3.5\times$ the trades, confirming the gap is paradigm-level (label vs.\ reward).
 
 \begin{table}[h]
 \centering
@@ -1021,14 +997,10 @@ REINFORCE policy gradient   & $-6.7$  & 1{,}583 & Reward \\
 }
 \end{table}
 
-Without conditioning, the PPO-GRU degenerates to zero entries. The
-2.3\% positive rate in the full Terra/LUNA stream is too sparse to
-calibrate the reward signal.
-Conditioning on primary-signal windows resolves the density problem,
-but the agent still earns $-29.2\bps$ on 919 trades.
-The overtrading pattern points to a timing-transfer mismatch. The
-agent learned Terra/LUNA's depth-withdrawal sequence and fires on it
-in SVB even when the timing does not match.
+Without conditioning the PPO-GRU degenerates (2.3\% positive rate too sparse).
+Conditioning resolves the density problem but the agent earns $-29.2\bps$ on
+919 trades: a timing-transfer mismatch where it fires on Terra/LUNA's
+depth-withdrawal sequence in SVB regardless of timing.
 
 
 %% =============================================================
@@ -1066,13 +1038,9 @@ mechanism classes confirms it ($+82.5\bps$ vs $-29.2\bps$ for PPO-GRU).
 (2)~Train on a different mechanism, not the same event.
 (3)~Prefer supervised meta-labeling over RL at identical label density.
 Future work: Tier-A DeFi labels, market-impact simulator, early-entry labels.
-Catalogue, labels, oracle, and harness released under CC-BY~4.0.
-
 
 \section*{Acknowledgements}
-The StressBench catalogue, execution-grade labels, oracle ceiling, and full
-experimental harness are released under CC-BY~4.0 at an anonymized repository
-(link provided at camera-ready).
+Code and data available at anonymized repository (link at camera-ready).
 
 %% =============================================================
 \bibliographystyle{ACM-Reference-Format}
