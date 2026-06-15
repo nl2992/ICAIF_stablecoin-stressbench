@@ -498,8 +498,8 @@ ExpNetProfitRegressor optimises the economic criterion directly and
 reaches $-73.8\bps$. Label mismatch is not the explanation.
 
 \textit{Regime detection.} No help.
-BOCPD, CUSUM, and EWMA all fail because CEX basis is mean-reverting,
-not change-point structured (BOCPD AUROC~0.229).
+Bayesian Online Change Point Detection (BOCPD), CUSUM, and EWMA all fail:
+CEX basis is mean-reverting, not change-point structured (AUROC~0.229).
 
 \textit{RL reward optimisation.} No help at identical density.
 A conditioned PPO-GRU at 17\% primary-signal density earns
