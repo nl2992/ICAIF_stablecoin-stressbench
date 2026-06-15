@@ -42,8 +42,8 @@
 %% =============================================================
 \begin{document}
 
-\title{Stablecoin StressBench, a Cross-Mechanism Transfer-Learning\\
-       Benchmark for Executable Arbitrage Under a \texorpdfstring{$12\times$}{12x} Optical Gap}
+\title{Stablecoin StressBench: The Highest-AUROC Model Loses the Most
+Money Under a \texorpdfstring{$12\times$}{12x} Execution Gap, and Cross-Mechanism Transfer Recovers It}
 
 %% ---- Abstract -----------------------------------------------
 \begin{abstract}\sloppy
@@ -76,11 +76,10 @@ At identical positive-label density, explicit binary labels earn
 $+82.5\bps$ while reward optimisation (a conditioned PPO-GRU) earns
 $-29.2\bps$ (headline run; a 5-seed sweep is uniformly more negative,
 $-45.9\pm5.2\bps$), so the label-vs-reward gap is not a seed artefact.
-We also show the gap is \emph{venue-specific}: $12\times$ on the CEX order book but $\approx\!1\times$ on real on-chain AMM execution (all five episodes), locating the barrier in CEX microstructure rather than in depegs per se.
-\emph{Scope}. This real transfer is demonstrated for a single
-source$\,\to\,$destination pair (Terra/LUNA$\,\to\,$Tier-A USDC/SVB). The other
-multi-mechanism conditions are synthetic, so a second execution-grade event is the
-key generalisation test (see Limitations).
+The gap is \emph{venue-specific}: $12\times$ on CEX order books vs.\ ${\approx}1\times$
+on real on-chain AMM execution (all five episodes), locating the barrier in CEX
+microstructure. \emph{Scope}: this real transfer covers a single source$\to$destination
+pair (Terra/LUNA$\to$Tier-A USDC/SVB); other benchmark conditions are synthetic.
 \end{abstract}
 
 \keywords{transfer learning, meta-labeling, reinforcement learning,
@@ -214,6 +213,11 @@ oracle.
         episodes, locating the barrier in CEX microstructure, not in depegs.
         (\S\ref{sec:benchmark}--\ref{sec:models},~\ref{sec:gap})
 \end{enumerate}
+
+\paragraph{What you can do with this benchmark (CC-BY~4.0)}
+The full catalogue, labels, oracle, and harness are released under CC-BY~4.0: test any
+model against 18 real depeg episodes without data collection, measure oracle capture as a
+principled denominator, and reproduce the $12\times$ gap from provided scripts.
 
 Figure~\ref{fig:workflow} summarises the full benchmark pipeline, from
 the 18-event catalogue through execution labels and the model ladder to
@@ -1033,38 +1037,35 @@ in SVB even when the timing does not match.
 %% =============================================================
 \section{Limitations}
 \label{sec:limitations}
-We collect the boundaries of the evidence in one place.
-\textbf{(1)~Single execution-grade destination.} All \emph{real} cross-mechanism
-transfer shares one Tier-A test event (Terra/LUNA$\,\to\,$USDC/SVB). The remaining
-multi-mechanism conditions are synthetic and illustrate rather than confirm the
-invariance, so a second execution-grade event is the primary open validation
-requirement. \textbf{(2)~Proxy buy leg.} The flagship gap rests on a kline-proxy
-BTC-USDC buy leg for the pre-2024 SVB window (no Binance perpetual existed before
-January 2024). A $20\%$ depth haircut bounds it to $12$--$14\times$ with the oracle
-still above $+130\bps$, so the headline is proxy-bounded, not a point estimate.
-\textbf{(3)~RL robustness addressed.} The 5-seed PPO-GRU sweep ($-37.6$ to $-51.2\bps$, mean $-45.9\pm5.2\bps$) and shaped-reward variant ($-35.6\bps$) confirm all configurations are uniformly negative. The supervision-format gap is not a seed artefact. \textbf{(4)~No market-impact model.} Labels book-walk
-static depth and do not simulate the agent's own impact, leaving the $111.7\bps$
-oracle-to-executable gap open.
+\paragraph{Statistical scope.}
+The real transfer result rests on one source$\to$destination pair (Terra/LUNA$\to$USDC/SVB);
+mechanism-invariance is illustrated by four synthetic classes. The secondary claims
+(AUROC--P\&L inversion, $12{\times}$ gap, supervision-format effect) are structural
+order-book properties, not sample-count issues.
+\textbf{(1)~Single execution-grade destination.} A second Tier-A CEX pair is unavailable
+(Binance pre-2024 archive lacks L2 depth; USDT/Curve 2023 has ${\approx}1{\times}$ AMM
+gap---a distinct mechanism). The five-event AMM result (all ${\approx}1{\times}$) is the
+strongest evidence the $12{\times}$ effect is CEX-specific.
+\textbf{(2)~Proxy buy leg.} The SVB gap uses a kline-proxy BTC-USDC buy leg; a $20\%$
+haircut bounds it to $12$--$14{\times}$ with oracle still above $+130\bps$.
+\textbf{(3)~No market-impact model.} Labels use static depth; the $111.7\bps$
+oracle-to-executable gap remains open.
 
 %% =============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-Stablecoin arbitrage benchmarks built on price labels measure the wrong object. 34.3\% of SVB minutes appeared dislocated but only 2.88\% survived VWAP execution, a $12\times$ gap replicated at $5.9\times$ on Terra/LUNA.
-Gap~1 is closed by execution-grade labels. Gap~2 is closed by cross-mechanism supervision, which succeeds because the order book responds to uncertainty rather than its cause (the shared depth-withdrawal and spread-widening signature of Figure~\ref{fig:shap_side}).
-A single transfer from algorithmic collapse to bank-reserve shock recovers half the oracle return, and pooling four mechanism classes confirms the result.
-
-\paragraph{Practitioner takeaways}
-\textbf{(1) Divide every price-label AUROC by $12\times$ before any capital decision}
-(the gap is robust across two independent crises, SVB $12\times$ and Terra $5.9\times$);
-until a study reports VWAP-grade labels its figures are unreliable for deployment.
-\textbf{(2) Train on a different mechanism, not the same event}, since every
-calm-trained or within-event model fails in a new regime while cross-mechanism
-supervision recovers $+82.5\bps$.
-\textbf{(3) Prefer supervised meta-labeling over RL}, which at identical label
-density earns $+82.5\bps$ versus $-29.2\bps$ for PPO-GRU.
-
-Future work includes Tier-A labels for DeFi and exchange-credit events, a market-impact simulator to close the $111.7$\,bps gap, and early-entry labels to reduce late-stage ambiguity.
+Price-label benchmarks measure the wrong object: 34.3\% of SVB minutes appeared
+dislocated but only 2.88\% survived VWAP execution ($12\times$ gap; $5.9\times$ on
+Terra/LUNA). Gap~1 is closed by execution-grade labels; Gap~2 is closed by
+cross-mechanism supervision---the order book responds to uncertainty not its cause,
+so a single Terra$\to$SVB transfer recovers half the oracle return and pooling four
+mechanism classes confirms it ($+82.5\bps$ vs $-29.2\bps$ for PPO-GRU).
+\textbf{Practitioner rules:}
+(1)~Divide every price-label AUROC by $12\times$ before capital decisions.
+(2)~Train on a different mechanism, not the same event.
+(3)~Prefer supervised meta-labeling over RL at identical label density.
+Future work: Tier-A DeFi labels, market-impact simulator, early-entry labels.
 Catalogue, labels, oracle, and harness released under CC-BY~4.0.
 
 
