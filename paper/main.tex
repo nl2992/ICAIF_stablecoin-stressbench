@@ -76,6 +76,7 @@ At identical positive-label density, explicit binary labels earn
 $+82.5\bps$ while reward optimisation (a conditioned PPO-GRU) earns
 $-29.2\bps$ (headline run; a 5-seed sweep is uniformly more negative,
 $-45.9\pm5.2\bps$), so the label-vs-reward gap is not a seed artefact.
+We also show the gap is \emph{venue-specific}: $12\times$ on the CEX order book but $\approx\!1\times$ on real on-chain AMM execution (all five episodes), locating the barrier in CEX microstructure rather than in depegs per se.
 \emph{Scope}. This real transfer is demonstrated for a single
 source$\,\to\,$destination pair (Terra/LUNA$\,\to\,$Tier-A USDC/SVB). The other
 multi-mechanism conditions are synthetic, so a second execution-grade event is the
