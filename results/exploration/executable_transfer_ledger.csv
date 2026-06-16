@@ -1,0 +1,13 @@
+batch,boot_p,ci_hi,ci_lo,fs,model,n,net_bps,net_key,oracle_cap,protocol
+20260617T075241,1.0,-26.75,-32.58,price_only,lgbm,1083,-29.76,q10000,-0.1835,crossmech
+20260617T075241,0.354,41.2,-23.4,price_only,logistic,95,7.71,q10000,0.0475,crossmech
+20260617T075241,1.0,-27.45,-33.72,price_only,random_forest,1112,-30.75,q10000,-0.1896,crossmech
+20260617T075241,1.0,-30.46,-36.48,price_plus_book,lgbm,422,-33.55,q10000,-0.2069,crossmech
+20260617T075241,1.0,-88.82,-110.64,price_plus_book,logistic,7,-99.14,q10000,-0.6112,crossmech
+20260617T075241,1.0,-36.38,-60.6,price_plus_book,random_forest,75,-48.88,q10000,-0.3013,crossmech
+20260617T075241,1.0,-94.44,-121.46,price_only,lgbm,8,-108.62,q10000,-0.6697,inevent_wf
+20260617T075241,nan,nan,nan,price_only,logistic,0,nan,q10000,,inevent_wf
+20260617T075241,1.0,-89.9,-113.56,price_only,random_forest,16,-101.08,q10000,-0.6232,inevent_wf
+20260617T075241,1.0,-90.65,-109.36,price_plus_book,lgbm,10,-99.57,q10000,-0.6138,inevent_wf
+20260617T075241,1.0,-15.0,-69.97,price_plus_book,logistic,5,-33.32,q10000,-0.2055,inevent_wf
+20260617T075241,1.0,-105.3,-116.48,price_plus_book,random_forest,3,-111.1,q10000,-0.685,inevent_wf
