@@ -2,7 +2,7 @@
 
 ## Study in One Paragraph
 
-This paper introduces **Stablecoin StressBench**, a transaction-cost-aware benchmark for evaluating stablecoin dislocation models. In the March 2023 USDC/SVB test event, price-level signals fire often: 34.3% of current-dataset 1-minute windows exceed a 10 bps primary/max cross-quote basis, and 12.45% exceed that threshold on the USDC-specific basis. Only 2.88% exceed the $10K executable-profit threshold after a VWAP order-book walk, taker fees, and market impact. The oracle upper bound confirms profitable windows exist (161–225 net bps on average), but calm-trained executable-arbitrage models remain negative out of sample. The current paper draft adds one positive transfer result: meta-labeling trained on Terra/LUNA earns +82.5 bps on SVB, while a conditioned PPO-GRU with the same positive-label density earns -29.2 bps. The benchmark therefore frames the problem as execution-aware stress transfer, not simple price-signal detection.
+This paper introduces **Stablecoin StressBench**, a transaction-cost-aware benchmark for evaluating stablecoin dislocation models. In the March 2023 USDC/SVB test event, price-level signals fire often: 34.3% of current-dataset 1-minute windows exceed a 10 bps primary/max cross-quote basis, and 12.45% exceed that threshold on the USDC-specific basis. Only 2.88% exceed the $10K executable-profit threshold after a VWAP order-book walk, taker fees, and market impact. The oracle upper bound confirms profitable windows exist (161–225 net bps on average), but calm-trained executable-arbitrage models remain negative out of sample. On the CEX order book no model selects profitable windows: a pre-registered 81-path search yields 0 survivors under a Benjamini-Hochberg FDR(0.10) gate, and even purged in-event cross-validation is -66 to -122 bps. (An earlier draft reported a +82.5 bps Terra->SVB transfer; that was a synthetic-generator artifact and is ~-30 bps on real data.) The real positive result is on-chain. The benchmark therefore frames the problem as execution-aware stress transfer, not simple price-signal detection.
 
 ---
 
@@ -227,5 +227,5 @@ Mechanism taxonomy: `results/paper_addon/table_18_mechanism_taxonomy_summary.csv
 
 - **Tier A expansion**: Acquire L2 archives for Terra/UST (Binance), FTX stress (Kraken), USDT/Curve to enable cross-mechanism execution-gap comparison.
 - **Uncertainty-aware abstention**: Bootstrap ensemble models that abstain when uncertainty is high; computational cost deferred.
-- **Meta-labeling beyond one training event**: Terra/LUNA-to-SVB transfer works in the current draft; the next question is whether it survives more mechanisms once Tier-A depth is available.
+- **Meta-labeling beyond one training event**: the Terra/LUNA-to-SVB transfer is NEGATIVE on real data (the earlier +82.5 bps was synthetic); the real positive result is on-chain venue-specificity.
 - **Reactive RL simulation**: The conditioned PPO-GRU result is a diagnostic, not a production execution simulator.

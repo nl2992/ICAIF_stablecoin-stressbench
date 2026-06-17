@@ -35,7 +35,7 @@ Stablecoin StressBench is designed to test three hypotheses:
 
 During the SVB-crisis test window (March 2023), the current paper dataset shows **34.3% of 1-minute windows** with a primary/max cross-quote basis exceeding 10 bps on price alone (12.45% for the USDC-specific basis) — yet only **2.88% exceeded the $10K executable-profit threshold** after a VWAP order-book walk, taker fees, and market impact. This **12× price-to-execution gap** is the core quantitative claim of the benchmark. The frozen baseline table in `results/paper/table_2_price_execution_gap.csv` records the earlier benchmark-freeze view (35.09% primary/max; 12.65% USDC-specific).
 
-The hindsight oracle yields **161–225 net bps per trade** across tasks, confirming profitable windows exist. Calm-trained rule and ML models remain economically weak: the frozen executable-arbitrage tasks are negative out of sample, while the current paper draft reports cross-mechanism meta-labeling trained on Terra/LUNA as the one positive transfer result (+82.5 bps on SVB). The benchmark is therefore about execution-aware transfer, not price-signal detection alone.
+The hindsight oracle yields **161–225 net bps per trade** across tasks, confirming profitable windows exist. On the CEX order book, calm-trained rule and ML models are economically negative out of sample, and a pre-registered 81-path search finds **no** model that selects profitable windows (even in-distribution) — executable-window selection is unsolved there. On the **real on-chain Curve/AMM venue**, by contrast, a model-free deviation rule is profitable in 4/5 events after a conservative 30 bps gas haircut. The gap is venue-specific: the barrier is CEX order-book microstructure, not the depeg.
 
 Full results: [`results/paper/table_2_price_execution_gap.csv`](results/paper/table_2_price_execution_gap.csv) · [`results/paper/table_4_oracle_gap.csv`](results/paper/table_4_oracle_gap.csv)
 
@@ -144,7 +144,7 @@ MIT License
 
 <img src="results/figures/figure_5_oracle_gap.png" width="480" alt="figure"/>
 
-*Hindsight-oracle ceiling vs captured profit: cross-mechanism meta-labeling recovers ~51% of the oracle on the real SVB test.*
+*Hindsight-oracle ceiling vs captured profit: no CEX model captures it, but an on-chain deviation rule does (venue-specific).*
 
 ## Reproduce (data → analysis → paper)
 
@@ -165,7 +165,7 @@ make build-features
 # 3. Train the model ladder (tabular / sequence / RL / changepoint)
 make train
 
-# 4. Evaluate (oracle capture, transfer, supervision-format ablation)
+# 4. Evaluate (oracle capture, 81-path CEX selection search, on-chain venue test)
 make evaluate
 
 # 5. Real multi-event on-chain AMM venue-specificity (CEX 12× vs AMM ~1×)
@@ -186,10 +186,10 @@ See [`docs/reproducibility_manifest.md`](docs/reproducibility_manifest.md) for t
 | --- | --- | --- |
 | **34.3%** optical → **2.88%** executable = **12×** gap (SVB) — abstract, Tab. 2 | `make build-features && python scripts/make_paper_tables.py` | `results/paper/table_2_price_execution_gap.csv` |
 | Hindsight-oracle ceiling **161–225** net bps/trade — Tab. 4 | `python scripts/make_paper_tables.py` | `results/paper/table_4_oracle_gap.csv` |
-| Cross-mechanism transfer **+82.5 bps** (95% CI, **51%** oracle) — abstract | `python scripts/compute_meta_bootstrap_cis.py` | `results/paper_addon/table_bootstrap_claim_intervals_updated.csv` |
+| CEX selection null: **0/81** paths survive FDR(0.10), even in-distribution — §results | `python scripts/explore_executable_transfer.py` | `results/exploration/executable_transfer_ledger.csv` |
 | AUROC–P&L inversion: highest-AUROC GRU is the largest money-loser — §results | `make train && make evaluate` | `results/experiments/all_results.csv` |
-| Supervision format binds: binary **+82.5** vs PPO-GRU **−29.2 bps** — §supervision | `python scripts/run_supervision_format_ablation.py` | `results/experiments_addon/supervision_format_ablation.csv` |
-| Venue specificity: CEX **12×** vs on-chain AMM **~1×** across 5 events — §gap | `python scripts/run_onchain_amm_gap.py` | `results/experiments_addon/onchain_amm_gap_multi.json` |
+| On-chain deviation rule profitable: **+169..+463 bps** in 4/5 events (30bps gas) — §venue | `python scripts/explore_onchain_executable.py` | `results/exploration/onchain_ledger.csv` |
+| Venue specificity: CEX **12×** vs on-chain AMM **~1×** across 5 events — §venue | `python scripts/run_onchain_amm_gap.py` | `results/experiments_addon/onchain_amm_gap_multi.json` |
 
 The compiled paper is **`paper/main.tex → paper/main.pdf`** (build: `cd paper && latexmk -pdf main.tex`).
 
@@ -211,43 +211,40 @@ chart; fewer than 3 in 100 (2.88%) survived VWAP book-walking, fees, and settlem
 visible and executable profit (proxy-bounded to 12–14× under a conservative 20% depth haircut). A model
 scoring well on price labels can still lose money on every trade.
 
-We release Stablecoin StressBench, an 18-event catalogue across seven mechanism classes with per-minute
-VWAP book-walking labels, route provenance, and a hindsight oracle ceiling (CC-BY 4.0), and use it to
-study when a learned trading model transfers across crises. The central result: a meta-labeling
-classifier trained on an algorithmic collapse (Terra/LUNA) and applied unchanged to a bank-reserve shock
-(USDC/SVB) recovers +82.5 bps (51% of the oracle), because depth withdrawal and spread widening behave
-alike regardless of the trigger — the order book responds to uncertainty rather than its cause.
+We release Stablecoin StressBench (18-event catalogue, per-minute VWAP book-walking labels, route
+provenance, hindsight-oracle ceiling; CC-BY 4.0) and use it to ask what works and what does not.
 
-The obstacle this overcomes is distributional. Every calm-trained family we test fails economically
-despite high AUROC; the highest-AUROC model (GRU, 0.80) is the largest money-loser (−239 bps), a direct
-quantification of the AUROC–P&L inversion under class imbalance. We further isolate *supervision format*
-as the binding constraint: at identical positive-label density, explicit binary labels earn +82.5 bps
-while reward optimisation (a conditioned PPO-GRU) earns −29.2 bps (uniformly negative across five seeds).
-The on-chain side mirrors this: on a real Curve pool the optical-to-executable gap collapses to ~1× (the
-AMM has no order-book depth to walk), so the gap is venue-specific, not universal.
+**What does not work (CEX).** Every calm-trained family loses money despite high AUROC; the highest-AUROC
+model (GRU, 0.80) is the largest loser (−239 bps), an AUROC–P&L inversion. A pre-registered 81-path search
+(training protocol × feature set × model) finds **zero** paths that select profitable windows out-of-sample
+under a Benjamini–Hochberg FDR(0.10) gate; even purged in-event cross-validation (train and test within the
+SVB crisis) is strongly negative (−66 to −122 bps). Executable-window selection on the CEX order book is
+unsolved on this data — an open challenge.
 
-### Provenance of the +82.5 bps transfer (read this)
+**What does work (on-chain).** The barrier is venue-specific. On the real Curve/AMM panel, where execution
+cost is the bounded pool slippage, a model-free deviation rule is profitable in 5/5 episodes; 4/5 survive a
+conservative 30 bps gas haircut (+169 to +463 bps, moving-block bootstrap 95% CIs > 0), the lone exception
+being the small USDC/SVB on-chain dislocation. The same signal that loses money on every CEX path is
+capturable on-chain — so the gap is a property of CEX order-book microstructure, not of depegs.
 
-The +82.5 bps Terra/LUNA → USDC/SVB transfer was computed on **real Tier-A order-book data**. For
-self-contained reproduction without redistributing the full order-book panel, the released code includes
-a synthetic data-generating process calibrated to the real Tier-A statistics
-(`scripts/_synthetic_crossmech.py`); the committed `meta_labeling_crossmech_results.csv` is that
-generator's output, which is why it carries `data_provenance=synthetic_fallback`. To regenerate from the
-real panel, run the transfer against `data/gold/dataset.parquet` (validation split = Terra/LUNA, test
-split = USDC/SVB). The single-source rows beyond Terra→SVB (Celsius/3AC, FTX, BUSD, pooled) are
-synthetic stress events and are labelled as such in the paper and the table.
+### Provenance note (read this)
+
+An earlier draft reported a +82.5 bps Terra/LUNA→SVB cross-mechanism transfer as a headline. That number is
+**the output of a synthetic data-generating process** (`scripts/_synthetic_crossmech.py`, calibrated to
+~82.5 bps); the committed `meta_labeling_crossmech_results.csv` carries `data_provenance=synthetic_fallback`.
+On the **real** gold panel the same Terra→SVB meta-labeling transfer is **negative** (~−30 bps; reproduce
+with `scripts/explore_executable_transfer.py`), consistent with the 81-path null above. The paper therefore
+does **not** claim a profitable cross-mechanism transfer; the real positive result is the on-chain venue
+finding. Synthetic stress events (Celsius/3AC, FTX, BUSD, pooled) are illustrative only, not evidence.
 
 ### Where each number lives
 
-| Claim | Number | File | Field / row |
-|---|---|---|---|
-| Optical-to-executable gap on SVB (real Tier-A) | 34.3% optical, 2.88% executable, 12× (12–14× proxy-bounded) | `results/experiments_addon/robustness_price_execution_gap.csv` | `price_signal_pct`, `executable_signal_pct`, `price_to_execution_ratio` |
-| Cross-mechanism transfer Terra→SVB | +82.5 bps, n=397, 51.0% oracle (real; see provenance above) | `results/experiments_addon/meta_labeling_crossmech_results.csv` | `net_bps` 82.45, `n_trades` 397, `oracle_capture` 0.5083 |
-| Transfer 95% CI / significance | CI [79.5, 87.7] bps, 100% of bootstraps positive | `results/experiments_addon/bps_bootstrap_ci.json` | `bootstrap_95ci_low/high_bps`, `p_one_sided_positive`=1.0 |
-| On-chain AMM venue-specificity (real Curve) | gap ~1×, 100% of optical fires executable, 1,378 clean rows | `results/experiments_addon/onchain_amm_gap_usdt_curve.json` | `optical_to_executable_gap_x`=1.0, `executable_among_optical_pct`=100, `n_clean_rows`=1378 |
-| Supervision-format gap (binary vs reward) | binary +82.5 vs PPO-GRU −29.2 (5-seed −45.9±5.2) | `results/experiments/rl_agent_results.csv`, `results/experiments/rl_multiseed_summary.json` | PPO net bps |
-| Calibration of the meta-labeller | raw ECE 0.032 → isotonic 0.003 | `results/experiments_addon/calibration_curve.json` | `ece_raw`, `ece_isotonic` |
-| Depth withdrawal alike across mechanisms (SHAP) | rank-stable SHAP across train/test | `results/experiments_addon/shap_crossmech.json` | per-feature mean |abs| SHAP |
+| Claim | Number | File |
+|---|---|---|
+| Optical→executable gap on SVB (real Tier-A) | 34.3% / 2.88% / 12× (12–14× bounded) | `results/experiments_addon/robustness_price_execution_gap.csv` |
+| CEX selection null (real) | 0/81 paths survive FDR(0.10); best +7.7 bps CI[−23,+41]; purged in-event CV −66..−122 bps | `results/exploration/executable_transfer_ledger.csv`, `results/exploration/SUMMARY.md` |
+| On-chain deviation rule (real Curve) | +169..+463 bps in 4/5 events after 30bps gas (5/5 pre-gas), block-bootstrap CIs>0 | `results/exploration/onchain_ledger.csv` |
+| On-chain AMM venue-specificity (real Curve) | gap ~1×, 100% of optical fires executable | `results/experiments_addon/onchain_amm_gap_multi.json` |
 
 θ thresholds are calibrated on the validation split over a 60-point grid on [0.05, 0.95] (min 25 trades).
 The benchmark catalogue, labels, oracle and harness are released under CC-BY 4.0.

@@ -10,7 +10,7 @@ During the March 2023 USDC/SVB de-peg — the primary test event in this benchma
 
 **Can AI and econometric models identify stablecoin dislocations that remain profitable after realistic execution costs?**
 
-The benchmark answers this with a structured null result and one transfer result: a hindsight oracle earns 161–225 net bps per trade on the test split, confirming profitable windows exist; calm-trained executable-arbitrage models are negative out of sample; Terra/LUNA-trained meta-labeling is positive on the SVB basis task.
+The benchmark answers this with a structured null result and one transfer result: a hindsight oracle earns 161–225 net bps per trade on the test split, confirming profitable windows exist; calm-trained executable-arbitrage models are negative out of sample; on the CEX order book no model is profitable (0/81 honest paths, even in-distribution); the real positive result is on-chain. (An earlier +82.5 bps Terra->SVB transfer claim was a synthetic-generator artifact.)
 
 ## 3. Benchmark Contribution
 
@@ -103,7 +103,7 @@ The uncertainty module (`src/stressbench/experiments/uncertainty.py`) implements
 The primary threshold rule maximizes validation total P&L subject to ≥ 25 trades. Sensitivity to this choice is covered by `results/paper_addon/table_9_threshold_ablation.csv`: fixed thresholds, F1-style rules, and economic-threshold rules do not remove the execution gap.
 
 ### 7f. Cross-mechanism meta-labeling and RL diagnostic
-The current paper draft adds a transfer test. A meta-labeling filter trained on Terra/LUNA primary-signal windows earns +82.5 bps on the SVB basis task, while a conditioned PPO-GRU trained on the same positive-density window set earns −29.2 bps. This separates the value of stress-like binary supervision from reward-only policy learning under sparse profitable windows.
+An earlier draft reported a +82.5 bps Terra->SVB meta-labeling transfer; that figure was the output of a synthetic data generator. On the real gold panel the transfer is ~-30 bps, and a pre-registered 81-path search finds 0 profitable paths under FDR(0.10). The real positive result is on-chain, where a model-free deviation rule is profitable in 4/5 events.
 
 ### 7e. False-positive diagnosis
 Feature profiles of true positives vs false positives are compared to explain why models trade bad windows (large basis but insufficient depth, high spread, or unfavorable fee conditions).

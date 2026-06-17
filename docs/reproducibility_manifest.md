@@ -267,7 +267,7 @@ Key test files:
 | Oracle gap (basis task) | 210 bps | `table_4_oracle_gap.csv` |
 | ExpectedNetProfitRegressor best | −61.4 bps | `expected_net_profit_results.csv` |
 | False positives (price_threshold_10bps) | 581 (mean −38.7 bps) | `table_5_false_positive_diagnosis.csv` |
-| Cross-mechanism meta-labeling | +82.5 bps | `meta_labeling_crossmech_results.csv` |
+| On-chain deviation rule (real Curve) | +169..+463 bps, 4/5 events (30bps gas) | `results/exploration/onchain_ledger.csv` (the +82.5 meta-label was synthetic, removed) |
 | Conditioned PPO-GRU | −29.2 bps | `conditioned_rl_results.csv` |
 
 ---

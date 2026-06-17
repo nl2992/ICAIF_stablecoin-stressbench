@@ -291,7 +291,7 @@ for SVB, resolving the uncertainty. USDC recovered to $0.997 by March 13 and to 
 - 2.88% exceed the $10K/1m executable-profit threshold after VWAP walk + fees → **12× price-to-execution gap**
 - Oracle: +161.7 bps (basis task), +224.6 bps (executable arb task)
 - Best frozen calm-trained ML model: −49.1 bps (logistic@price\_plus\_book); oracle gap 211 bps
-- Current add-on result: Terra/LUNA-trained meta-labeling earns +82.5 bps on the SVB basis task
+- The +82.5 bps Terra/LUNA->SVB meta-labeling figure was a synthetic-generator artifact; on real data the transfer is ~-30 bps. The real positive result is the on-chain deviation rule (+169..+463 bps in 4/5 events).
 
 **Empirical use:** Primary benchmark test split. All execution-grade claims anchored here.
 

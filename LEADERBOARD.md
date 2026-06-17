@@ -14,8 +14,7 @@ All results use the committed gold dataset and the evaluation protocol in `scrip
 | Rank | Model | Feature set | Net bps | Trades | Oracle cap. | Paper ref. |
 |------|-------|-------------|---------|--------|------------|------------|
 | — | **Oracle (ceiling)** | — | **+161.7** | 316 | **100.0%** | Table 8 |
-| 1 | **Meta-label (cross-mech., Terra/LUNA)** | price+book | **+82.5** | 397 | **51.0%** | Table 9 |
-| 2 | Meta-label (4-event pooled) | price+book | +83.7 | 163 | 51.8% | Table 11 |
+| — | _No profitable entry_‡ | — | _< 0_ | — | _0/81 paths_ | §results |
 | — | GRU supervised (calm) | price+book | −239.0 | 656 | — | Table 12 |
 | — | ExpNetProfitRegressor | price\_only | −73.8 | 537 | — | Table 8 |
 | — | LightGBM (calm) | all | 0 trades† | — | — | Table 8 |
@@ -23,6 +22,7 @@ All results use the committed gold dataset and the evaluation protocol in `scrip
 | — | NoTrade | — | 0.0 | 0 | 0.0% | — |
 
 †Calibration threshold search finds no configuration with ≥25 trades and positive expected return.
+‡No model selects profitable windows on the CEX order book: a pre-registered 81-path search (training protocol × feature set × model) yields 0 paths surviving a Benjamini–Hochberg FDR(0.10) gate, and even purged in-event cross-validation is −66 to −122 bps (`results/exploration/`). The earlier "+82.5 bps meta-label" rows were the output of a synthetic data generator (`scripts/_synthetic_crossmech.py`); on the real gold panel that transfer is ≈−30 bps, so they have been removed. The genuine positive result is on-chain (see `onchain_ledger.csv`).
 
 ## Secondary Task: executive_arb_q10000_5m (oracle = +224.6 bps)
 

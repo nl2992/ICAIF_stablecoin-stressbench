@@ -62,12 +62,12 @@ windows and is not deployable.
 | Oracle, `basis_usdc_1m_gt10bps` | +161.7 bps | `results/paper/table_4_oracle_gap.csv` |
 | Oracle, `executable_arb_q10000_5m` | +224.6 bps | `results/paper/table_4_oracle_gap.csv` |
 | Best frozen executable-task model | -42.9 bps | `results/paper/table_4_oracle_gap.csv` |
-| Cross-mechanism meta-labeling | +82.5 bps | `results/experiments_addon/meta_labeling_crossmech_results.csv` |
+| On-chain deviation rule (real Curve) | +169..+463 bps, 4/5 events (30bps gas) | `results/exploration/onchain_ledger.csv` |
 | Conditioned PPO-GRU diagnostic | -29.2 bps | `results/experiments/conditioned_rl_results.csv` |
 
 The frozen executable-arbitrage tasks remain negative for deployable
 calm-trained models. The current paper draft adds a separate positive result:
-meta-labeling trained on Terra/LUNA transfers to SVB and recovers about half of
+the +82.5 bps Terra->SVB transfer was a synthetic-generator artifact; on real data it is negative (~-30 bps) and the real positive result is on-chain. (Former claim that it recovered about half of
 the basis-task oracle return.
 
 ## Reproduction

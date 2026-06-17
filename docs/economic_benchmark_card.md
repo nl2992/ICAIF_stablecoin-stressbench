@@ -48,7 +48,7 @@ These measure whether a model strategy is economically viable after costs. A mod
 | `oracle` | +161 to +225 bps | Theoretical ceiling; not deployable |
 | `price_threshold_10bps` | Negative (test split) | Naive rule baseline |
 | `logistic@price_plus_book` | −49 bps (basis task, frozen baseline) | Best frozen non-oracle ML result for the basis task |
-| `meta_labeling_crossmech@price_plus_book` | +82.5 bps (basis task, add-on) | Terra/LUNA-trained transfer result; not part of the calm-trained baseline grid |
+| `onchain deviation rule` (real Curve) | +169..+463 bps, 4/5 events after 30bps gas | The +82.5 bps cross-mech transfer was a SYNTHETIC artifact (removed); real Terra->SVB transfer is ~-30 bps |
 
 ## Oracle
 
@@ -71,7 +71,7 @@ The `NoTradeBaseline` never trades. It returns exactly 0 net bps and 0 final P&L
 - 2.88% exceed the $10K executable-profit threshold after costs (12× price-to-execution ratio)
 - Oracle earns +161 to +225 bps depending on task
 - Frozen executable-arbitrage models are negative out of sample
-- Cross-mechanism meta-labeling trained on Terra/LUNA is the positive add-on result: +82.5 bps on the SVB basis task
+- The +82.5 bps cross-mechanism transfer was a synthetic-generator artifact; on real data it is ~-30 bps (0/81 honest paths survive FDR). The real positive result is the on-chain deviation rule (+169..+463 bps in 4/5 events after a 30bps gas haircut).
 
 ## Dataset
 

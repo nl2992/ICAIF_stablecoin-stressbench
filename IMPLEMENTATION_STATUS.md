@@ -52,7 +52,7 @@ graph/network modeling.
   - Oracle: +161.7 bps, 316 trades (basis_usdc_1m_gt10bps, SVB test split)
   - Every calibrated ML model (LightGBM, logistic, XGBoost) produces 0 or
     degenerate trades on the SVB test split; no calm-trained model beats zero.
-  - Cross-mechanism meta-labeling (Terra/LUNA train, SVB test): +82.5 bps,
+  - Cross-mechanism meta-labeling transfer (Terra/LUNA->SVB) is NEGATIVE (~-30 bps) on real data; the +82.5 bps was a synthetic-generator artifact (removed),
     397 trades, 50.9% oracle capture.
   - Pooled four-event training (Terra/LUNA + Celsius/3AC + FTX + BUSD): +83.7
     bps, 163 trades, 51.6% oracle capture (from

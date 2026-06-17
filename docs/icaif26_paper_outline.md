@@ -11,7 +11,7 @@
 
 ## Abstract
 
-Stablecoin stress events generate frequent price dislocations, but many apparent arbitrage opportunities disappear once executable depth, VWAP book walking, fees, and market impact are included. We introduce Stablecoin StressBench, a transaction-cost-aware benchmark for evaluating whether AI and econometric models can distinguish optical arbitrage from executable arbitrage. During the March 2023 USDC/SVB test window, 34.3% of current-dataset 1-minute windows exceed a 10 bps primary/max price-basis threshold (12.45% for the USDC-specific basis), but only 2.88% exceed the $10K executable-profit threshold after execution costs — a 12× price-to-execution gap. A hindsight oracle earns positive net bps, calm-trained executable-arbitrage models lose money out of sample, and Terra/LUNA-trained meta-labeling is the one positive transfer result in the current draft. The benchmark reframes stablecoin arbitrage prediction as an execution-aware stress-transfer problem rather than a simple price-signal detection problem.
+Stablecoin stress events generate frequent price dislocations, but many apparent arbitrage opportunities disappear once executable depth, VWAP book walking, fees, and market impact are included. We introduce Stablecoin StressBench, a transaction-cost-aware benchmark for evaluating whether AI and econometric models can distinguish optical arbitrage from executable arbitrage. During the March 2023 USDC/SVB test window, 34.3% of current-dataset 1-minute windows exceed a 10 bps primary/max price-basis threshold (12.45% for the USDC-specific basis), but only 2.88% exceed the $10K executable-profit threshold after execution costs — a 12× price-to-execution gap. A hindsight oracle earns positive net bps; on the CEX order book no model selects profitable windows (a pre-registered 81-path search yields 0 survivors under FDR(0.10), even in-distribution); the real positive result is on-chain, where a model-free deviation rule is profitable in 4/5 events. The benchmark reframes stablecoin arbitrage prediction as an execution-aware stress-transfer problem rather than a simple price-signal detection problem.
 
 *~150 words — fits ACM abstract requirement*
 
@@ -179,7 +179,7 @@ Oracle profitable trades:        351  (2.22%)
 | basis_usdc_1m_gt10bps | +161.7 bps | −49.1 bps | 211 bps |
 | executable_arb_q10000_5m | +224.6 bps | −42.9 bps | 267 bps |
 
-Frozen calm-trained executable-arbitrage models are economically negative on the test split. The current draft separately reports cross-mechanism meta-labeling trained on Terra/LUNA at +82.5 bps on the SVB basis task.
+Frozen calm-trained executable-arbitrage models are economically negative on the test split. The +82.5 bps cross-mechanism figure was a synthetic-generator artifact; on real data the Terra->SVB transfer is ~-30 bps and 0/81 honest paths are profitable. The real positive result is the on-chain deviation rule.
 
 ### 6.4 Robustness (Figures 8, 9)
 The price-to-execution gap persists across all tested cost assumptions (forward rolling max of adjusted net profit over each horizon window; fee and settlement parameters genuinely affect executable percentages):
@@ -213,7 +213,7 @@ Directly predicting net_profit_bps improves calibration vs classification models
 
 ## 8. Conclusion (~0.25 pages)
 
-Stablecoin StressBench introduces a benchmark for execution-aware stablecoin arbitrage prediction. The central finding is that price-only signals dramatically overstate the frequency of profitable arbitrage: the price-to-execution ratio is 12× at 10 bps during the SVB crisis. A hindsight oracle confirms profitable windows exist (161–225 net bps), calm-trained executable-arbitrage models remain negative, and cross-mechanism meta-labeling shows that stress-like positive examples can recover part of the oracle. The benchmark establishes stablecoin arbitrage prediction as an execution-aware transfer problem rather than a signal-detection problem.
+Stablecoin StressBench introduces a benchmark for execution-aware stablecoin arbitrage prediction. The central finding is that price-only signals dramatically overstate the frequency of profitable arbitrage: the price-to-execution ratio is 12× at 10 bps during the SVB crisis. A hindsight oracle confirms profitable windows exist (161–225 net bps), calm-trained executable-arbitrage models remain negative, and on the CEX order book no model recovers the oracle (0/81 honest paths); the on-chain Curve venue is where a model-free deviation rule is profitable. The benchmark establishes stablecoin arbitrage prediction as an execution-aware transfer problem rather than a signal-detection problem.
 
 ---
 
