@@ -8,12 +8,17 @@ under realistic training protocols? This is the open challenge the benchmark pos
 Design (anti-overfitting / anti-p-hacking guardrails):
   * Real gold panel only (data/gold/dataset.parquet) -- never synthetic data.
   * Honest OOS: the decision threshold is calibrated on the TRAIN segment, never on test.
-  * A grid of (training protocol x feature set x model) is tried; EVERY path is logged to
-    results/exploration/executable_transfer_ledger.csv (append-only), win or lose.
+  * A grid of (training protocol x feature set x model x notional) is tried; the runner
+    auto-skips combinations already in the ledger and logs EVERY new path, win or lose, to
+    results/exploration/executable_transfer_ledger.csv (append-only).
   * Each path reports a bootstrap one-sided p (H0: mean net <= 0) and a 95% CI.
   * A path counts as a POSITIVE FINDING only if ALL hold: net_bps>0, bootstrap CI lower
     bound>0, n_trades>=30, and it survives Benjamini-Hochberg FDR(0.10) across the whole
     ledger. Trying many paths and keeping the best is dredging; requiring FDR survival is not.
+
+Data note: this gold panel covers only 2022-01 (control), 2022-05 (Terra), 2023-02 (control),
+2023-03 (SVB), 2024-01 (control). No other stress events and no row-level on-chain AMM panel
+are present here, so on-chain modelling is out of scope for this script.
 
 Run:  pip install -e .  &&  python scripts/explore_executable_transfer.py
 """
@@ -26,9 +31,15 @@ ROOT = Path(__file__).parents[1]
 LEDGER = ROOT / "results/exploration/executable_transfer_ledger.csv"
 THR = 10.0; ORACLE = 162.2
 BOOK = ["depth_bid_10bp_mean", "depth_ask_10bp_mean", "spread_bps_mean", "imbalance_1bp_mean"]
-NETS = {"q10000": "net_profit_bps_q10000", "q50000": "net_profit_bps_q50000"}
+NETS = {"q10000": "net_profit_bps_q10000", "q50000": "net_profit_bps_q50000",
+        "q100000": "net_profit_bps_q100000"}
 WIN = {"terra": ((2022,5,7),(2022,5,14,23,59,59)), "svb": ((2023,3,10),(2023,3,20,23,59,59))}
 FIRE_BASIS = {"terra": "cross_quote_basis_maxabs_bps", "svb": "cross_quote_basis_usdc_bps"}
+
+PROTOCOLS = ["crossmech", "control2svb", "inevent_wf", "inevent_purged_cv"]
+FEATURE_SETS = ["price_only", "price_plus_book", "book_dynamics"]
+MODELS = ["lgbm", "logistic", "random_forest"]
+NET_KEYS = ["q10000", "q50000", "q100000"]
 
 
 def _seg(df, key):
@@ -36,10 +47,19 @@ def _seg(df, key):
     return df.filter((pl.col("dt") >= dt.datetime(*a)) & (pl.col("dt") <= dt.datetime(*b))).sort("dt")
 
 def _feat(seg, basiscol, fs):
+    """Feature matrix. Col 0 is always the basis (used as the primary-signal column).
+    book_dynamics adds within-segment 1-step deltas (depth-withdrawal velocity etc.)."""
     b = seg[basiscol].fill_null(0).to_numpy()
     if fs == "price_only":
         return b, b.reshape(-1, 1)
-    return b, np.column_stack([b] + [seg[c].fill_null(0).to_numpy() for c in BOOK])
+    book = [seg[c].fill_null(0).to_numpy() for c in BOOK]
+    if fs == "price_plus_book":
+        return b, np.column_stack([b] + book)
+    # book_dynamics: basis, book levels, and deltas (diff with leading 0)
+    def d(x):
+        return np.concatenate([[0.0], np.diff(x)])
+    dyn = [d(b)] + [d(x) for x in book]
+    return b, np.column_stack([b] + book + dyn)
 
 def _model(name):
     if name == "lgbm":
@@ -49,6 +69,14 @@ def _model(name):
     from sklearn.ensemble import RandomForestClassifier
     return "sk", (LogisticRegression(max_iter=500) if name == "logistic"
                   else RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1))
+
+def _fit_predict(kind, mdl, Xtr, ptr, mtr, Xte):
+    if kind == "meta":
+        mdl.fit(Xtr, ptr, mtr); return mdl.predict_proba(Xte)[:, 1]
+    m = mtr[ptr == 1]; xx = Xtr[ptr == 1]
+    if len(np.unique(m)) < 2:
+        return np.zeros(len(Xte))
+    mdl.fit(xx, m); return mdl.predict_proba(Xte)[:, 1]
 
 def _calib(proba, net, mintr=25):
     bt, bv = 0.5, -np.inf
@@ -72,32 +100,40 @@ def run_path(df, protocol, fs, model_name, net_key):
     svb = _seg(df, "svb"); bsvb, Xsvb = _feat(svb, FIRE_BASIS["svb"], fs)
     nsvb = svb[netcol].fill_null(-15.0).to_numpy(); fsvb = np.abs(bsvb) > THR
     kind, mdl = _model(model_name)
-    def fit_predict(Xtr, ptr, mtr, Xte):
-        if kind == "meta":
-            mdl.fit(Xtr, ptr, mtr); return mdl.predict_proba(Xte)[:, 1]
-        m = mtr[ptr == 1]; xx = Xtr[ptr == 1]
-        if len(np.unique(m)) < 2:
-            return np.zeros(len(Xte))
-        mdl.fit(xx, m); return mdl.predict_proba(Xte)[:, 1]
+    fp = lambda Xtr, ptr, mtr, Xte: _fit_predict(kind, mdl, Xtr, ptr, mtr, Xte)
     if protocol == "crossmech":
         tr = _seg(df, "terra"); btr, Xtr = _feat(tr, FIRE_BASIS["terra"], fs)
         ntr = tr[netcol].fill_null(-15.0).to_numpy(); ftr = np.abs(btr) > THR
         mtr = (ftr & (ntr > 0)).astype(np.int8)
-        proba = fit_predict(Xtr, ftr.astype(np.int8), mtr, Xsvb)
-        th = _calib(fit_predict(Xtr, ftr.astype(np.int8), mtr, Xtr), ntr); traded = nsvb[proba > th]
+        proba = fp(Xtr, ftr.astype(np.int8), mtr, Xsvb)
+        th = _calib(fp(Xtr, ftr.astype(np.int8), mtr, Xtr), ntr); traded = nsvb[proba > th]
     elif protocol == "control2svb":
         ctl = df.filter((pl.col("dt") < dt.datetime(2022, 5, 1)) | (pl.col("dt") > dt.datetime(2023, 4, 1))).sort("dt")
         bc, Xc = _feat(ctl, FIRE_BASIS["svb"], fs); nc = ctl[netcol].fill_null(-15.0).to_numpy()
         fc = np.abs(bc) > THR; mc = (fc & (nc > 0)).astype(np.int8)
         if fc.sum() < 20 or mc.sum() < 2:
             return None
-        proba = fit_predict(Xc, fc.astype(np.int8), mc, Xsvb)
-        th = _calib(fit_predict(Xc, fc.astype(np.int8), mc, Xc), nc); traded = nsvb[proba > th]
+        proba = fp(Xc, fc.astype(np.int8), mc, Xsvb)
+        th = _calib(fp(Xc, fc.astype(np.int8), mc, Xc), nc); traded = nsvb[proba > th]
     elif protocol == "inevent_wf":
         cut = svb.height // 2; msvb = (fsvb & (nsvb > 0)).astype(np.int8)
-        proba = fit_predict(Xsvb[:cut], fsvb[:cut].astype(np.int8), msvb[:cut], Xsvb[cut:])
-        th = _calib(fit_predict(Xsvb[:cut], fsvb[:cut].astype(np.int8), msvb[:cut], Xsvb[:cut]), nsvb[:cut])
+        proba = fp(Xsvb[:cut], fsvb[:cut].astype(np.int8), msvb[:cut], Xsvb[cut:])
+        th = _calib(fp(Xsvb[:cut], fsvb[:cut].astype(np.int8), msvb[:cut], Xsvb[:cut]), nsvb[:cut])
         traded = nsvb[cut:][proba > th]
+    elif protocol == "inevent_purged_cv":
+        # 5-fold time-blocked PURGED CV within SVB (embargo); in-distribution upper bound,
+        # explicitly NOT a transfer result. Threshold calibrated on each fold's train only.
+        n = svb.height; emb = 30; msvb = (fsvb & (nsvb > 0)).astype(np.int8)
+        folds = np.array_split(np.arange(n), 5); chunks = []
+        for fold in folds:
+            lo, hi = fold[0], fold[-1]
+            tm = np.ones(n, bool); tm[max(0, lo - emb):min(n, hi + emb) + 1] = False
+            if fsvb[tm].sum() < 20 or msvb[tm].sum() < 2:
+                continue
+            proba = fp(Xsvb[tm], fsvb[tm].astype(np.int8), msvb[tm], Xsvb[fold])
+            th = _calib(fp(Xsvb[tm], fsvb[tm].astype(np.int8), msvb[tm], Xsvb[tm]), nsvb[tm])
+            chunks.append(nsvb[fold][proba > th])
+        traded = np.concatenate(chunks) if chunks else np.array([])
     else:
         return None
     if len(traded) == 0:
@@ -116,14 +152,18 @@ def bh_findings(rows, q=0.10):
     cand = sorted(cand, key=lambda r: r["boot_p"]); m = len(rows)
     return [r for i, r in enumerate(cand, 1) if r["boot_p"] <= (i / m) * q]
 
+def _load_ledger():
+    return list(csv.DictReader(open(LEDGER))) if LEDGER.exists() else []
+
 def main():
     LEDGER.parent.mkdir(parents=True, exist_ok=True)
     df = pl.read_parquet(ROOT / "data/gold/dataset.parquet").with_columns(
         pl.from_epoch(pl.col("ts_1m_ns"), time_unit="ns").alias("dt"))
-    grid = list(itertools.product(["crossmech", "control2svb", "inevent_wf"],
-                                  ["price_only", "price_plus_book"],
-                                  ["lgbm", "logistic", "random_forest"], ["q10000"]))
+    allrows = _load_ledger()
+    done = {(r["protocol"], r["fs"], r["model"], r["net_key"]) for r in allrows}
+    grid = [c for c in itertools.product(PROTOCOLS, FEATURE_SETS, MODELS, NET_KEYS) if c not in done]
     batch = dt.datetime.now().strftime("%Y%m%dT%H%M%S"); rows = []
+    print(f"ledger has {len(allrows)} paths; {len(grid)} new combinations to run this batch.")
     for proto, fs, mdl, nk in grid:
         try:
             r = run_path(df, proto, fs, mdl, nk)
@@ -132,7 +172,6 @@ def main():
                      ci_lo=float("nan"), ci_hi=float("nan"), boot_p=float("nan"), err=str(e)[:80])
         if r:
             r["batch"] = batch; rows.append(r); print(r)
-    allrows = list(csv.DictReader(open(LEDGER))) if LEDGER.exists() else []
     fields = sorted(set().union(*[set(r) for r in rows + allrows])) if (rows or allrows) else []
     with open(LEDGER, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=fields); w.writeheader()
@@ -153,7 +192,7 @@ def main():
         print("  FINDING:", r)
     if not f:
         print("  No honest positive survives correction -> benchmark conclusion stands "
-              "(the executable-window selection problem is unsolved on this venue).")
+              "(executable-window selection is unsolved on this venue/data).")
 
 if __name__ == "__main__":
     main()
