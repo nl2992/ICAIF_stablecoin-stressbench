@@ -783,6 +783,32 @@ strongly negative ($-66$ to $-122\bps$): the profitable minority is \emph{unpred
 this microstructure}, not merely non-transferable. Selecting executable windows on the CEX
 order book is, on this data, unsolved---a standing challenge the benchmark poses.
 
+\begin{table}[h]
+\centering
+\caption{The CEX selection null is robust: mean out-of-sample net bps by training protocol over the
+  $81$-path pre-registered search (well-defined paths, $n{\ge}30$). No protocol is profitable, and
+  even purged in-event cross-validation---the easiest setting, train and test \emph{within} SVB---is
+  strongly negative. Best single path: cross-mechanism logistic, $+7.7\bps$, $95\%$ CI $[-23,+41]$
+  (not significant).}
+\label{tab:cexnull}
+\setlength{\tabcolsep}{5pt}
+{\small
+\begin{tabular}{lrl}
+\toprule
+\textbf{Training protocol} & \textbf{Mean net bps} & \textbf{Setting} \\
+\midrule
+Cross-mechanism (Terra$\to$SVB)    & $-28$ & hardest (transfer) \\
+Purged in-event CV (within SVB)    & $-75$ & easiest (in-distribution) \\
+In-event walk-forward (within SVB) & $-94$ & in-distribution \\
+\bottomrule
+\multicolumn{3}{@{}p{0.92\columnwidth}@{}}{\footnotesize $0/81$ paths clear the Benjamini--Hochberg
+  FDR($0.10$) gate (net${>}0$, bootstrap CI${>}0$, $n{\ge}30$). Grid: feature sets
+  \{price-only, price-plus-book, book-dynamics\} $\times$ models \{LightGBM meta-label, logistic,
+  random forest\} $\times$ notionals \{\$10k,\$50k,\$100k\}.}\\
+\end{tabular}
+}
+\end{table}
+
 \paragraph{What does work (on-chain).} The barrier is venue-specific. We repeat the test on the
 \emph{real} on-chain Curve/AMM panel ($4{,}994$ rows across five episodes, \S\ref{sec:venue}),
 where the capturable dislocation is $\text{net}=|\text{basis}|-\text{slippage}_{10k}-\text{fee}$,
@@ -840,6 +866,29 @@ predicted ahead of time. On an automated market maker, execution cost is the det
 slippage of the pool invariant, so a visible dislocation above the fire threshold is almost
 always a real, capturable one. The lesson for execution-aware AI is that the venue's
 microstructure, not the crisis mechanism, decides whether a learned signal is tradeable.
+
+\paragraph{Why these choices.} Each parameter is fixed by a prior or a stated rationale, not tuned to a
+result. The $10\bps$ optical-fire threshold matches the CEX primary-signal pipeline used throughout the
+benchmark, so the on-chain and CEX tests fire on the same definition. The $1\bps$ swap fee is Curve's
+StableSwap pool fee~\cite{egorov2019stableswap}. Because per-row gas is absent from the on-chain panel we
+do not infer it from a volatile gas series; we instead charge a fixed $30\bps$ haircut---equivalent to a
+$\sim\!\$30$ swap on a \$10k notional, above the $2022$--$23$ median Curve-swap cost---so the on-chain
+result is reported under a deliberately pessimistic execution assumption, and we report the pre-gas figure
+alongside it. Significance uses a moving-block bootstrap (block $=30$ minutes)~\cite{politis1994stationary}
+because per-minute returns within an event are serially correlated, and a finding must additionally clear a
+Benjamini--Hochberg FDR($0.10$) gate~\cite{benjamini1995fdr} across the whole ledger, so searching many
+paths cannot manufacture a false positive. Every decision threshold is calibrated on the training segment
+only; no result uses the test split for tuning.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\columnwidth]{../results/exploration/figure_exploration_summary.png}
+  \caption{The CEX selection null, visualised. Each point is one of the $81$ pre-registered paths
+    (well-defined, $n{\ge}30$); the bar is the per-protocol mean. Every protocol sits below zero and far
+    below the oracle ceiling, including the in-distribution purged cross-validation---no configuration
+    selects profitable executable windows on the CEX order book.}
+  \label{fig:cexnull_scatter}
+\end{figure}
 
 
 \section{Limitations}
