@@ -1,0 +1,11 @@
+batch,boot_p,ci_hi,ci_lo,event,n,net_bps,net_metric,strategy,venue
+20260617T174955,0.0,478.02,266.06,usdt_curve_2023,697,371.16,net_bps,fire_all_optical,onchain
+20260617T174955,0.0,12.18,7.62,usdc_svb_2023,375,9.38,net_bps,fire_all_optical,onchain
+20260617T174955,0.0,510.23,284.12,terra_luna_2022,549,380.53,net_bps,fire_all_optical,onchain
+20260617T174955,0.0,607.25,374.48,ftx_2022,353,492.69,net_bps,fire_all_optical,onchain
+20260617T174955,0.0,241.56,153.94,busd_2023,766,198.8,net_bps,fire_all_optical,onchain
+20260617T174955,0.0,448.02,236.06,usdt_curve_2023,697,341.16,net_bps_gas30,fire_all_optical,onchain
+20260617T174955,1.0,-17.82,-22.38,usdc_svb_2023,375,-20.62,net_bps_gas30,fire_all_optical,onchain
+20260617T174955,0.0,480.23,254.12,terra_luna_2022,549,350.53,net_bps_gas30,fire_all_optical,onchain
+20260617T174955,0.0,577.25,344.48,ftx_2022,353,462.69,net_bps_gas30,fire_all_optical,onchain
+20260617T174955,0.0,211.56,123.94,busd_2023,766,168.8,net_bps_gas30,fire_all_optical,onchain

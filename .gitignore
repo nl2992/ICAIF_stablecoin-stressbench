@@ -68,3 +68,4 @@ docs/internal/
 !results/exploration/
 !results/exploration/**
 !data/gold/dataset.parquet
+!data/gold/onchain_amm_panel.parquet
