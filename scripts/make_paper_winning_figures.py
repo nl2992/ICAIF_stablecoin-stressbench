@@ -62,7 +62,6 @@ def make_auroc_scatter() -> None:
         ("RF", 0.840, 0.0, "s", GREY, 60),  # 0 trades → NoTrade
         ("GRU\n(seq, AUROC 0.80)", 0.800, -239.0, "^", BLUE, 90),
         ("MLP-Window", 0.652, -341.0, "^", BLUE, 90),
-        ("Meta-label\n(Terra→SVB)", 0.000, 82.5, "D", GOLD, 110),  # no AUROC concept
         ("Oracle\n(hindsight)", 0.519, 162.2, "*", NAVY, 140),
     ]
 
@@ -91,15 +90,6 @@ def make_auroc_scatter() -> None:
     )
 
     ax.annotate(
-        "Meta-label\n+82.5 bps",
-        xy=(0.0, 82.5),
-        xytext=(0.12, 110),
-        fontsize=6,
-        color=GOLD,
-        arrowprops=dict(arrowstyle="->", color=GOLD, lw=0.8),
-    )
-
-    ax.annotate(
         "Oracle\n+162 bps",
         xy=(0.519, 162.2),
         xytext=(0.30, 150),
@@ -120,7 +110,6 @@ def make_auroc_scatter() -> None:
         mpatches.Patch(color=RED, label="Price rules"),
         mpatches.Patch(color=GREY, label="Tabular ML"),
         mpatches.Patch(color=BLUE, label="Sequence models"),
-        mpatches.Patch(color=GOLD, label="Meta-labeling"),
         mpatches.Patch(color=NAVY, label="Oracle ceiling"),
     ]
     ax.legend(

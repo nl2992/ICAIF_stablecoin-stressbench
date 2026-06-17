@@ -43,7 +43,7 @@
 \begin{document}
 
 \title{Stablecoin StressBench: The Highest-AUROC Model Loses the Most
-Money Under a \texorpdfstring{$12\times$}{12x} Execution Gap, and Cross-Mechanism Transfer Recovers It}
+Money Under a \texorpdfstring{$12\times$}{12x} Execution Gap That Vanishes On-Chain}
 
 %% ---- Abstract -----------------------------------------------
 \begin{abstract}\sloppy
@@ -56,30 +56,26 @@ under a conservative $20\%$ depth haircut).  A model scoring well on
 price labels can still lose money on every trade.
 We release \textbf{Stablecoin StressBench}, an 18-event catalogue across
 seven mechanism classes with per-minute VWAP (volume-weighted average
-price) book-walking labels, route provenance, and a hindsight oracle
-ceiling (CC-BY~4.0), and use it to study when a learned trading model
-transfers across financial crises.
-Our main result is that \emph{cross-mechanism transfer} works.
-A meta-labeling classifier trained on an algorithmic collapse
-(Terra/LUNA) and applied unchanged to a bank-reserve shock (USDC/SVB)
-recovers $+82.5\bps$ (95\% CI $[79.5,\,87.7]\bps$, 51.0\% of the oracle),
-because depth withdrawal and spread widening behave alike regardless of the
-trigger: the order book responds to uncertainty rather than its cause.
-The obstacle this overcomes is distributional. Every calm-trained family
-we test (tabular classifiers, sequence models, reinforcement learning, and
-changepoint detectors) fails economically despite high AUROC; the
-highest-AUROC model (GRU, AUROC~0.80) is simultaneously the largest
-money-loser ($-239\bps$), a direct quantification of the AUROC--P\&L
-inversion under class imbalance.
-We further isolate \emph{supervision format} as the binding constraint.
-At identical positive-label density, explicit binary labels earn
-$+82.5\bps$ while reward optimisation (a conditioned PPO-GRU) earns
-$-29.2\bps$ (headline run; a 5-seed sweep is uniformly more negative,
-$-45.9\pm5.2\bps$), so the label-vs-reward gap is not a seed artefact.
-The gap is \emph{venue-specific}: $12\times$ on CEX order books vs.\ ${\approx}1\times$
-on real on-chain AMM execution (all five episodes), locating the barrier in CEX
-microstructure. \emph{Scope}: this real transfer covers a single source$\to$destination
-pair (Terra/LUNA$\to$Tier-A USDC/SVB); other benchmark conditions are synthetic.
+price) book-walking labels, route provenance, and a hindsight-oracle
+ceiling (CC-BY~4.0), and use it to ask what works and what does not.
+\emph{What does not work:} every calm-trained family we test (tabular,
+sequence, reinforcement-learning, and change-point) loses money despite high
+AUROC; the highest-AUROC model (GRU, $0.80$) is the largest loser ($-239\bps$),
+a direct quantification of the AUROC--P\&L inversion under class imbalance.
+A pre-registered $81$-path search over training protocols, feature sets, and
+models finds \textbf{zero} paths that select profitable windows out-of-sample
+under a Benjamini--Hochberg FDR($0.10$) gate; even purged in-event
+cross-validation (train and test \emph{within} the SVB crisis) is strongly
+negative ($-66$ to $-122\bps$), so executable-window \emph{selection} is
+unsolved, not merely non-transferable.
+\emph{What does work:} the barrier is venue-specific. On real on-chain
+Curve/AMM data, where execution cost is the bounded pool slippage rather than
+order-book impact, a simple deviation rule is profitable in $5/5$ episodes;
+$4/5$ survive a conservative $30\bps$ gas haircut ($+169$ to $+463\bps$,
+moving-block bootstrap $95\%$ CIs above zero), the lone exception being the
+small USDC/SVB on-chain dislocation. The same signal that loses money on every
+CEX path is capturable on-chain, so the optical-to-executable barrier is a
+property of CEX order-book microstructure, not of stablecoin depegs.
 \end{abstract}
 
 \keywords{transfer learning, meta-labeling, reinforcement learning,
@@ -159,54 +155,36 @@ phenomenon structural, not an artefact of either event; only the \emph{Tier-A}
 execution labels, backed by real full-depth order-book data rather than a
 price-only proxy, are SVB-specific.
 
-The one approach that crosses zero exploits a simple regularity. The
-order book responds to uncertainty, not to its cause.
-Depth withdrawal and spread widening look identical in an algorithmic
-collapse and a bank-reserve shock, so a meta-labeler trained on
-Terra/LUNA recognises the executable signature in SVB without ever
-seeing it.
-This single transfer recovers half the return available to a hindsight
-oracle.
+No calm-trained model captures this gap. In stress the order book withdraws depth and
+widens spreads, but \emph{which} dislocated minutes are executable turns out to be
+unpredictable from that microstructure---we show below that even a model trained and
+tested \emph{within} the SVB crisis cannot select them. The barrier is not the crisis,
+it is the venue: on an automated market maker the same dislocation is capturable, because
+execution cost is the bounded slippage of the pool invariant rather than open-ended
+order-book impact.
 
 \paragraph{Contributions}
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
-  \item \textbf{Cross-mechanism transfer for executable arbitrage.}
-        A meta-labeling classifier trained on one crisis type (Terra/LUNA) and
-        applied unchanged to a different, real Tier-A event (USDC/SVB) recovers
-        $+82.5\bps$ (51.0\% oracle capture), a single demonstrated cross-mechanism
-        transfer. The mechanism-invariance hypothesis (depth withdrawal, spread
-        widening), which SHAP attribution supports, is further \emph{illustrated} by
-        synthetic multi-mechanism conditions (four-event pooled, 51.8\%). We are
-        explicit that these synthetic sources do not independently validate
-        generality, which awaits a second execution-grade event.
-        (\S\ref{sec:diagnostics})
-  \item \textbf{Supervision format, not label density, as the binding
-        constraint.}
-        At identical 17\% positive-label density (definitions:
-        \S\ref{sec:eval}), explicit binary supervision earns $+82.5\bps$
-        while reward optimisation
-        (a conditioned PPO-GRU) earns $-29.2\bps$, locating the
-        difference in how the learning signal is delivered rather than in
-        data scarcity. Every other calm-trained family (tabular,
-        sequence, class-balanced, regression, and changepoint) also
-        fails, ruling out architecture and features as the remedy.
-        (\S\ref{sec:ladder},~\ref{sec:rl_results})
-  \item \textbf{An execution-aware benchmark that makes these claims
-        measurable.}
-        StressBench supplies the apparatus. An 18-event source-tracked catalogue
-        across seven mechanism classes, per-minute VWAP book-walking labels with
-        route provenance, and a \emph{hindsight oracle ceiling}, the profit
-        achievable by a hypothetical agent that knows at each minute exactly which
-        windows are executable, forming an upper bound on any model's performance.
-        Measuring oracle capture (recovered profit as a fraction of the oracle)
-        provides a principled denominator that raw bps figures lack. It
-        exposes a $12\times$ optical-to-executable gap---an
-        evaluation-integrity result for any AI trading model on this
-        data. We further show this gap is
-        \textbf{venue-specific}, $12\times$ on the CEX order book but
-        $\approx\!1\times$ on real on-chain AMM execution across all five
-        episodes, locating the barrier in CEX microstructure, not in depegs.
-        (\S\ref{sec:benchmark}--\ref{sec:models},~\ref{sec:gap})
+  \item \textbf{An execution-aware benchmark that exposes a $12\times$ optical-to-executable gap.}
+        StressBench supplies the apparatus: an 18-event source-tracked catalogue across seven
+        mechanism classes, per-minute VWAP book-walking labels with route provenance, and a
+        \emph{hindsight-oracle ceiling} that upper-bounds any model's profit. On the marquee
+        USDC/SVB event, $34.3\%$ of minutes look dislocated but only $2.88\%$ are executable
+        (a $12\times$ gap), so oracle capture---not price-label AUROC---is the right yardstick.
+        (\S\ref{sec:benchmark}--\ref{sec:models})
+  \item \textbf{What does not work: executable-window selection is unsolved on the CEX order book.}
+        Every calm-trained family loses money despite high AUROC, and the AUROC--P\&L relationship
+        \emph{inverts} (the highest-AUROC model, GRU $0.80$, loses $-239\bps$). A pre-registered
+        $81$-path search (training protocols $\times$ feature sets $\times$ models) yields zero
+        paths that clear a Benjamini--Hochberg FDR($0.10$) gate~\cite{benjamini1995fdr}; even
+        purged in-event cross-validation is strongly negative, so the windows are unpredictable
+        from this microstructure, not merely non-transferable. (\S\ref{sec:ladder},~\ref{sec:diagnostics})
+  \item \textbf{What does work: the gap is venue-specific and the on-chain venue is tradeable.}
+        On real on-chain Curve/AMM data, a simple deviation rule is profitable in $5/5$ episodes
+        and $4/5$ survive a conservative $30\bps$ gas haircut ($+169$ to $+463\bps$, moving-block
+        bootstrap CIs $>0$). The optical-to-executable barrier is therefore a property of CEX
+        order-book microstructure---thin depth, taker fees, settlement delay---not of stablecoin
+        depegs. (\S\ref{sec:venue},~\ref{sec:diagnostics})
 \end{enumerate}
 
 \paragraph{What you can do with this benchmark (CC-BY~4.0)}
@@ -716,22 +694,20 @@ false positives from route-direction mismatch dominate. $\frac{1}{3}$ fire on US
 dislocations while the USDC route is simultaneously non-executable.
 Sequence models (GRU, AUROC~0.80) earn $-239\bps$. High discrimination does not
 imply positive P\&L when no threshold can isolate the $2.88\%$ executable minority.
-Figure~\ref{fig:auroc_pnl} plots AUROC against net bps for all calm-trained models.
-The relationship is inverted. The highest-AUROC model (GRU, 0.80) is the second
-worst in P\&L. Meta-labeling, by contrast, carries essentially no AUROC signal
-on the calm-data benchmark (it fires only on transferred stress-regime windows)
-yet is the only approach that earns positive net bps.
+Figure~\ref{fig:auroc_pnl} plots AUROC against net bps for all calm-trained models;
+the relationship is inverted---the highest-AUROC model (GRU, 0.80) is among the worst
+in P\&L. The failure is not specific to these families: a pre-registered $81$-path search
+(\S\ref{sec:diagnostics}) finds no configuration that selects profitable windows
+out-of-sample, so the executable minority is unpredictable from this order-book
+microstructure.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{../results/paper/figures/figure_auroc_pnl_scatter.png}
-  \caption{AUROC vs.\ net bps for all models on the SVB test split.
-    Calm-trained models cluster in the upper left, high discrimination, negative P\&L.
-    Meta-labeling (orange diamond, $+82.5\bps$) occupies the unique profitable region
-    with near-zero AUROC because it is activated only on transferred stress-regime depth
-    windows, not on calm-data patterns.
-    The GRU (AUROC~0.80, $-239\bps$) is annotated explicitly to illustrate the inversion.
-    Oracle (navy star) is the achievable ceiling.}
+  \caption{AUROC vs.\ net bps for calm-trained models on the SVB test split. Models cluster
+    in the upper left: high discrimination, negative P\&L. The GRU (AUROC~0.80, $-239\bps$) is
+    annotated to illustrate the inversion---no threshold isolates the $2.88\%$ executable
+    minority. Oracle (navy star) is the achievable ceiling.}
   \label{fig:auroc_pnl}
 \end{figure}
 
@@ -786,258 +762,123 @@ Figure~\ref{fig:waterfall} decomposes the 260\,bps oracle gap into false-positiv
 drag (dominant), timing error ($40$--$80\bps$), and sizing error ($40$--$100\bps$).
 
 
-\subsection{Cross-Mechanism Transfer}
+\subsection{Executable-Window Selection: Unsolved on CEX, Profitable On-Chain}
 \label{sec:diagnostics}
 
-Cross-mechanism transfer means training on one type of crisis and
-testing on a completely different one. Here, the filter trained on
-Terra/LUNA's algorithmic collapse is applied unchanged to SVB's
-reserve-bank shock.
-This approach is the only method that crosses zero, earning
-$+82.5\bps$ (51.0\% oracle capture on the \task{basis\_usdc\_1m}
-task, oracle $+161.7\bps$ from Table~\ref{tab:master}).
-A reinforcement learning agent given the same 17\% primary-signal
-density earns $-29.2\bps$ (this single headline run; the 5-seed sweep is
-uniformly more negative, mean $-45.9\pm5.2\bps$, so the gap below is conservative).
-The 111.7\,bps gap points to explicit binary labels as the ingredient
-that reward optimisation cannot replicate at sparse positive rates.
-We treat this as a hypothesis for the multi-mechanism RL experiment,
-not a causal claim (Section~\ref{sec:rl_results}).
+\paragraph{What does not work (CEX).} Can \emph{any} model select the profitable executable
+windows among optical fires? We answer with a pre-registered grid search over training
+protocol $\times$ feature set $\times$ model, scored out-of-sample on the SVB execution-grade
+split. Protocols are cross-mechanism (train Terra/LUNA $\to$ test SVB), calm-control $\to$ SVB,
+in-event walk-forward (train first-half SVB $\to$ test second-half), and a purged five-fold
+in-event cross-validation (embargoed)---the easiest possible setting, train and test within the
+\emph{same} crisis. Feature sets are price-only, price-plus-book, and book-dynamics (adding
+depth-withdrawal velocity and basis/spread deltas); models are LightGBM
+meta-labeling~\cite{lopezdeprado2018}, logistic regression, and random forests, at
+\$10k/\$50k/\$100k notionals. Every decision threshold is calibrated on the \emph{training}
+segment only. Across \textbf{81 logged paths, zero} clear a Benjamini--Hochberg FDR($0.10$)
+gate~\cite{benjamini1995fdr} on (net bps${>}0$, bootstrap $95\%$ CI lower bound${>}0$,
+$n{\ge}30$): the best single path returns $+7.7\bps$ but with CI $[-23,+41]$ (not significant),
+and the mean cross-mechanism path is $-28\bps$. Decisively, even the purged in-event CV is
+strongly negative ($-66$ to $-122\bps$): the profitable minority is \emph{unpredictable from
+this microstructure}, not merely non-transferable. Selecting executable windows on the CEX
+order book is, on this data, unsolved---a standing challenge the benchmark poses.
 
-\subsubsection{Cross-Mechanism Transfer and Training Diversity}
-
-Meta-labeling earns $+82.5\bps$ on the one real cross-mechanism transfer
-(Terra/LUNA$\,\to\,$SVB) and positive returns on synthetic multi-mechanism stress
-events (Table~\ref{tab:metalabel}). The synthetic four-event pooled condition reaches
-$+83.7\bps$ (51.8\% oracle capture). As detailed below, the synthetic rows illustrate
-the mechanism-invariance hypothesis rather than independently confirm it.
-
-\begin{table}[h]
-\centering
-\caption{Transfer and policy results (\task{basis\_usdc\_1m\_gt10bps},
-  \texttt{price\_plus\_book}, SVB test split). Mean net bps per triggered trade.
-  \textbf{Only Terra/LUNA (source) and SVB (test) use real catalogue data. The
-  Celsius/3AC, FTX, BUSD and pooled rows use \emph{synthetic} stress events, and the
-  decision threshold is calibrated on Terra/LUNA for all conditions.} Bootstrap
-  ranges over the synthetic data-generating process are thus not independent of the
-  Terra-calibrated threshold. See text for a per-pair-calibrated sweep in which
-  Celsius fails.}
-\label{tab:metalabel}
-\setlength{\tabcolsep}{2pt}
-{\small
-\begin{tabular}{lp{1.5cm}rrr}
-\toprule
-\textbf{Training source} & \textbf{Mechanism} & \textbf{Net\,bps} & \textbf{Trades} & \textbf{Oracle cap.}\\
-\midrule
-Oracle & hindsight & $+161.7$ & 316 & 100\%\\
-\midrule
-Calm-control & none & $\phantom{+}0.0$ & 0 & 0\%\\
-\midrule
-Terra/LUNA only & algorithmic & $+82.5$ & 397 & 51.0\%\\
-Celsius/3AC only & exch.\ credit & $+79.7$ & 221 & 49.1\%\\
-FTX only$^{\ast\ast}$ & exch.\ credit & $+36.5$ & 1 & 22.5\%\\
-Four-event pooled & 3~mechs. & $+83.7$ & 163 & 51.8\%\\
-\midrule
-PPO-GRU conditioned & RL on Terra & $-29.2$ & 919 & $-18\%^\ddagger$\\
-\bottomrule
-\multicolumn{5}{@{}p{0.96\columnwidth}@{}}{\footnotesize $^{\ast\ast}$FTX signal too weak ($<5\bps$, single trade); excluded from the multi-source claim. $^\ddagger$Negative capture: the agent loses relative to the NoTrade (0\,bps) floor.}\\
-\end{tabular}
-}
-\end{table}
-
-We are deliberate about what this table does and does not establish.
-Terra/LUNA is the \emph{one} transfer backed by real catalogue source data, and it
-recovers $+82.5\bps$ ($n=397$ trades fired at the validation-calibrated threshold, each
-scored by the VWAP book-walk net label; 51.0\% of oracle) into the real Tier-A SVB test split.
-A stationary block bootstrap on the full evaluation sequence (block length 60 minutes,
-$B{=}2{,}000$ resamples, $n=442$ including pre-filter rows) gives a 95\% CI of $[79.5,\,87.7]\bps$, with all $100\%$ of
-bootstrap replicates positive ($p{=}1.0$); the $+82.5\bps$ figure (price-plus-book feature set, which conditions entry on depth withdrawal) falls inside this interval, confirming the result is not driven by a
-small number of large trades.
-The remaining single-source and pooled conditions (Celsius/3AC, FTX, BUSD) use
-\emph{synthetic} stress events calibrated to the historical catalogue
-(\S\ref{sec:diagnostics}). Because their generator embeds the same
-depth-withdrawal/spread signature in every mechanism, they \emph{illustrate} the
-mechanism-invariance hypothesis by construction rather than validate it
-independently. Consistent with this caveat, a per-pair-calibrated transfer sweep
-(\texttt{transfer\_matrix}) finds the synthetic Celsius source can instead
-\emph{fail} (net $-40.9\bps$) once its decision threshold is not borrowed from
-Terra/LUNA. The operative, real-data claim is therefore a \emph{single demonstrated
-cross-mechanism transfer} (Terra/LUNA$\,\to\,$SVB). Multi-mechanism generality
-remains an open question pending a second execution-grade event (\S\ref{sec:intro}).
-
-Cross-mechanism training succeeds because depth withdrawal, spread
-widening, and route mismatch recur across stress triggers even when
-triggers differ.
-Figure~\ref{fig:shap_side} shows this directly. Ask-side depth
-collapses and spread widens identically in primary-signal windows
-across Terra/LUNA and SVB despite mechanistically distinct causes.
-The order book responds to uncertainty, not its source.
-SHAP analysis
-confirms the two-stage structure. Price-basis features supply the
-candidate signal (94.8\% of importance), while ask-side depth and
-spread filter execution quality (3.4\%) once the model has seen
-stress-regime depth withdrawal.
-
-\paragraph{SHAP mechanism invariance. Synthetic training preserves real signal structure}
-A direct cross-mechanism SHAP comparison addresses the key concern about synthetic training data.
-Does the model trained on calibrated synthetic Terra/LUNA data actually learn the same features
-that matter on real SVB microstructure?
-Computing mean absolute SHAP values for the secondary classifier on both the synthetic training
-set (Terra) and the real test set (SVB), the feature importance rankings are \textbf{identical}.
-Spearman $\rho = 1.0$, Jaccard $= 1.0$ across both the top-3 and all-5 features
-(Table~\ref{tab:shap_invariance}).
-The ranking stability holds because \emph{spread}, \emph{imbalance}, and \emph{depth} are
-the structural features of any CEX order book under stress. The synthetic generator
-calibrated to these moments by design, and the test confirms they transfer.
-Short of a second execution-grade event, this is the strongest available evidence that synthetic training is not confounding the transfer: a generator artefact would show divergent SHAP rankings on real data (though rank stability alone cannot exclude a shared confounder).
+\paragraph{What does work (on-chain).} The barrier is venue-specific. We repeat the test on the
+\emph{real} on-chain Curve/AMM panel ($4{,}994$ rows across five episodes, \S\ref{sec:venue}),
+where the capturable dislocation is $\text{net}=|\text{basis}|-\text{slippage}_{10k}-\text{fee}$,
+the benchmark's own AMM-executable formula (single-leg, $1\bps$ Curve StableSwap
+fee~\cite{egorov2019stableswap}). Because pool slippage is bounded and small (median
+$0.8$--$5.5\bps$), a \emph{model-free} deviation rule (capture every optical fire) is profitable
+in $5/5$ episodes (Table~\ref{tab:onchain}). Under a deliberately conservative $30\bps$ gas
+haircut---per-row gas is absent from the source panel, so we charge a fixed cost equivalent to a
+$\sim\!\$30$ swap on a $\$10k$ notional, above the $2022$--$23$ median---$4/5$ episodes remain
+robustly profitable ($+169$ to $+463\bps$, moving-block bootstrap~\cite{politis1994stationary}
+$95\%$ CIs above zero); the lone failure is the small USDC/SVB on-chain dislocation
+($+9.4\bps$ pre-gas). The \emph{same} deviation signal that loses money on every CEX path is
+capturable on-chain (Figure~\ref{fig:venue}).
 
 \begin{table}[h]
 \centering
-\caption{SHAP feature importance. Synthetic Terra training vs.\ real SVB test.
-  Spearman $\rho=1.0$, Jaccard $=1.0$ on all features, rankings are mechanism-invariant,
-  consistent with synthetic calibration preserving real signal structure.}
-\label{tab:shap_invariance}
-\setlength{\tabcolsep}{3pt}
-{\small
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Feature} & \textbf{Terra (synth.)} & \textbf{SVB (real)} & \textbf{Rank} \\
-\midrule
-Bid-ask spread   & 1.437 & 1.400 & 1 \\
-Imbalance        & 1.175 & 1.161 & 2 \\
-Bid depth        & 0.775 & 0.807 & 3 \\
-Ask depth        & 0.732 & 0.743 & 4 \\
-Basis            & 0.022 & 0.021 & 5 \\
-\midrule
-Spearman $\rho$  & \multicolumn{3}{c}{$1.000$} \\
-Jaccard (top-3)  & \multicolumn{3}{c}{$1.000$} \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
-
-The result is robust to training-data sampling (DGP bootstrap, 500 seeds:
-Terra $[+78.7,\!+86.2]$, Celsius $[+74.1,\!+89.9]$, pooled $[+75.3,\!+93.1]\bps$)
-and to cost stress ($2{\times}$ fees, $40\%$ depth haircut: $+73.3\bps$, the
-worst of a $3{\times}3$ fee-haircut grid). No configuration yields negative returns.
-Performance is also stable across prediction horizons: requiring the
-label decision $h{=}1$--$5$\,min before the primary signal fires
-yields $79$--$82\,\bps$ net; at $h{=}10$\,min return degrades to
-$69\,\bps$ but remains positive ($+69\,\bps$, $n{=}162$ trades).
-
-Three regime-detection filters (CUSUM, EWMA, BOCPD
-\cite{adamsmackay2007bocpd}) were evaluated as alternative pre-filters.
-BOCPD achieves AUROC~0.229 on CEX cross-quote data.
-CEX basis is mean-reverting rather than change-point structured, so
-changepoint methods cannot substitute for the training-distribution
-fix that meta-labeling provides.
-
-\textbf{Convergence finding. Oracle capture saturates near $51\%$ regardless of training diversity.}
-All four training conditions produce oracle capture in the narrow range
-51.0--51.8\% (Terra, Celsius, and pooled four-event).
-This is itself a finding about the benchmark.
-Adding three mechanistically distinct extra events to the training pool lifts capture
-by fewer than one percentage point.
-The microstructural explanation is concrete. In the minutes immediately before a
-dislocation closes, ask-side depth partially recovers and the basis compresses,
-making late-stage windows indistinguishable from genuine opportunities.
-The secondary classifier cannot resolve this ambiguity regardless of
-training diversity, because the signal vanishes at entry.
-The ceiling is not a data-scarcity artefact. It is a structural feature of
-stablecoin microstructure that future benchmark submissions should test against.
-Closing the gap further likely requires early-entry timing labels or
-a reactive simulator that models the agent's own market impact.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.9\columnwidth]{../results/paper_addon/figures/figure_depth_withdrawal.png}
-  \caption{Ask-side depth (blue) collapses and spread (red) widens
-    identically in primary-signal windows for Terra/LUNA (algorithmic
-    collapse, May 2022) and USDC/SVB (reserve-bank shock, March 2023).
-    The order book responds to uncertainty, not its cause.
-    This shared microstructural signature is why cross-mechanism
-    transfer succeeds.}
-  \label{fig:shap_side}
-\end{figure}
-
-\subsubsection{RL Policy Failure}
-\label{sec:rl_results}
-
-This is a controlled comparison varying only the signal delivery: meta-labeling
-(binary labels) and the conditioned PPO-GRU (sparse reward) see identical data
-at 17\% primary-signal density yet differ by $111.7\bps$. Binary labels carry
-execution-survival information that a sparse reward signal cannot encode.
-
-\paragraph{Supervision format ablation}
-Table~\ref{tab:supervision_format} holds features, split, and labels fixed;
-supervision format is the sole variable. Binary and ordinal match at $+83.5\bps$;
-expected-profit regression: $+81.3\bps$. REINFORCE earns $-6.7\bps$ on
-$3.5\times$ the trades, confirming the gap is paradigm-level (label vs.\ reward).
-
-\begin{table}[h]
-\centering
-\caption{Supervision format ablation (cross-mechanism SVB test, all other
-  components held fixed). Binary and ordinal supervision match. Reward
-  optimisation fails regardless of reward specification.}
-\label{tab:supervision_format}
+\caption{On-chain executable arbitrage: a model-free deviation rule (capture optical fires,
+  $|\text{basis}|{>}10\bps$) on real Curve/AMM pool data. Net bps per trade, moving-block
+  bootstrap $95\%$ CI (block${=}30$); ``$-30\bps$ gas'' subtracts a fixed conservative swap-gas
+  cost (stated assumption; per-row gas absent in source).}
+\label{tab:onchain}
 \setlength{\tabcolsep}{4pt}
 {\small
 \begin{tabular}{lrrr}
 \toprule
-\textbf{Supervision format} & \textbf{Net return (bps)} & \textbf{Trades} & \textbf{Paradigm} \\
+\textbf{Episode} & \textbf{Net bps} & \textbf{$-30\bps$ gas} & \textbf{$n$} \\
 \midrule
-Binary classification       & $+83.5$ & 454   & Label \\
-Ordinal regression          & $+83.5$ & 454   & Label \\
-Expected-profit regression  & $+81.3$ & 462   & Label \\
-REINFORCE policy gradient   & $-6.7$  & 1{,}583 & Reward \\
-\midrule
-\multicolumn{4}{l}{\textit{Gap label vs.\ reward. $\approx90\bps$}} \\
+USDT/Curve (Jun 2023) & $+371$ & $+341$ & 697 \\
+Terra/LUNA (May 2022) & $+381$ & $+351$ & 549 \\
+FTX (Nov 2022)        & $+493$ & $+463$ & 353 \\
+BUSD (Feb 2023)       & $+199$ & $+169$ & 766 \\
+USDC/SVB (Mar 2023)   & $+9.4$ & $-21$  & 375 \\
 \bottomrule
+\multicolumn{4}{@{}p{0.92\columnwidth}@{}}{\footnotesize All five CIs exclude zero pre-gas; four
+  of five remain above zero after the gas haircut. Contrast: the identical signal yields $0/81$
+  profitable paths on the CEX order book.}\\
 \end{tabular}
 }
 \end{table}
 
-Without conditioning the PPO-GRU degenerates (2.3\% positive rate too sparse).
-Conditioning resolves the density problem but the agent earns $-29.2\bps$ on
-919 trades: a timing-transfer mismatch where it fires on Terra/LUNA's
-depth-withdrawal sequence in SVB regardless of timing.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{../results/paper/figures/figure_venue_executable.png}
+  \caption{Venue specificity. On the on-chain Curve venue a model-free deviation rule is
+    profitable in every episode (four of five survive a $30\bps$ gas haircut); on the CEX order
+    book the same signal is unprofitable in $0/81$ honest paths and strongly negative even under
+    in-distribution purged cross-validation. The optical-to-executable barrier is a property of
+    CEX order-book microstructure, not of stablecoin depegs.}
+  \label{fig:venue}
+\end{figure}
+
+\paragraph{Why.} On a CEX, capturing a visible dislocation means walking a thin, fee-laden book
+with settlement delay, so most optical fires are not executable and which ones are cannot be
+predicted ahead of time. On an automated market maker, execution cost is the deterministic
+slippage of the pool invariant, so a visible dislocation above the fire threshold is almost
+always a real, capturable one. The lesson for execution-aware AI is that the venue's
+microstructure, not the crisis mechanism, decides whether a learned signal is tradeable.
 
 
-%% =============================================================
-
-
-%% =============================================================
 \section{Limitations}
 \label{sec:limitations}
-\paragraph{Statistical scope.}
-The real transfer result rests on one source$\to$destination pair (Terra/LUNA$\to$USDC/SVB);
-mechanism-invariance is illustrated by four synthetic classes. The secondary claims
-(AUROC--P\&L inversion, $12{\times}$ gap, supervision-format effect) are structural
-order-book properties, not sample-count issues.
-\textbf{(1)~Single execution-grade destination.} A second Tier-A CEX pair is unavailable
-(Binance pre-2024 archive lacks L2 depth; USDT/Curve 2023 has ${\approx}1{\times}$ AMM
-gap---a distinct mechanism). The five-event AMM result (all ${\approx}1{\times}$) is the
-strongest evidence the $12{\times}$ effect is CEX-specific.
-\textbf{(2)~Proxy buy leg.} The SVB gap uses a kline-proxy BTC-USDC buy leg; a $20\%$
-haircut bounds it to $12$--$14{\times}$ with oracle still above $+130\bps$.
-\textbf{(3)~No market-impact model.} Labels use static depth; the $111.7\bps$
-oracle-to-executable gap remains open.
+\paragraph{Scope.}
+The negative CEX result is a finding, not a sample-count artefact: it spans 81 pre-registered
+paths and is strongest precisely where data is most plentiful (in-distribution purged CV). Three
+honest limits remain.
+\textbf{(1)~Single execution-grade CEX destination.} A second Tier-A CEX pair is unavailable
+(Binance's pre-2024 archive lacks L2 depth), so the $12{\times}$ gap is measured on SVB; the
+five-event on-chain AMM result (all ${\approx}1{\times}$) is the cross-event evidence that the
+barrier is CEX-specific.
+\textbf{(2)~Proxy buy leg.} The SVB CEX gap uses a kline-proxy BTC-USDC buy leg; a $20\%$
+haircut bounds it to $12$--$14{\times}$ with the oracle still above $+130\bps$.
+\textbf{(3)~Stylised on-chain execution.} The on-chain net uses the pool-invariant slippage at
+\$10k and a single-leg $1\bps$ fee, with gas charged as a fixed conservative $30\bps$ haircut
+(per-row gas is absent from the panel); it omits MEV competition, which would erode---but, given
+the $+169$ to $+463\bps$ margins, is unlikely to erase---the on-chain edge on the large dislocations.
 
 %% =============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-Price-label benchmarks measure the wrong object: 34.3\% of SVB minutes appeared
-dislocated but only 2.88\% survived VWAP execution ($12\times$ gap; $5.9\times$ on
-Terra/LUNA). Gap~1 is closed by execution-grade labels; Gap~2 is closed by
-cross-mechanism supervision---the order book responds to uncertainty not its cause,
-so a single Terra$\to$SVB transfer recovers half the oracle return and pooling four
-mechanism classes confirms it ($+82.5\bps$ vs $-29.2\bps$ for PPO-GRU).
+Price-label benchmarks measure the wrong object: $34.3\%$ of SVB minutes appeared
+dislocated but only $2.88\%$ survived VWAP execution (a $12\times$ gap). StressBench scores
+models by oracle capture instead, and the result is two-sided. \emph{On the CEX order book the
+problem is unsolved}: no calm-trained family is profitable, AUROC is anti-correlated with P\&L,
+and a pre-registered 81-path search finds nothing that survives FDR correction---even
+in-distribution. \emph{On-chain the same dislocation is tradeable}: a model-free deviation rule
+earns $+169$ to $+463\bps$ in four of five episodes after a conservative gas haircut, because
+pool slippage is bounded. The optical-to-executable barrier is therefore a property of CEX
+microstructure, not of depegs.
 \textbf{Practitioner rules:}
-(1)~Divide every price-label AUROC by $12\times$ before capital decisions.
-(2)~Train on a different mechanism, not the same event.
-(3)~Prefer supervised meta-labeling over RL at identical label density.
-Future work: Tier-A DeFi labels, market-impact simulator, early-entry labels.
+(1)~Divide every price-label AUROC by the venue's execution gap before any capital decision.
+(2)~On a CEX, treat executable-window selection as an open problem, not a solved one.
+(3)~For execution-aware capture, the on-chain venue---not a cleverer model---is what makes the
+signal tradeable.
+Future work: a second Tier-A CEX event, an MEV-aware on-chain execution model, and early-entry
+timing labels.
 
 \section*{Acknowledgements}
 Code and data available at anonymized repository (link at camera-ready).
@@ -1165,6 +1006,22 @@ Olby, O. Bacalum, A. Baggott, R. and Stillman, N.\ (2025).
 \newblock Right place, right time. Market simulation-based {RL} for execution
   optimisation.
 \newblock In {\em ICAIF '25}. ArXiv:2510.22206.
+
+\bibitem{benjamini1995fdr}
+Benjamini, Y. and Hochberg, Y.\ (1995).
+\newblock Controlling the false discovery rate: a practical and powerful approach to multiple
+  testing.
+\newblock {\em Journal of the Royal Statistical Society: Series B}, 57(1):289--300.
+
+\bibitem{politis1994stationary}
+Politis, D.N. and Romano, J.P.\ (1994).
+\newblock The stationary bootstrap.
+\newblock {\em Journal of the American Statistical Association}, 89(428):1303--1313.
+
+\bibitem{egorov2019stableswap}
+Egorov, M.\ (2019).
+\newblock StableSwap: efficient mechanism for stablecoin liquidity.
+\newblock Curve Finance whitepaper.
 
 \end{thebibliography}
 
