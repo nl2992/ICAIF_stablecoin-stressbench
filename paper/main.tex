@@ -849,16 +849,19 @@ USDC/SVB (Mar 2023)   & $+9.4$ & $-21$  & 375 \\
 }
 \end{table}
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\columnwidth]{../results/paper/figures/figure_venue_executable.png}
-  \caption{Venue specificity. On the on-chain Curve venue a model-free deviation rule is
-    profitable in every episode (four of five survive a $30\bps$ gas haircut); on the CEX order
-    book the same signal is unprofitable in $0/81$ honest paths and strongly negative even under
-    in-distribution purged cross-validation. The optical-to-executable barrier is a property of
-    CEX order-book microstructure, not of stablecoin depegs.}
+  \includegraphics[width=0.86\textwidth]{../results/paper/figures/figure_venue_specificity.png}
+  \caption{Venue specificity in one view. \textbf{(a)}~Of the optically dislocated minutes, only
+    $2.88\%$ are executable on the CEX order book versus $100\%$ on the on-chain Curve/AMM pool---a
+    $12\times$ gap. \textbf{(b)}~Trading those windows, a model-free deviation rule earns $+169$ to
+    $+463\bps$ on-chain in four of five episodes after a conservative $30\bps$ gas haircut
+    (moving-block bootstrap $95\%$ CIs shown); the lone exception is the small USDC/SVB dislocation.
+    On the CEX order book the same signal yields $0/81$ profitable paths (best $+7.7\bps$, CI
+    $[-23,+41]$, n.s.; protocol means $-28$ to $-94\bps$). The optical-to-executable barrier is a
+    property of CEX order-book microstructure, not of stablecoin depegs.}
   \label{fig:venue}
-\end{figure}
+\end{figure*}
 
 \paragraph{Why.} On a CEX, capturing a visible dislocation means walking a thin, fee-laden book
 with settlement delay, so most optical fires are not executable and which ones are cannot be
@@ -880,15 +883,6 @@ Benjamini--Hochberg FDR($0.10$) gate~\cite{benjamini1995fdr} across the whole le
 paths cannot manufacture a false positive. Every decision threshold is calibrated on the training segment
 only; no result uses the test split for tuning.
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.92\columnwidth]{../results/exploration/figure_exploration_summary.png}
-  \caption{The CEX selection null, visualised. Each point is one of the $81$ pre-registered paths
-    (well-defined, $n{\ge}30$); the bar is the per-protocol mean. Every protocol sits below zero and far
-    below the oracle ceiling, including the in-distribution purged cross-validation---no configuration
-    selects profitable executable windows on the CEX order book.}
-  \label{fig:cexnull_scatter}
-\end{figure}
 
 
 \section{Limitations}
