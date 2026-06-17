@@ -27,19 +27,20 @@ PAPER_FIG_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Columbia palette ────────────────────────────────────────────────────────
 NAVY = "#003057"
-BLUE = "#75B2DD"
-GOLD = "#F2A900"
-RED = "#C4122F"
-GREY = "#9E9E9E"
+BLUE = "#4a6b8a"
+GOLD = "#9a8c5a"
+RED = "#7a2230"
+GREY = "#9a9a9a"
 
 plt.rcParams.update(
     {
         "font.family": "serif",
+        "font.size": 8,
         "axes.spines.top": False,
         "axes.spines.right": False,
-        "axes.grid": True,
-        "grid.alpha": 0.3,
-        "grid.linestyle": "--",
+        "axes.grid": False,
+        "axes.edgecolor": "#444444",
+        "axes.linewidth": 0.7,
     }
 )
 
@@ -79,31 +80,13 @@ def make_auroc_scatter() -> None:
             linewidths=0.5,
         )
 
-    # Annotate key points
-    ax.annotate(
-        "GRU\n(AUROC 0.80,\n−239 bps)",
-        xy=(0.800, -239.0),
-        xytext=(0.58, -200),
-        fontsize=6,
-        color=BLUE,
-        arrowprops=dict(arrowstyle="->", color=BLUE, lw=0.8),
-    )
+    # Minimal, un-boxed labels for the two reference points
+    ax.text(0.80, -239.0 - 22, "GRU", fontsize=6.5, color=GREY, ha="center", va="top")
+    ax.text(0.519, 162.2 + 8, "oracle", fontsize=6.5, color=GREY, ha="center")
 
-    ax.annotate(
-        "Oracle\n+162 bps",
-        xy=(0.519, 162.2),
-        xytext=(0.30, 150),
-        fontsize=6,
-        color=NAVY,
-        arrowprops=dict(arrowstyle="->", color=NAVY, lw=0.8),
-    )
-
-    ax.axhline(0, color="black", lw=0.8, linestyle="--", alpha=0.5)
+    ax.axhline(0, color="#444444", lw=0.8)
     ax.set_xlabel("AUROC (calm-trained)", fontsize=8)
-    ax.set_ylabel("Net bps per triggered trade", fontsize=8)
-    ax.set_title(
-        "Discrimination ≠ Profitability Under Class Imbalance", fontsize=8, pad=6
-    )
+    ax.set_ylabel("net bps per triggered trade", fontsize=8)
     ax.tick_params(labelsize=7)
 
     legend_elements = [
