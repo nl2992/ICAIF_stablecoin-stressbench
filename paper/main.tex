@@ -798,15 +798,15 @@ order book is, on this data, unsolved---a standing challenge the benchmark poses
   strongly negative. Best single path: cross-mechanism logistic, $+7.7\bps$, $95\%$ CI $[-23,+41]$
   (not significant).}
 \label{tab:cexnull}
-\setlength{\tabcolsep}{5pt}
+\setlength{\tabcolsep}{4pt}
 {\small
 \begin{tabular}{lrl}
 \toprule
 \textbf{Training protocol} & \textbf{Mean net bps} & \textbf{Setting} \\
 \midrule
-Cross-mechanism (Terra$\to$SVB)    & $-28$ & hardest (transfer) \\
-Purged in-event CV (within SVB)    & $-75$ & easiest (in-distribution) \\
-In-event walk-forward (within SVB) & $-94$ & in-distribution \\
+Cross-mechanism (Terra$\to$SVB)  & $-28$ & hardest (transfer) \\
+Purged in-event CV (SVB)         & $-75$ & easiest (in-dist.) \\
+In-event walk-forward (SVB)      & $-94$ & in-dist. \\
 \bottomrule
 \multicolumn{3}{@{}p{0.92\columnwidth}@{}}{\footnotesize $0/81$ paths clear the Benjamini--Hochberg
   FDR($0.10$) gate (net${>}0$, bootstrap CI${>}0$, $n{\ge}30$). Grid: feature sets
