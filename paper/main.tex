@@ -174,9 +174,10 @@ order-book impact.
         USDC/SVB event, $34.3\%$ of minutes look dislocated but only $2.88\%$ are executable
         (a $12\times$ gap), so oracle capture---not price-label AUROC---is the right yardstick.
         (\S\ref{sec:benchmark}--\ref{sec:models})
-  \item \textbf{What does not work: executable-window selection is unsolved on the CEX order book.}
+  \item \textbf{The AUROC--P\&L inversion: executable-window selection is unsolved on the CEX order book.}
         Every calm-trained family loses money despite high AUROC, and the AUROC--P\&L relationship
-        \emph{inverts} (the highest-AUROC model, GRU $0.80$, loses $-239\bps$). A pre-registered
+        \emph{inverts}---we name this the \emph{AUROC--P\&L inversion}: the highest-AUROC model
+        (GRU $0.80$) is the largest loser ($-239\bps$). A pre-registered
         $81$-path search (training protocols $\times$ feature sets $\times$ models) yields zero
         paths that clear a Benjamini--Hochberg FDR($0.10$) gate~\cite{benjamini1995fdr}; even
         purged in-event cross-validation is strongly negative, so the windows are unpredictable
