@@ -298,16 +298,19 @@ crypto trading (Li et al. 2021).
 **Benchmark question answered.** Can a secondary classifier, trained only on the basis-fire events,
 filter the false positives that drive the economic losses?
 
-**Paper interpretation.** Calm-control meta-labeling remains an informative null result: the
+**Paper interpretation.** Calm-control meta-labeling is an informative null result: the
 calm train split has too few profitable primary-signal fires for the secondary model to learn a
-stress filter. The current paper draft then tests the obvious fix: train the secondary model on
-Terra/LUNA primary-signal windows and evaluate on SVB.
+stress filter. An earlier draft then tested the obvious fix — train the secondary model on
+Terra/LUNA primary-signal windows and evaluate on SVB — and reported a +82.45 bps cross-mechanism
+transfer for `MetaLabelingFilter_lgbm_crossmech`. That figure did not survive scrutiny: it came
+from a synthetic data generator (`scripts/_synthetic_crossmech.py`), and on the real gold panel the
+Terra/LUNA→SVB transfer is about −30 bps. It has been removed from the paper and leaderboard.
 
-That cross-mechanism run is the one positive transfer result in the repository:
-`MetaLabelingFilter_lgbm_crossmech` with `price_plus_book` features earns +82.45 bps on the SVB
-test split, takes 397 trades, and captures 50.8% of the basis-task oracle. The interpretation is
-not that meta-labeling solves all executable arbitrage tasks; it shows that stress-like positive
-examples matter more than adding another calm-trained classifier.
+On real CEX data no calm-trained or cross-mechanism path selects profitable windows: a
+pre-registered 81-path search yields zero survivors under a Benjamini–Hochberg FDR(0.10) gate, and
+even purged in-event cross-validation runs −66 to −122 bps. The genuine positive result is on-chain
+(a model-free Curve deviation rule, +169 to +463 bps in 4/5 events after a 30 bps gas haircut); see
+`results/exploration/onchain_ledger.csv`.
 
 ---
 
